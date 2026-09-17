@@ -40,9 +40,10 @@ cd upcode-deploy
 Máte-li k organizaci přístup přes SSH klíč, funguje rovněž
 `git clone git@github.com:UPOL-KMI/upcode-deploy.git`.
 
-Poté stáhněte zdrojové kódy všech komponent. Skript `pull-repos.sh` naklonuje osm repozitářů do
+Poté stáhněte zdrojové kódy všech komponent. Skript `pull-repos.sh` naklonuje sedm repozitářů do
 adresáře `repos/` a přepne každý z nich na revizi uvedenou v souboru `repos.lock` — tedy na tu, se
-kterou bylo nasazení ověřeno, nikoli na aktuální vývojovou špičku:
+kterou bylo nasazení ověřeno, nikoli na aktuální vývojovou špičku. Vše se stahuje přes HTTPS,
+takže server nepotřebuje žádný klíč ani přihlášení:
 
 ```bash
 ./pull-repos.sh

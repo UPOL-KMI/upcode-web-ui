@@ -41,9 +41,10 @@ cd upcode-deploy
 If you have SSH access to the organisation,
 `git clone git@github.com:UPOL-KMI/upcode-deploy.git` works as well.
 
-Then fetch the source of every component. `pull-repos.sh` clones eight repositories into `repos/`
+Then fetch the source of every component. `pull-repos.sh` clones seven repositories into `repos/`
 and checks each one out at the revision named in `repos.lock` — that is, the revision the deployment
-was verified against, rather than the current development tip:
+was verified against, rather than the current development tip. Everything is fetched over HTTPS, so
+the server needs no key and no sign-in:
 
 ```bash
 ./pull-repos.sh
