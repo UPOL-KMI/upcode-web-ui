@@ -1,144 +1,176 @@
-Tenhle návod je pro toho, kdo učí: jak založit kurz, napsat cvičení, nastavit termíny a číst, co
-studenti odevzdali.
+> [!WARNING]
+> **Beta verze.** Aplikace i tato dokumentace se stále vyvíjejí a jejich obsah bude průběžně
+> upravován.
 
-## Jak je to poskládané
+Tato část dokumentace popisuje založení kurzu z pohledu vyučujícího, přípravu úloh, jejich zadání
+studentům, průběžné hodnocení odevzdaných řešení a vedení zkoušky.
 
-UPolníček má čtyři pojmy a všechno ostatní je detail některého z nich.
+## Základní pojmy
 
-- **Skupina** je kurz nebo seminární skupina uvnitř něj. Drží studenty a zadání a může mít
-  podskupiny.
-- **Cvičení** je úloha s testy: text, soubory, které testy potřebují, limity a aspoň jedno
-  referenční řešení. Cvičení žijí v katalogu nezávisle na kurzech.
-- **Zadání** je cvičení přiřazené skupině, s vlastními termíny a body. Totéž cvičení může být
-  zadané v pěti kurzech a v každém mít jiné termíny.
-- **Řešení** je jeden pokus jednoho studenta o jedno zadání. Opraví se automaticky a výsledek
-  můžete přebít.
+Systém pracuje se čtyřmi pojmy a veškerá další nastavení jsou podrobnostmi některého z nich.
 
-Rozdíl, na kterém záleží: **cvičení napíšete jednou a zadáte mnohokrát.** Úprava cvičení nerozhodí
-kurzy, které ho už používají, dokud to sami neřeknete.
+- **Skupina** je kurz nebo seminární skupina uvnitř kurzu. Sdružuje studenty a zadání a může
+  obsahovat podskupiny.
+- **Úloha** je definovaná svým zadáním, (volitelně) testy, vzorovým řešením a nastavením omezení
+  zdrojů. Úlohy jsou uloženy v katalogu nezávisle na kurzech a dají se dle nastavených práv zadávat
+  do libovolné skupiny.
+- **Zadání** je konkrétní úloha přiřazená konkrétní skupině, s vlastními termíny a bodovým
+  ohodnocením. Tutéž úlohu lze zadat v libovolném počtu kurzů a v každém nastavit jiné termíny.
+- **Řešení** je jeden pokus jednoho studenta vztažený k jednomu zadání. Systém jej může automaticky
+  vyhodnotit a obodovat a vyučující může výsledné hodnocení změnit.
 
-## Váš kurz
+Zásadní je rozdíl mezi úlohou a zadáním: **úlohu připravíte jednou a zadáte ji opakovaně.** Pozdější
+úprava úlohy neovlivní kurzy, ve kterých je již zadána, dokud synchronizaci sami nevyvoláte.
 
-Založíte ho ze **Skupin**. Skupina potřebuje název v obou jazycích, které rozhraní nabízí, a patří
-do instance — na nasazení pro jednu fakultu je jen jedna.
+## Založení kurzu a budoucí archivace
 
-O chování rozhodují tři nastavení:
+Kurz založíte v sekci **Skupiny**. Povinný je název alespoň v jednom jazyce rozhraní (česky nebo
+anglicky); druhý můžete doplnit později.
 
-- **Veřejná** — jestli se studenti mohou přihlásit sami.
-- **Organizační** — skupina, která drží jen další skupiny. Může mít podskupiny, ale žádná zadání
-  ani studenty. Hodí se pro katedru nebo studijní program.
-- **Archivovaná** — kurz, který skončil. Zůstane čitelný a zmizí ze seznamů, se kterými se pracuje.
+Chování kurzu určují tři možnosti nastavení druhu skupiny:
 
-Studenti se dostanou dovnitř třemi způsoby: sami se přidají do veřejné skupiny, přidáte je ze
-seznamu, nebo jim pošlete **pozvánkový odkaz** s platností.
+- **Organizační** — mohou obsahovat další skupiny, ale neobsahují žádné studenty ani zadání.
+- **Běžná** — jako organizační, ale lze do této skupiny zadávat zadání úloh a přidávat studenty.
+- **Zkoušková** — příznak běžné skupiny určený pro skupinu, ve které se koná zkouška. Má tři
+  důsledky: zadání vytvořená v takové skupině se automaticky označí jako zkoušková a studentovi se
+  po dobu konání zkoušky zobrazí pouze tehdy, je-li do skupiny zamčen; studenti skupinu nemohou
+  opustit sami; a skupina nemůže obsahovat podskupiny. Zkouškovou skupinu nelze zároveň označit
+  jako organizační.
 
-## Psaní cvičení
+Nezávisle na druhu lze skupinu označit jako **veřejnou**, což znamená, že se do ní studenti mohou
+zapsat sami, bez zásahu vyučujícího.
 
-Z **Cvičení** založte nové a vyplňte čtyři věci — dokud nejsou všechny, rozhraní vám cvičení
-nedovolí zadat.
+Po skončení semestru nebo akademického roku lze neaktivní skupiny archivovat. K archivovaným
+skupinám se lze v budoucnu vracet, ale tyto skupiny studentům i vyučujícím zmizí ze seznamu
+aktivních kurzů.
 
-1. **Text.** Markdown, v každém jazyce, který chcete nabídnout. Vykresluje se kód i matematika.
-2. **Testy.** Každý test říká, co jde dovnitř a co má vyjít ven. Pro běžný tvar — tohle na standardní
-   vstup, tamto se čeká na výstupu — je porovná vestavěný soudce, buď přesně, nebo bez ohledu na
-   bílé znaky.
-3. **Limity.** Čas a paměť, pro každý test a prostředí. Vyjděte z naměřeného času referenčního
-   řešení a nechte skutečnou rezervu: stroj, který známkuje, není studentův notebook.
-4. **Referenční řešení.** Správné řešení, které odevzdáte sami. **Bez něj cvičení nejde zadat**, a je
-   to záměr: je to důkaz, že testy, limity a pipeline spolu opravdu fungují, a je to místo, kde se
-   projeví většina chyb v konfiguraci.
+Studenty lze do kurzu zařadit třemi způsoby: zapíší se sami, je-li kurz veřejný; přidáte je ručně ze
+seznamu uživatelů; nebo jim zašlete **pozvánkový odkaz** s omezenou platností. Odkazy spravujete
+v detailu kurzu a u každého je vidět, kdo jej vystavil a do kdy platí.
 
-Referenční řešení odevzdejte a přečtěte jeho verdikt, než půjdete dál. Pokud nedostane plný počet
-bodů, cvičení není hotové — a každý student by narazil na tutéž zeď.
+V nastavení kurzu dále určíte, zda mohou studenti skupinu opustit sami, a zda se jim zobrazují
+souhrnné statistiky skupiny.
 
-### Úkoly, které nejsou program
+## Příprava úlohy
 
-Ne všechno se dá spustit a otestovat. Esej, naměřená data, prezentace, sken — na to slouží
-prostředí **Data**: přijímá **libovolný soubor** bez ohledu na příponu a nic nekompiluje ani
-nespouští. Jediné, co u něj proběhne, je kontrola, kterou k cvičení přiložíte vy.
+Novou úlohu založíte v sekci **Úlohy**. Než ji bude možné zadat, musí být její konfigurace úplná;
+dokud není, systém ji označí za nekompletní a uvede konkrétní důvod — chybějící text, žádné testy,
+nenastavený způsob výpočtu úspěšnosti, nevybraný programovací jazyk, neúplná konfigurace testů
+nebo chybné
+limity.
 
-Ta kontrola **není volitelná**, a je to ta jediná věc, na které se u data-only cvičení dá pohořet.
-Bez ní skončí každé odevzdání jako `FAILED` s hláškou `/box/: Is a directory` — na cvičení, které
-jinak vypadá správně nastavené. Pokud chcete jen soubor vybrat a ohodnotit ho sami, přiložte jako
-soubor cvičení dvouřádkový skript:
+1. **Text zadání.** Zapisuje se v Markdownu, a to zvlášť pro každý jazyk, ve kterém chcete zadání
+   nabídnout — tedy česky, anglicky, nebo obojí. Vykreslují se i bloky kódu a matematické výrazy
+   zapsané pomocí `$...$` a `$$...$$`.
+2. **Testy.** Každý test určuje, co vstupuje do programu a jaký výstup se očekává. Porovnání provádí
+   vestavěný soudce; podle zvoleného soudce se výstup porovnává znak po znaku, nebo bez ohledu na
+   pořadí slov na řádku či pořadí celých řádků.
+3. **Limity.** Časový a paměťový limit je nutné nastavit pro každý test a každý programovací
+   jazyk. Vyjděte z hodnot naměřených u referenčního řešení a ponechte dostatečnou rezervu — stroj,
+   který úlohy vyhodnocuje, nemá výkon studentova notebooku.
+4. **Referenční řešení.** Správné řešení, které odevzdáte sami. Není sice technicky vyžadováno
+   k zadání úlohy, ale **je jediným způsobem, jak si ověřit, že testy, limity a konfigurace spolu
+   skutečně fungují**, a projeví se na něm většina chyb v nastavení.
 
-```bash
-#!/bin/bash
-echo "Odevzdáno. Čeká na posouzení vyučujícím."
-exit 0
-```
+Referenční řešení odevzdejte a přečtěte si jeho výsledek dříve, než úlohu zadáte studentům.
+Nezíská-li plný počet bodů, úloha není připravena — na tutéž překážku by narazil každý student.
 
-Odevzdání pak dostane plný počet bodů z automatické části, ta věta se studentovi ukáže mezi
-výsledky a skutečné body mu udělíte ručně na obrazovce řešení. Pokud naopak kontrolovat chcete —
-třeba porovnat odevzdaná data se vzorem — je to obyčejný program, který dostane odevzdané soubory
-a rozhodne.
+### Úlohy bez automatického vyhodnocení
 
-Referenční řešení potřebuje i data-only cvičení. Je jím prostě soubor, který sami odevzdáte.
+Ne každou práci lze spustit a otestovat. Pro eseje, naměřená data, prezentace nebo skenované
+dokumenty slouží prostředí **Data-Only**, které se volí mezi programovacími jazyky úlohy, v sekci
+**Jazyky**. Přijímá libovolný
+soubor bez ohledu na příponu, nic nepřekládá ani nespouští a nemá testy ani limity — konfigurace
+úlohy se proto omezí na samotný text zadání.
 
-### Import z GitHub Classroom
+Odevzdané řešení dostane stav **Čeká na hodnocení** a nula bodů. Body udělíte ručně na obrazovce
+řešení; teprve tím se řešení považuje za ohodnocené. Do doby, než tak učiníte, systém studentovi
+žádný verdikt netvrdí.
 
-Zadání s `autograding.json` jde naimportovat místo přepisování. Jeho testy typu `input`/`output` se
-mapují na testy v UPolníčku čistě, `README.md` šablony se stane textem cvičení a ostatní soubory
-přílohami.
+Prostředí Data-Only nelze v jedné úloze kombinovat s žádným programovacím jazykem; rozhraní na to
+upozorní.
 
-Co naimportovat nejde, je řečeno nahlas a ne odhadnuto: test, který spouští libovolný příkaz shellu,
-ani celý testovací framework uvnitř repozitáře se na dvojice vstup/výstup převést nedají — import
-vám řekne, které testy přeložit nedokázal. A referenční řešení v šabloně z Classroomu prakticky
-nikdy není, takže naimportované cvičení přijde **zatím nezadatelné**, dokud ho nenapíšete.
+### Import z GitHub Classroom (beta)
 
-## Zadání
+Zadání obsahující soubor `autograding.json` lze naimportovat namísto ručního přepisování. Testy typu
+`input` a `output` se převedou na testy v systému, soubor `README.md` ze šablony se stane textem
+úlohy a ostatní soubory přílohami.
 
-Ve skupině zvolte **Zadat cvičení**. Výběr začíná u cvičení vašeho kurzu a dá se rozšířit na celý
-katalog.
+Co převést nelze, import výslovně uvede: test spouštějící libovolný příkaz shellu ani celý testovací
+framework uvnitř repozitáře se na dvojice vstup/výstup převést nedají. Šablona z Classroomu navíc
+prakticky nikdy neobsahuje referenční řešení, takže je nutné je doplnit.
 
-Pak nastavte podmínky:
+## Zadání úlohy studentům
 
-- **První termín** a body před ním.
-- **Druhý termín**, volitelně, s nižším ziskem — pozdě, ale ne zbytečně. Body mohou klesnout skokem
-  v termínu, nebo se mezi oběma termíny plynule snižovat.
-- **Bodový práh** — jakou část bodů musí řešení získat, aby se vůbec počítalo.
-- **Limit pokusů** — kolikrát smí student odevzdat. Nechte ho velkorysý, pokud nejde o zkoušku.
-- **Viditelné od** — zadání existuje, ale do té doby zůstane skryté.
-- **Ve kterých jazycích** smí student odevzdávat.
+V detailu kurzu zvolte možnost zadání úlohy. Výběr začíná u úloh vašeho kurzu a lze jej rozšířit na
+celý katalog.
 
-Termíny se zadávají **ve vaší časové zóně** a každému se zobrazí v té jeho.
+Následně nastavíte podmínky:
 
-## Čtení toho, co přišlo
+- **První termín** a počet bodů platný do jeho uplynutí.
+- **Druhý termín**, volitelně, se sníženým počtem bodů. Bodové ohodnocení může po prvním termínu
+  klesnout skokově, nebo se mezi oběma termíny snižovat plynule.
+- **Bodový práh** — jakou část bodů musí řešení získat, aby se studentovi vůbec započítalo.
+- **Limit pokusů** — kolikrát smí student odevzdat. Nejde-li o zkoušku, doporučujeme jej nastavit
+  velkoryse.
+- **Viditelné od** — zadání existuje, ale studentům se do uvedeného okamžiku nezobrazí.
+- **Povolené programovací jazyky**, ve kterých smí student odevzdávat.
 
-Záložka **Řešení** u zadání vypisuje každý pokus, jeden řádek na odevzdání. Po otevření vidíte, co
-student odevzdal, co udělal každý test a jak se došlo ke skóre.
+Termíny zadáváte ve své časové zóně a každému uživateli se zobrazí v zóně jeho vlastní.
 
-Co odtud můžete dělat:
+Upravíte-li úlohu poté, co již byla zadána, změna se do existujících zadání nepromítne sama.
+Zadání drží vlastní kopii konfigurace a je nutné vyvolat jeho synchronizaci s úlohou.
 
-- **Udělit body, které vyhodnocení nedalo.** Přebití s poznámkou proč. Použijte ho, když je řešení
-  správné způsobem, který testy nezachytí — nebo špatné způsobem, který jim unikl.
-- **Uznat pokus.** Ve výchozím stavu se počítá poslední odevzdání; uznáním označíte konkrétní jiné.
-- **Napsat revizi.** Komentáře ke konkrétním řádkům odevzdaného kódu. Revize je jen vaše, dokud ji
-  neuzavřete — teprve pak ji student uvidí.
-- **Přehodnotit.** Spustí testy znovu — třeba po opravě rozbitého cvičení.
-- **Porovnat dvě řešení** řádek po řádku, když chcete vidět, co se mezi pokusy změnilo.
+## Hodnocení odevzdaných řešení
 
-Studenti si o revizi mohou říct sami a tyhle žádosti se sbírají na vaší nástěnce, takže fronta je
-místo, kam se díváte, ne něco, co si musíte pamatovat.
+Záložka **Řešení** u zadání vypisuje jednotlivé pokusy, jeden řádek na odevzdání. Po otevření
+konkrétního řešení uvidíte odevzdané soubory, výsledek každého testu a způsob, jakým bylo vypočteno
+bodové skóre řešení. Z odevzdaných řešení jednoho studenta je vždy vybráno jen jedno, jehož body se
+započítávají do celkového hodnocení.
+
+Z obrazovky řešení lze provést následující:
+
+- **Upravit počet bodů.** Automatické hodnocení přepíšete vlastním, s poznámkou o důvodu. Využijete
+  je u řešení, které je správné způsobem, jejž testy nezachytí, nebo naopak chybné způsobem, který
+  jim unikl.
+- **Uznat pokus.** Uznané řešení se do hodnocení započítá přednostně, i kdyby jiný pokus získal více
+  bodů.
+- **Napsat revizi.** Komentáře ke konkrétním řádkům kódu, případně k řešení jako celku. Komentář lze
+  označit jako připomínku k vyřešení. **Revize zůstává studentovi skrytá, dokud ji neuzavřete.**
+- **Přehodnotit řešení.** Spustí testy znovu, například po opravě chybně nastavené úlohy.
+- **Porovnat dva pokusy** řádek po řádku a zjistit, co se mezi nimi změnilo.
+
+Bez zásahu vyučujícího se do hodnocení započítává řešení s nejvyšším počtem bodů, nikoli poslední
+odevzdané. Při shodném počtu bodů rozhoduje novější pokus. Uznáte-li některé řešení, má přednost
+před oběma pravidly.
+
+Studenti mohou o revizi požádat sami. Žádosti se shromažďují na vašem přehledu, takže fronta
+neuzavřených revizí je místem, kam se stačí podívat.
+
+## Přehled o celém kurzu
+
+Záložka **Studenti** zobrazuje bodovou matici: každý student proti každému zadání, včetně součtů.
+Matici lze exportovat a z každé buňky vede odkaz na pokusy daného studenta.
+
+Každý student má v rámci kurzu vlastní obrazovku se všemi svými odevzdanými řešeními na jednom
+místě. Bývá nejrychlejší odpovědí na otázku, jak si konkrétní člověk v kurzu vede.
+
+## Body udělované bez odevzdání
+
+**Stínové zadání** slouží k evidenci bodů za práci, kterou studenti neodevzdávají do systému — za
+prezentaci, ústní zkoušení nebo aktivitu na semináři. Objeví se v bodování kurzu vedle běžných
+zadání a body zadáváte sami, po jednotlivých studentech, spolu s datem, kdy byly uděleny.
+
+Termín u stínového zadání je pouze informativní: systém podle něj nic nevynucuje a o tom, zda byl
+dodržen, rozhodujete vy.
 
 ## Zkoušky
 
-Skupinu lze na zvolené období přepnout do zkouškového režimu: začne hned nebo v čase, který určíte,
-trvá zadanou dobu nebo do zadaného konce, a může studenty na tu dobu zamknout do skupiny. Zamčený
-student během zkoušky vidí jen tenhle kurz.
+Kurz lze na zvolené období přepnout do zkouškového režimu. Zkouška začne okamžitě nebo v čase, který
+určíte, trvá zadanou dobu nebo do zadaného konce a může studenty po tuto dobu zamknout do kurzu.
+Zamčený student vidí během zkoušky pouze daný kurz a pozvánkové odkazy do jiných skupin jsou po tu
+dobu odmítány.
 
-Nastavte to dřív, než se místnost zaplní. Obrazovka zkoušky ukazuje, kdo je zamčený, a umožní
-jednotlivce uvolnit.
-
-## Body, které nejsou kód
-
-**Stínové zadání** jsou body bez odevzdání — za prezentaci, ústní zkoušení, aktivitu na semináři.
-Objeví se v bodování skupiny vedle skutečných zadání a body zadáváte sami, po studentech, s datem,
-kdy byly získány.
-
-## Pohled na celý kurz naráz
-
-Záložka **Studenti** je bodová matice: každý student proti každému zadání, včetně součtů. Dá se
-exportovat a z každé buňky vede odkaz na pokusy toho studenta.
-
-Celý kurz jednoho studenta má vlastní obrazovku — všechno, co v něm odevzdal, na jednom místě — a
-bývá to nejrychlejší způsob, jak odpovědět na otázku „jak si ten člověk vlastně vede".
+Zkouškový režim nastavte dříve, než se místnost zaplní. Záložka **Zkoušky** ukazuje průběh, seznam
+zamčených studentů a záznamy o dříve proběhlých zkouškách; jednotlivé studenty lze v případě potřeby
+uvolnit.

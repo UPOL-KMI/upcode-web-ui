@@ -1,151 +1,186 @@
-This guide is for whoever teaches: creating a course, writing exercises, setting deadlines, and
-reading what students submitted.
+> [!WARNING]
+> **Beta release.** Both the application and this documentation are still under development and
+> their content will be revised as the work continues.
 
-## The shape of the thing
+This part of the documentation describes how a teacher creates a course, prepares exercises, assigns
+them to students, grades the solutions that come in and runs an examination.
 
-UPolníček has four nouns, and everything else is a detail of one of them.
+## The basic concepts
 
-- A **group** is a course, or a seminar group inside one. It holds students and assignments, and it
-  can hold subgroups.
-- An **exercise** is a task with tests: a text, the files the tests need, limits, and at least one
-  reference solution. Exercises live in a catalogue, independent of any course.
-- An **assignment** is an exercise given to a group, with its own deadlines and points. The same
-  exercise can be assigned to five courses and carry different deadlines in each.
-- A **solution** is one student's attempt at one assignment. It is graded automatically, and you can
-  override the result.
+The system works with four concepts, and every other setting is a detail of one of them.
 
-The distinction that matters: **you write an exercise once and assign it many times.** Changing the
-exercise does not disturb the courses that already use it until you say so.
+- A **group** is a course, or a seminar group within a course. It holds students and assignments and
+  may contain subgroups.
+- An **exercise** is defined by its text, optionally by its tests, by a model solution and by the
+  resource limits set for it. Exercises live in a catalogue independently of any course and, subject
+  to permissions, can be assigned to any group.
+- An **assignment** is one particular exercise given to one particular group, with deadlines and
+  points of its own. The same exercise can be assigned in any number of courses, each with different
+  deadlines.
+- A **solution** is one attempt by one student against one assignment. The system may evaluate and
+  score it automatically, and the teacher may change the resulting grade.
 
-## Your course
+The distinction between an exercise and an assignment is the one that matters: **an exercise is
+written once and assigned many times.** Editing it later does not affect the courses it is already
+assigned in until you trigger the synchronisation yourself.
 
-Create it from **Groups**. A group needs a name in both languages the interface offers, and it
-belongs to an instance — on a single-faculty deployment there is only one.
+## Creating a course, and archiving it later
 
-Three settings decide how it behaves:
+A course is created in the **Groups** section. A name in at least one interface language (Czech or
+English) is required; the other can be added later.
 
-- **Public** — whether students can find and join it themselves.
-- **Organisational** — a group that only holds other groups. It can have subgroups but no
-  assignments and no students. Use it for a department or a degree programme.
-- **Archived** — a course that has finished. It stays readable and stops appearing in the lists
-  people work from.
+Three kinds of group govern how a course behaves:
 
-Students arrive in one of three ways: they join a public group themselves, you add them from the
-roster, or you create an **invitation link** with an expiry and send it to them.
+- **Organizational** — may contain further groups, but holds no students and no assignments.
+- **Ordinary** — as organizational, except that assignments can be given in it and students added
+  to it.
+- **Exam** — a flag on an ordinary group, for a group in which an examination is held. It has three
+  consequences: assignments created in such a group are automatically marked as exam assignments and
+  are shown to a student during the examination only if that student is locked into the group;
+  students cannot leave the group on their own; and the group cannot contain subgroups. An exam
+  group cannot also be marked organizational.
 
-## Writing an exercise
+Independently of its kind, a group can be marked **public**, which means students may enrol
+themselves without the teacher's involvement.
 
-From **Exercises**, create one, then fill in four things — the interface will not let you assign it
-until they are all there.
+Once a term or an academic year ends, inactive groups can be archived. An archived group can still
+be returned to, but it disappears from the list of active courses for students and teachers alike.
 
-1. **The text.** Markdown, in each language you intend to offer. Code fences and mathematics both
-   render.
-2. **The tests.** Each test names what goes in and what should come out. For the common shape —
-   feed this to standard input, expect that on standard output — the built-in judge compares them
-   for you, either exactly or ignoring whitespace.
-3. **The limits.** Time and memory, per test and per environment. Start from the reference
-   solution's own measured time and leave real headroom: the grading machine is not the student's
-   laptop.
-4. **A reference solution.** A correct solution that you submit yourself. **An exercise cannot be
-   assigned without one**, deliberately: it is the proof that the tests, the limits and the
-   pipeline actually work together, and it is where most configuration mistakes surface.
+Students can be brought into a course in three ways: they enrol themselves where the course is
+public; you add them by hand from the list of users; or you send them an **invitation link** with a
+limited validity. The links are managed in the course detail, and each shows who issued it and how
+long it remains valid.
 
-Submit the reference solution and read its verdict before going further. If it does not score
-full marks, the exercise is not finished, and every student would have hit the same wall.
+The course settings further determine whether students may leave the group on their own, and whether
+they see the group's aggregate statistics.
 
-### Assignments that are not programs
+## Preparing an exercise
 
-Not everything can be run and tested. An essay, measured data, a presentation, a scan — that is
-what the **Data** environment is for: it accepts **any file** whatever its extension, and compiles
-and runs nothing. The only thing that happens to a submission is the check you attach to the
-exercise yourself.
+A new exercise is created in the **Exercises** section. Before it can be assigned its configuration
+has to be complete; until it is, the system marks it as incomplete and states the particular reason
+— a missing text, no tests, no method of computing the score, no programming language selected, an
+incomplete test configuration or invalid limits.
 
-That check is **not optional**, and it is the one thing a data-only exercise goes wrong on. Without
-it every submission comes back `FAILED`, reading `/box/: Is a directory`, on an exercise that
-otherwise looks correctly configured. If all you want is to collect the file and mark it yourself,
-attach a two-line script as an exercise file:
+1. **The text of the task.** Written in Markdown, separately for each language you wish to offer
+   the assignment in — Czech, English or both. Code blocks and mathematics written as `$...$` and
+   `$$...$$` are rendered.
+2. **Tests.** Each test states what goes into the program and what output is expected. The
+   comparison is performed by a built-in judge; depending on which judge is chosen, the output is
+   compared character by character, or without regard to the order of words on a line or the order
+   of whole lines.
+3. **Limits.** A time and memory limit has to be set for each test and each programming language.
+   Start from the values measured for the reference solution and leave a real margin — the machine
+   that grades does not have the performance of a student's laptop.
+4. **A reference solution.** A correct solution that you submit yourself. It is not technically
+   required in order to assign the exercise, but **it is the only way to establish that the tests,
+   the limits and the configuration actually work together**, and most configuration faults show up
+   on it.
 
-```bash
-#!/bin/bash
-echo "Submitted. Awaiting the teacher's review."
-exit 0
-```
+Submit the reference solution and read its result before giving the exercise to students. If it does
+not earn full marks, the exercise is not ready — every student would meet the same obstacle.
 
-The submission then scores full marks on the automatic part, that sentence appears to the student
-among the results, and you award the real points by hand on the solution screen. If you do want to
-check something — comparing submitted data against a model answer, say — it is an ordinary program
-that receives the submitted files and decides.
+### Exercises without automatic evaluation
 
-A data-only exercise needs a reference solution too. It is simply a file you submit yourself.
+Not every piece of work can be run and tested. For essays, measured data, presentations or scanned
+documents there is the **Data-Only** environment, chosen among the exercise's programming
+languages in the **Languages** section. It accepts any file regardless of its extension, compiles
+and runs nothing, and has neither tests nor limits — the exercise configuration is therefore reduced to the text of the task
+itself.
 
-### Importing from GitHub Classroom
+The submitted solution is given the state **Awaiting grading** and no points. You award the points
+by hand on the solution screen; only then is the solution considered graded. Until you do, the
+system asserts no verdict to the student.
 
-An assignment template with an `autograding.json` can be imported instead of retyped. Its
-`input`/`output` tests map cleanly onto UPolníček tests, the template's `README.md` becomes the
-exercise text, and its other files become attachments.
+Data-Only cannot be combined with any programming language in the same exercise; the interface says
+so.
 
-What cannot be imported is stated rather than guessed at: a test that runs an arbitrary shell
-command, or a whole test framework inside the repository, cannot become per-test input and output
-pairs — the import will tell you which tests it could not translate. And a reference solution is
-never in a Classroom template, so an imported exercise arrives **not yet assignable** until you
-write one.
+### Importing from GitHub Classroom (beta)
 
-## Assigning it
+An assignment containing an `autograding.json` file can be imported instead of being retyped. Tests
+of type `input` and `output` are converted into tests in the system, the template's `README.md`
+becomes the text of the exercise and the remaining files become attachments.
 
-From the group, choose **Assign an exercise**. The picker starts with your course's own exercises
-and can widen to the whole catalogue.
+What cannot be converted, the import states explicitly: neither a test that runs an arbitrary shell
+command nor an entire testing framework inside the repository can be reduced to input/output pairs.
+A Classroom template also practically never contains a reference solution, so one has to be added.
 
-Then set the terms:
+## Assigning an exercise to students
 
-- **First deadline** and the points before it.
-- **Second deadline**, optional, with a lower score — late but not worthless. Points can drop in one
-  step at the deadline, or slide between the two.
-- **Points threshold** — the fraction of the points a solution has to reach before it counts at all.
-- **Attempt limit** — how many times a student may submit. Leave it generous unless the exercise is
-  an exam.
-- **Visible from** — the assignment exists but stays hidden until then.
-- **Which languages** a student may submit in.
+In the course detail, choose to assign an exercise. The selection begins with your course's own
+exercises and can be widened to the whole catalogue.
 
-Deadlines are typed in **your own time zone**, and are shown to every reader in theirs.
+You then set the terms:
 
-## Reading what came back
+- **The first deadline** and the number of points valid until it passes.
+- **A second deadline**, optionally, carrying fewer points. The points may drop abruptly after the
+  first deadline, or decrease gradually between the two.
+- **The point threshold** — what share of the points a solution has to earn before it counts for the
+  student at all.
+- **The attempt limit** — how many times a student may submit. Unless this is an examination, we
+  recommend setting it generously.
+- **Visible from** — the assignment exists but is not shown to students until the stated moment.
+- **The permitted programming languages** a student may submit in.
 
-The assignment's **Solutions** tab lists every attempt, one row per submission. Open one and you
-see what the student submitted, what each test did, and how the score was reached.
+Deadlines are entered in your own time zone and displayed to every user in theirs.
 
-What you can do from there:
+If you edit an exercise after it has been assigned, the change does not reach the existing
+assignments by itself. An assignment holds its own copy of the configuration, and its
+synchronisation with the exercise has to be triggered.
 
-- **Award points the evaluation did not.** An override, with a note saying why. Use it when a
-  solution is right in a way the tests do not capture — or wrong in a way they missed.
-- **Accept an attempt.** By default a student's last submission counts; accepting marks a
-  particular one as the one that does.
-- **Write a review.** Comments on specific lines of the submitted code. A review stays yours until
-  you close it, and only then does the student see it.
-- **Re-evaluate.** Runs the tests again — after fixing a broken exercise, for instance.
-- **Compare two solutions**, line by line, when you want to see what changed between attempts.
+## Grading the solutions that come in
 
-Students can ask for a review themselves, and those requests collect on your dashboard so the queue
-is somewhere you look rather than something you remember.
+The **Solutions** tab of an assignment lists the individual attempts, one row per submission.
+Opening a particular solution shows the submitted files, the result of every test and how the
+solution's score in points was arrived at. Of one student's submitted solutions exactly one is
+chosen, and its points are the ones that count towards the overall grade.
 
-## Exams
+From the solution screen you can do the following:
 
-A group can be put into exam mode for a period you set: it starts now or at a time you choose, runs
-for a length or until an end you name, and can lock students to the group for its duration. While an
-exam is running, a locked student sees that course and nothing else.
+- **Change the number of points.** The automatic grade is overridden by your own, with a note giving
+  the reason. Use it for a solution that is correct in a way the tests do not capture, or wrong in a
+  way that escaped them.
+- **Accept an attempt.** An accepted solution counts towards the grade in preference to all others,
+  even if another attempt earned more points.
+- **Write a review.** Comments on particular lines of the code, or on the solution as a whole. A
+  comment can be marked as an issue to fix. **A review stays hidden from the student until you close
+  it.**
+- **Re-evaluate a solution.** Runs the tests again, for instance after a misconfigured exercise has
+  been repaired.
+- **Compare two attempts** line by line and see what changed between them.
 
-Set it up before the room fills. The exam screen shows who is locked in and lets you release
-somebody individually.
+Without any intervention from the teacher, the solution counted towards the grade is the one with
+the most points, not the most recent. Where two are equal on points, the newer attempt wins. If you
+accept a solution, it takes precedence over both rules.
 
-## Points that are not code
+Students may request a review themselves. The requests collect on your dashboard, so the queue of
+open reviews is a place you look at rather than something you have to remember.
 
-A **shadow assignment** is points without a submission — for a presentation, an oral exam, activity
-in a seminar. It appears in the group's scoring alongside real assignments, and you type the points
-in yourself, per student, with the date they were earned.
+## An overview of the whole course
 
-## Seeing the whole course at once
+The **Students** tab presents a matrix of points: every student against every assignment, with
+totals. The matrix can be exported, and every cell links to that student's attempts.
 
-The group's **Students** tab is the points matrix: every student against every assignment, with
-totals. It exports, and it links from any cell to that student's own attempts.
+Each student additionally has a screen of their own within the course, with everything they have
+submitted in one place. It is usually the quickest answer to the question of how a particular person
+is getting on.
 
-One student's whole course is its own screen — everything they submitted in it, in one place —
-which is usually the fastest way to answer "how is this person actually doing".
+## Points awarded without a submission
+
+A **shadow assignment** records points for work students do not submit to the system — a
+presentation, an oral examination or participation in a seminar. It appears in the course's scoring
+beside ordinary assignments, and you enter the points yourself, student by student, together with
+the date on which they were earned.
+
+The deadline of a shadow assignment is informative only: the system enforces nothing by it, and
+whether it was met is for you to decide.
+
+## Examinations
+
+A course can be switched into examination mode for a chosen period. The examination begins
+immediately or at a time you set, lasts for a given duration or until a given end, and may lock
+students into the course for that time. A locked student sees only that course for the duration, and
+invitation links to other groups are refused meanwhile.
+
+Set the examination mode up before the room fills. The **Exams** tab shows the progress, the list of
+locked students and the records of examinations held earlier; individual students can be released
+where necessary.

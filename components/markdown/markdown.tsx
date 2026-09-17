@@ -7,6 +7,7 @@ import remarkMath from "remark-math";
 
 import { getHighlighter } from "@/lib/code/highlight";
 import { PLAINTEXT } from "@/lib/code/languages";
+import { rehypeAlerts } from "@/lib/markdown/alerts";
 import { remarkEscapeRawHtml, remarkLegacyMathDelimiters } from "@/lib/markdown/legacy-compat";
 import { rehypeShikiPalette } from "@/lib/markdown/shiki-palette";
 
@@ -46,6 +47,7 @@ export async function Markdown({ source }: { source: string }) {
         rehypePlugins={[
           rehypeSlug,
           rehypeKatex,
+          rehypeAlerts,
           [
             rehypeShikiFromHighlighter,
             highlighter,

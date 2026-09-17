@@ -365,16 +365,47 @@
   padding-left: 0.75rem;
   color: var(--muted-foreground);
 }
+/* `lib/markdown/alerts.ts` turns `> [!WARNING]` into this. A box rather than the quotation rule
+   above, because the two say different things and a reader should not have to read the text to
+   tell them apart. */
+[data-slot="markdown"] blockquote[data-alert] {
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: var(--foreground);
+}
+[data-slot="markdown"] blockquote[data-alert="warning"],
+[data-slot="markdown"] blockquote[data-alert="caution"] {
+  border-left-color: var(--warning);
+  background-color: var(--warning-surface);
+}
+[data-slot="markdown"] blockquote[data-alert="note"],
+[data-slot="markdown"] blockquote[data-alert="tip"],
+[data-slot="markdown"] blockquote[data-alert="important"] {
+  border-left-color: var(--info);
+  background-color: var(--info-surface);
+}
 [data-slot="markdown"] code:not(.shiki code) {
   background-color: var(--muted);
   border-radius: 0.25rem;
   padding: 0.1rem 0.3rem;
   font-size: 0.9em;
 }
+/* **A fence needs a surface of its own, and Shiki's light theme does not give it one.**
+   github-light's background is `#fff`, which is the page, so a code block in a guide was white on
+   white -- present, selectable and invisible. Light mode therefore takes the app's own muted
+   surface instead. Dark mode keeps `--shiki-dark-bg`: it already differs from the page, and the
+   token contrast measured against it in DEC-145's audit stays measured against it. The border is
+   for both, so the block reads as a block whichever theme is on. */
 [data-slot="markdown"] .shiki {
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   overflow-x: auto;
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+}
+.dark [data-slot="markdown"] .shiki {
+  background-color: var(--shiki-dark-bg);
 }
 [data-slot="markdown"] table {
   border-collapse: collapse;

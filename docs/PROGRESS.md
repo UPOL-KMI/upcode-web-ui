@@ -6590,3 +6590,51 @@ built purely on group stats cannot, and keep the automatic verdict rather than g
 **And the explanations are visible.** They were `title` attributes — held back a second or two,
 drawn in the system's style, never shown to a keyboard. `Hint` existed for exactly that complaint
 and every status badge uses it now.
+
+### 2026-09-17 — the documentation says what the product does
+
+The operator read all three guides against the running instance and the round that came back was a
+mixture of wording and of things that were simply untrue. The wording is his; the corrections are
+what checking each claim against the code turned up.
+
+**Four of them would have misled a reader.** The student guide told people to register with an
+e-mail and a password — `LOCAL_REGISTRATION_ENABLED` is `false` and the registration screen says so
+itself, so it sent students at a locked door; the way in is a university account or an invitation
+from a teacher. It said "hodnotí se **poslední** odevzdané řešení, nikoli nejlepší", which is
+exactly backwards: `AssignmentSolutions::compareBestSolution()` prefers an accepted solution, then
+the most points, then the more recent — so a student who believed the guide would not resubmit for
+fear of spoiling a grade they cannot spoil. It promised that an archive may be submitted, when
+core-api matches uploaded names against the exercise's own `source-files` pattern and refuses a
+`.zip` where `*.py` is expected. And its verdict table was in English — `OK`, `FAILED`,
+`Runtime error` — while the application says `Prošel`, `Neprošel` and has no runtime-error state at
+all; the states it actually has (`Čeká na hodnocení`, `Bez bodování`, `Body od vyučujícího`) were
+missing.
+
+**The teacher's guide had three more.** A group needs a name in _one_ language, not both. A
+reference solution is not required to assign an exercise — `isBroken` is computed from the
+configuration and says nothing about reference solutions — so "bez něj cvičení nejde zadat" was an
+invention; it is the only way to _check_ the configuration, which is worth saying plainly instead.
+And the whole data-only section described the behaviour that was replaced: it told teachers to
+attach a two-line shell script and reported that submissions then score full marks, where today the
+environment has a judge of its own, scores nought, and waits to be marked.
+
+**The administrator's guide listed a service that does not run** (`cleaner`), omitted one that does
+(`api-worker`), and answered "the cache is not cleaned automatically" with no indication of what
+that means for anyone. Measured instead: the worker's cache is content-addressed, holds 14 entries
+and 68 kB, and grows with the exercise catalogue rather than with traffic; `api_storage` grows with
+every submission and never shrinks; and `api_log` was already 57 MB, 53 MB of it core-api's own
+`user_actions.log`, which no logging driver can reach. The guide says which is which and what to do
+about each.
+
+**Markdown grew alerts** (`lib/markdown/alerts.ts`): `> [!WARNING]` becomes a coloured box, in
+guides and in exercise texts alike. Twenty lines and one rule rather than a dependency, and no label
+of its own — the author writes their own lead, which is the only way a translated document says it
+in its own language. An unknown marker is left visible rather than swallowed.
+
+**Two layout faults the operator saw before I did.** The anonymous header sat in `max-w-4xl` while
+the guides render through `PageShell`'s `max-w-6xl`, so the mark stood an inch inside the text it
+headed; the header takes `PageShell`'s container now and the landing page keeps its narrower column
+_inside_ it rather than by being narrower. And a fenced code block had no surface: github-light's
+background is `#fff`, which is the page, so every command in the install guide was white on white —
+present, selectable and invisible. Light mode takes the app's muted surface; dark keeps
+`--shiki-dark-bg`, where DEC-145's contrast was measured.
