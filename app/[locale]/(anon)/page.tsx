@@ -46,8 +46,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
   return (
     <RouteMessages>
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex max-w-4xl flex-col gap-12">
-          <header className="flex flex-col gap-4">
+        <div className="flex flex-col gap-12">
+          {/* The container is centred and the page fills it, so the content reads centred and its
+              left edge is the one the mark above it sits on. Only the prose carries a measure of
+              its own -- a paragraph the full width of this container is too long a line to read
+              comfortably, while a heading or a grid of cards is not. */}
+          <header className="flex max-w-3xl flex-col gap-4">
             <h1 className="text-4xl font-semibold tracking-tight">{t("title")}</h1>
             <p className="border-l-4 border-primary pl-4 text-xl">{t("tagline")}</p>
             <p className="text-sm text-muted-foreground">{t("operator")}</p>
@@ -63,7 +67,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           </header>
 
           {instance && (
-            <section aria-labelledby="home-instance" className="flex flex-col gap-2">
+            <section aria-labelledby="home-instance" className="flex max-w-3xl flex-col gap-2">
               <h2 id="home-instance" className="text-lg font-semibold tracking-tight text-primary">
                 {t("instance.title")}
               </h2>
@@ -86,7 +90,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             <h2 id="home-quickstart" className="text-lg font-semibold tracking-tight text-primary">
               {t("quickStart.title")}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {sections.map((section) => (
                 <div
                   key={section}
@@ -99,7 +103,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             </div>
           </section>
 
-          <footer className="flex flex-col gap-3 border-t border-border pt-6">
+          <footer className="flex max-w-3xl flex-col gap-3 border-t border-border pt-6">
             <p className="text-sm text-muted-foreground">{t("acknowledgement")}</p>
             <p className="flex flex-wrap gap-4 text-sm">
               <a
