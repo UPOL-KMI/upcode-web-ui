@@ -45,87 +45,81 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
 
   return (
     <RouteMessages>
-      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-12">
-          {/* The container is centred and the page fills it, so the content reads centred and its
-              left edge is the one the mark above it sits on. Only the prose carries a measure of
-              its own -- a paragraph the full width of this container is too long a line to read
-              comfortably, while a heading or a grid of cards is not. */}
-          <header className="flex max-w-3xl flex-col gap-4">
-            <h1 className="text-4xl font-semibold tracking-tight">{t("title")}</h1>
-            <p className="border-l-4 border-primary pl-4 text-xl">{t("tagline")}</p>
-            <p className="text-sm text-muted-foreground">{t("operator")}</p>
-            <p className="text-sm">{t("what")}</p>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/login" className={buttonClasses("primary", "md")}>
-                {t("signIn")}
-              </Link>
-              <Link href="/docs" className={buttonClasses("outline", "md")}>
-                {t("docs.link")}
-              </Link>
-            </div>
-          </header>
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-4 py-12 sm:px-6">
+        <header className="flex flex-col gap-4">
+          <h1 className="text-4xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="border-l-4 border-primary pl-4 text-xl">{t("tagline")}</p>
+          <p className="text-sm text-muted-foreground">{t("operator")}</p>
+          <p className="text-sm">{t("what")}</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/login" className={buttonClasses("primary", "md")}>
+              {t("signIn")}
+            </Link>
+            <Link href="/docs" className={buttonClasses("outline", "md")}>
+              {t("docs.link")}
+            </Link>
+          </div>
+        </header>
 
-          {instance && (
-            <section aria-labelledby="home-instance" className="flex max-w-3xl flex-col gap-2">
-              <h2 id="home-instance" className="text-lg font-semibold tracking-tight text-primary">
-                {t("instance.title")}
-              </h2>
-              <p className="text-sm font-medium">{instance.name}</p>
-              {instance.description && <Markdown source={instance.description} />}
-              {helpdesk !== "" && (
-                <p className="text-sm">
-                  <a
-                    href={helpdesk}
-                    className="text-muted-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  >
-                    {t("instance.support")}
-                  </a>
-                </p>
-              )}
-            </section>
-          )}
-
-          <section aria-labelledby="home-quickstart" className="flex flex-col gap-6">
-            <h2 id="home-quickstart" className="text-lg font-semibold tracking-tight text-primary">
-              {t("quickStart.title")}
+        {instance && (
+          <section aria-labelledby="home-instance" className="flex flex-col gap-2">
+            <h2 id="home-instance" className="text-lg font-semibold tracking-tight text-primary">
+              {t("instance.title")}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {sections.map((section) => (
-                <div
-                  key={section}
-                  className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5"
+            <p className="text-sm font-medium">{instance.name}</p>
+            {instance.description && <Markdown source={instance.description} />}
+            {helpdesk !== "" && (
+              <p className="text-sm">
+                <a
+                  href={helpdesk}
+                  className="text-muted-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
-                  <h3 className="text-sm font-semibold">{t(`quickStart.${section}.title`)}</h3>
-                  <p className="text-sm text-muted-foreground">{t(`quickStart.${section}.body`)}</p>
-                </div>
-              ))}
-            </div>
+                  {t("instance.support")}
+                </a>
+              </p>
+            )}
           </section>
+        )}
 
-          <footer className="flex max-w-3xl flex-col gap-3 border-t border-border pt-6">
-            <p className="text-sm text-muted-foreground">{t("acknowledgement")}</p>
-            <p className="flex flex-wrap gap-4 text-sm">
-              <a
-                href="https://github.com/UPOL-KMI/upcode-web-ui"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        <section aria-labelledby="home-quickstart" className="flex flex-col gap-6">
+          <h2 id="home-quickstart" className="text-lg font-semibold tracking-tight text-primary">
+            {t("quickStart.title")}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {sections.map((section) => (
+              <div
+                key={section}
+                className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5"
               >
-                {t("links.source")}
-              </a>
-              <a
-                href="https://github.com/ReCodEx/wiki/wiki"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              >
-                {t("links.docs")}
-              </a>
-            </p>
-            <p className="text-xs text-muted-foreground">{t("license")}</p>
-          </footer>
-        </div>
+                <h3 className="text-sm font-semibold">{t(`quickStart.${section}.title`)}</h3>
+                <p className="text-sm text-muted-foreground">{t(`quickStart.${section}.body`)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <footer className="flex flex-col gap-3 border-t border-border pt-6">
+          <p className="text-sm text-muted-foreground">{t("acknowledgement")}</p>
+          <p className="flex flex-wrap gap-4 text-sm">
+            <a
+              href="https://github.com/UPOL-KMI/upcode-web-ui"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              {t("links.source")}
+            </a>
+            <a
+              href="https://github.com/ReCodEx/wiki/wiki"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              {t("links.docs")}
+            </a>
+          </p>
+          <p className="text-xs text-muted-foreground">{t("license")}</p>
+        </footer>
       </div>
     </RouteMessages>
   );
