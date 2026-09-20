@@ -6,6 +6,7 @@ import { formatPoints } from "@/lib/format/points";
 import { routing } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { CreateGroup } from "@/components/groups/create-group";
+import { SubgroupTree } from "@/components/groups/subgroup-tree";
 import { Markdown } from "@/components/markdown/markdown";
 import { Badge } from "@/components/status/badge";
 import { Hint } from "@/components/status/hint";
@@ -188,18 +189,8 @@ export async function GroupInfo({
             {t("subgroups")}
           </h2>
           {group.subgroups.length > 0 ? (
-            <ul className="flex flex-col gap-1">
-              {group.subgroups.map((subgroup) => (
-                <li key={subgroup.id}>
-                  <Link
-                    href={`/groups/${subgroup.id}`}
-                    className="text-sm hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  >
-                    {subgroup.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            /* core-api returns the whole subtree here, not the children -- see `SubgroupTree`. */
+            <SubgroupTree rootId={group.id} subgroups={group.subgroups} />
           ) : (
             <p className="text-sm text-muted-foreground">{t("noSubgroups")}</p>
           )}

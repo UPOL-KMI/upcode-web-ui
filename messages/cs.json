@@ -397,6 +397,9 @@
       "subgroups": "Podskupiny",
       "addSubgroup": "Nová podskupina",
       "noSubgroups": "Tato skupina nemá žádné podskupiny.",
+      "subgroupCount": "{count, plural, one {# skupina uvnitř} few {# skupiny uvnitř} other {# skupin uvnitř}}",
+      "organizational": "Organizační",
+      "archived": "Archivovaná",
       "externalAttributes": {
         "title": "Externí atributy",
         "service": "Služba",
@@ -3644,7 +3647,7 @@
         "student": "Vidí jen skupiny, do kterých patří, a řeší, co je tam zadáno.",
         "supervisor-student": "Obojí zároveň — v některých skupinách učí, v jiných studuje.",
         "supervisor": "Vede vlastní skupiny, zadává úlohy a vytváří nové.",
-        "empowered-supervisor": "Cvičící, který navíc smí psát pipeline a konfigurovat jimi úlohy.",
+        "empowered-supervisor": "Cvičící, který navíc smí zakládat podskupiny ve skupinách, kde učí, a psát pipeline a konfigurovat jimi úlohy.",
         "superadmin": "Smí cokoli, ve všech instancích, do kterých patří."
       }
     },

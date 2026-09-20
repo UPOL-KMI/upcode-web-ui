@@ -397,6 +397,9 @@
       "subgroups": "Subgroups",
       "addSubgroup": "New subgroup",
       "noSubgroups": "This group has no subgroups.",
+      "subgroupCount": "{count, plural, one {# group inside} other {# groups inside}}",
+      "organizational": "Organizational",
+      "archived": "Archived",
       "externalAttributes": {
         "title": "External Attributes",
         "service": "Service",
@@ -3644,7 +3647,7 @@
         "student": "Sees only the groups they belong to, and solves what is assigned there.",
         "supervisor-student": "Both at once — teaches some groups while studying in others.",
         "supervisor": "Runs their own groups, assigns exercises, and creates new ones.",
-        "empowered-supervisor": "A supervisor who may also write pipelines and configure exercises with them.",
+        "empowered-supervisor": "A supervisor who may also open subgroups in the groups they teach, and write pipelines and configure exercises with them.",
         "superadmin": "May do anything, in every instance they belong to."
       }
     },

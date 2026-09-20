@@ -43,6 +43,18 @@ export interface GroupRef {
   name: string;
 }
 
+/**
+ * One descendant of the group being shown, with what the page needs to nest it.
+ *
+ * `GET /v1/groups/{id}/subgroups` returns the **whole subtree**, so the flat list has to be put
+ * back into a tree before it is rendered -- see `subgroupTree`.
+ */
+export interface SubgroupRef extends GroupRef {
+  parentGroupId: string | null;
+  organizational: boolean;
+  archived: boolean;
+}
+
 /** One locale's name and description, as core-api stores and expects them back. */
 export interface GroupText {
   locale: string;
@@ -63,7 +75,7 @@ export interface GroupDetail {
   path: GroupRef[];
   /** The group this one hangs under. Null only for an instance's root group, which cannot move. */
   parentGroupId: string | null;
-  subgroups: GroupRef[];
+  subgroups: SubgroupRef[];
   organizational: boolean;
   public: boolean;
   archived: boolean;
@@ -194,6 +206,9 @@ export const getGroupDetail = cache(async function getGroupDetail(
     subgroups: subgroups.map((subgroup) => ({
       id: subgroup.id,
       name: localizedName(subgroup.localizedTexts, locale),
+      parentGroupId: subgroup.parentGroupId ?? null,
+      organizational: subgroup.organizational ?? false,
+      archived: subgroup.archived ?? false,
     })),
     parentGroupId: group.parentGroupId ?? null,
     organizational: group.organizational ?? false,
