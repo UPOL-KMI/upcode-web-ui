@@ -57,6 +57,8 @@ export function MemberManager({
     kind: "student" | "member";
     id: string;
     name: string;
+    /** They administer this group from a parent too, so removing takes only the role held here. */
+    keepsInherited?: boolean;
   } | null>(null);
 
   async function run(call: () => Promise<ActionResult<unknown>>, successKey: string) {
@@ -131,10 +133,16 @@ export function MemberManager({
                             kind: "member",
                             id: member.id,
                             name: member.fullName || member.id,
+                            keepsInherited: member.inheritedAdmin,
                           })
                         }
                       >
-                        {t("remove")}
+                        {/* "Odebrat" reads as "take this person out of the group", which is what it
+                            means for everyone else -- but for somebody who also administers a
+                            parent it removes only the role held here, and the operator could find
+                            no way back from a direct role to an inherited one because the button
+                            did not look like the way back. */}
+                        {member.inheritedAdmin ? t("staff.removeDirect") : t("remove")}
                       </button>
                     )}
                   </>
@@ -215,11 +223,23 @@ export function MemberManager({
         onOpenChange={(open) => {
           if (!open) setRemoving(null);
         }}
-        title={t(`confirmRemove.${removing?.kind ?? "student"}.title`)}
-        description={t(`confirmRemove.${removing?.kind ?? "student"}.description`, {
-          name: removing?.name ?? "",
-        })}
-        confirmLabel={t("confirmRemove.confirm")}
+        title={
+          removing?.keepsInherited
+            ? t("confirmRemove.direct.title")
+            : t(`confirmRemove.${removing?.kind ?? "student"}.title`)
+        }
+        description={
+          // The ordinary wording -- "loses access to this group and the rights that come with it"
+          // -- is simply untrue of somebody who keeps administering it from above.
+          removing?.keepsInherited
+            ? t("confirmRemove.direct.description", { name: removing?.name ?? "" })
+            : t(`confirmRemove.${removing?.kind ?? "student"}.description`, {
+                name: removing?.name ?? "",
+              })
+        }
+        confirmLabel={
+          removing?.keepsInherited ? t("staff.removeDirect") : t("confirmRemove.confirm")
+        }
         pending={pending}
         onConfirm={() => {
           const target = removing;

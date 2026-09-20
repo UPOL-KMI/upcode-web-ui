@@ -759,7 +759,8 @@
           "add": "Přidat vyučujícího nebo pozorovatele",
           "addAsSupervisor": "Přidat jako cvičícího",
           "added": "Byl(a) přidán(a) jako cvičící.",
-          "removeMember": "Odebrat uživatele {name}"
+          "removeMember": "Odebrat uživatele {name}",
+          "removeDirect": "Odebrat přímou roli"
         },
         "students": {
           "title": "Studenti",
@@ -779,6 +780,10 @@
           "member": {
             "title": "Odebrat ze skupiny?",
             "description": "{name} přijde o přístup k této skupině i o práva, která z něj plynou."
+          },
+          "direct": {
+            "title": "Odebrat přímou roli?",
+            "description": "{name} přijde o roli nastavenou v této skupině. Správcem této skupiny zůstane, protože to má z nadřazené skupiny — a tím i přístup ke všemu v ní."
           },
           "confirm": "Odebrat"
         }

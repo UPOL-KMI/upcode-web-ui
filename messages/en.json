@@ -759,7 +759,8 @@
           "add": "Add a teacher or observer",
           "addAsSupervisor": "Add as supervisor",
           "added": "They were added as a supervisor.",
-          "removeMember": "Remove {name}"
+          "removeMember": "Remove {name}",
+          "removeDirect": "Remove the role held here"
         },
         "students": {
           "title": "Students",
@@ -779,6 +780,10 @@
           "member": {
             "title": "Remove them from the group?",
             "description": "{name} loses access to this group and the rights that came with it."
+          },
+          "direct": {
+            "title": "Remove the role held here?",
+            "description": "{name} loses the role set on this group. They remain its administrator, which they hold from a parent group -- and with it, access to everything in it."
           },
           "confirm": "Remove"
         }
