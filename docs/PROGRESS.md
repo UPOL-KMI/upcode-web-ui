@@ -6682,3 +6682,26 @@ read-only now and says where the role comes from.
 all five of his groups, so `teachingDirect` equals `teaching` and no member is inherited. The
 difference appears the moment a colleague is given supervisor membership on a shared parent, which
 is the arrangement the round exists to make possible.
+
+**What the operator's testing then found, in the order he found it.** The subgroup list was
+`Group::getAllSubgroups()` -- the whole subtree flat, a container and the course inside it side by
+side -- so it is nested now, with every branch that has children folded into a `<details>` and the
+first level open (DEC-148's bargain again: the browser owns the state, find-in-page reaches inside,
+nothing becomes a client component). `lib/groups/subgroup-tree.ts` holds the rule and the two
+shapes worth testing: core-api filters the subtree by visibility, so a visible grandchild of an
+invisible child surfaces one level up rather than vanishing, and anything caught in a cycle is
+surfaced too.
+
+**And I over-corrected the member list, twice.** Making the inherited row read-only took away
+something real: giving a colleague who administers the parent a _direct_ supervisor role on one
+course is exactly how that course reaches their own menu. Only removal is impossible there
+(`actionRemoveMember` finds no direct row and answers "The user is not a member of the group");
+setting a role _creates_ one. Then the differentiated confirmation did not fire for the case that
+needed it most, because "inherits" was computed by subtraction -- in `privateData.admins`, not in
+`primaryAdminsIds` -- which misses somebody who inherits _and_ was named here, since the direct row
+puts them in both. It is read off the ancestors now, which the page already fetches.
+
+**Two notes went in where the questions were actually asked**: who may open a subgroup, in the place
+the button would be, and what the role does, in the role's own description. The operator gave a
+colleague the _group_ role Cvičící and expected subgroups to follow -- reasonable, since the
+instance role that decides it carries the same word and an absent button explained nothing.
