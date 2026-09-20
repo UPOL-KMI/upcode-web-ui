@@ -745,7 +745,8 @@
         "staff": {
           "title": "Vyučující a pozorovatelé",
           "explain": "Zakládat podskupiny smí správce skupiny, a dále cvičící, který má v celém UPolníčku roli Cvičící s rozšířenými právy — ta se nastavuje u konkrétního člověka, ne zde.",
-          "inherited": "Zděděno z nadřazené skupiny",
+          "inherited": "Zděděný správce z nadřazené skupiny",
+          "alsoInherited": "+ zděděný správce z nadřazené skupiny",
           "empty": "Skupinu nikdo neučí ani nepozoruje.",
           "role": "Role uživatele {name}",
           "roles": {

@@ -88,18 +88,7 @@ export function MemberManager({
             {members.map((member) => (
               <li key={member.id} className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium">{member.fullName || member.id}</span>
-                {/* **An inherited administrator is not editable here.** They administer this group
-                    because they administer something above it, and core-api's own membership lookup
-                    skips inherited rows -- so changing the role would silently mint a second,
-                    direct membership shadowing the first, and removing would do nothing at all.
-                    Both are offers that cannot succeed, so neither is made; the row says where the
-                    role actually comes from instead. */}
-                {member.inherited ? (
-                  <>
-                    <span className="text-muted-foreground">{t(`staff.roles.${member.role}`)}</span>
-                    <Badge tone="neutral">{t("staff.inherited")}</Badge>
-                  </>
-                ) : canEditMembers ? (
+                {canEditMembers ? (
                   <>
                     <select
                       aria-label={t("staff.role", { name: member.fullName })}
@@ -124,24 +113,41 @@ export function MemberManager({
                         </option>
                       ))}
                     </select>
-                    <button
-                      type="button"
-                      aria-label={t("staff.removeMember", { name: member.fullName })}
-                      disabled={pending}
-                      className={rowButton}
-                      onClick={() =>
-                        setRemoving({
-                          kind: "member",
-                          id: member.id,
-                          name: member.fullName || member.id,
-                        })
-                      }
-                    >
-                      {t("remove")}
-                    </button>
+                    {/* **Only a membership held here can be removed.** `actionRemoveMember` looks
+                        it up with `Group::getMembershipOfUser`, which skips inherited rows, and
+                        answers "The user is not a member of the group" when there is none -- so for
+                        somebody who only administers a parent this button could only ever fail.
+                        Setting a role is a different matter and stays offered: it *creates* a
+                        direct membership beside the inherited one, which is how a colleague who
+                        administers the parent gets this course into their own "My teaching". */}
+                    {member.direct && (
+                      <button
+                        type="button"
+                        aria-label={t("staff.removeMember", { name: member.fullName })}
+                        disabled={pending}
+                        className={rowButton}
+                        onClick={() =>
+                          setRemoving({
+                            kind: "member",
+                            id: member.id,
+                            name: member.fullName || member.id,
+                          })
+                        }
+                      >
+                        {t("remove")}
+                      </button>
+                    )}
                   </>
                 ) : (
                   <span className="text-muted-foreground">{t(`staff.roles.${member.role}`)}</span>
+                )}
+                {/* Said whether or not the row is editable: it is why the person is here, and --
+                    where they also hold a direct role -- why removing that role will not take
+                    their administrator rights away. */}
+                {member.inheritedAdmin && (
+                  <Badge tone="neutral">
+                    {member.direct ? t("staff.alsoInherited") : t("staff.inherited")}
+                  </Badge>
                 )}
               </li>
             ))}

@@ -23,19 +23,32 @@ import { getMyGroupStats, type GroupStudentStats } from "./groups";
 export interface GroupMember {
   id: string;
   fullName: string;
+  /**
+   * What they hold **here**, where they hold anything; otherwise the role they inherit.
+   *
+   * One row per person, not per role. Somebody can be an administrator by inheritance *and* a
+   * supervisor named on this group -- core-api reports them in both sets, and listing them twice
+   * said less than saying it once with both facts attached.
+   */
   role: "admin" | "supervisor" | "observer";
   /**
-   * They administer this group because they administer something above it, not because anybody
-   * named them here.
+   * They also administer this group because they administer something above it.
    *
    * core-api inherits group-admin membership down the whole subtree (`Group::getAdminIdsInternal`
    * walks the parent chain) and reports the two sets separately: `privateData.admins` includes the
-   * inherited ones, `primaryAdminsIds` does not. Until this was read, both kinds arrived in this
-   * list indistinguishable -- and the settings screen offered to change the role of, or remove,
-   * somebody whose membership is not held here at all. Supervisors and observers are always direct;
-   * neither of those types inherits.
+   * inherited ones, `primaryAdminsIds` does not. Supervisors and observers never inherit.
    */
-  inherited: boolean;
+  inheritedAdmin: boolean;
+  /**
+   * They hold a membership on this group itself -- which is what makes it editable here.
+   *
+   * Removing works only on a direct row: `actionRemoveMember` looks it up with
+   * `Group::getMembershipOfUser`, which skips inherited ones, and answers *"The user is not a
+   * member of the group"* when there is none. Setting a role, by contrast, **creates** a direct
+   * membership beside the inherited one -- which is the whole point, and how a colleague who
+   * administers a parent gets this course into their own "My teaching".
+   */
+  direct: boolean;
 }
 
 export interface GroupRef {
@@ -162,14 +175,25 @@ export const getGroupDetail = cache(async function getGroupDetail(
   const priv = group.privateData as
     (NonNullable<typeof group.privateData> & { shadowAssignments?: string[] }) | undefined;
 
-  const memberRoles: [string, GroupMember["role"]][] = [
-    ...(priv?.admins ?? []).map((id): [string, GroupMember["role"]] => [id, "admin"]),
-    ...(priv?.supervisors ?? []).map((id): [string, GroupMember["role"]] => [id, "supervisor"]),
-    ...(priv?.observers ?? []).map((id): [string, GroupMember["role"]] => [id, "observer"]),
-  ];
-  const memberIds = [...new Set(memberRoles.map(([id]) => id))];
-  // Everyone in `admins` who is not also in `primaryAdminsIds` holds the role somewhere above.
+  // **One row per person, not per role.** core-api reports somebody who administers a parent *and*
+  // supervises this group in both sets, and listing them twice said less than one row carrying both
+  // facts. The direct role wins where there is one, because that is the one this screen can edit.
   const directAdmins = new Set(group.primaryAdminsIds ?? []);
+  const supervisors = new Set(priv?.supervisors ?? []);
+  const observers = new Set(priv?.observers ?? []);
+  const inheritedAdmins = new Set((priv?.admins ?? []).filter((id) => !directAdmins.has(id)));
+
+  const memberIds = [
+    ...new Set([...directAdmins, ...supervisors, ...observers, ...inheritedAdmins]),
+  ];
+  const roleOf = (id: string): GroupMember["role"] =>
+    directAdmins.has(id)
+      ? "admin"
+      : supervisors.has(id)
+        ? "supervisor"
+        : observers.has(id)
+          ? "observer"
+          : "admin"; // inherited administrator, and nothing held here
 
   const [ancestors, subgroups, people, statsByGroup] = await Promise.all([
     // Named one by one rather than from the group list: an ancestor can be a group this reader is
@@ -220,13 +244,14 @@ export const getGroupDetail = cache(async function getGroupDetail(
     detaining: priv?.detaining ?? false,
     threshold: priv?.threshold ?? null,
     pointsLimit: priv?.pointsLimit ?? null,
-    members: memberRoles.map(([id, role]) => ({
+    members: memberIds.map((id) => ({
       id,
       // A name core-api declined to disclose is not a reason to drop the person: that they hold
       // the role is the fact this list is about.
       fullName: names.get(id) ?? "",
-      role,
-      inherited: role === "admin" && !directAdmins.has(id),
+      role: roleOf(id),
+      inheritedAdmin: inheritedAdmins.has(id),
+      direct: directAdmins.has(id) || supervisors.has(id) || observers.has(id),
     })),
     studentCount: priv?.students?.length ?? null,
     assignmentCount: priv?.assignments?.length ?? 0,
