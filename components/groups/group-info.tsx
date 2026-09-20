@@ -194,12 +194,17 @@ export async function GroupInfo({
           ) : (
             <p className="text-sm text-muted-foreground">{t("noSubgroups")}</p>
           )}
-          {group.can.addSubgroup === true && (
+          {group.can.addSubgroup === true ? (
             <CreateGroup
               parentGroupId={group.id}
               locales={routing.locales}
               label={t("addSubgroup")}
             />
+          ) : (
+            /* Said where the button would have been. The operator gave a colleague the *group*
+               role Cvičící and expected subgroups to follow -- reasonably, since the instance role
+               that actually decides it carries the same word. An absent button explained nothing. */
+            <p className="text-xs text-muted-foreground">{t("whoMayAddSubgroup")}</p>
           )}
         </section>
       )}

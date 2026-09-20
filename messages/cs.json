@@ -397,6 +397,7 @@
       "subgroups": "Podskupiny",
       "addSubgroup": "Nová podskupina",
       "noSubgroups": "Tato skupina nemá žádné podskupiny.",
+      "whoMayAddSubgroup": "Zakládat podskupiny může správce této skupiny, a dále cvičící, který má v celém UPolníčku roli Cvičící s rozšířenými právy nebo vyšší.",
       "subgroupCount": "{count, plural, one {# skupina uvnitř} few {# skupiny uvnitř} other {# skupin uvnitř}}",
       "organizational": "Organizační",
       "archived": "Archivovaná",

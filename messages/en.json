@@ -397,6 +397,7 @@
       "subgroups": "Subgroups",
       "addSubgroup": "New subgroup",
       "noSubgroups": "This group has no subgroups.",
+      "whoMayAddSubgroup": "Subgroups may be opened by this group's administrator, and by a supervisor holding the instance role Empowered supervisor or higher.",
       "subgroupCount": "{count, plural, one {# group inside} other {# groups inside}}",
       "organizational": "Organizational",
       "archived": "Archived",
