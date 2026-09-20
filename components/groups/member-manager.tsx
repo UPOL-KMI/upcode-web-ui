@@ -14,6 +14,7 @@ import type { ActionResult } from "@/lib/forms/action-result";
 
 import { useRouter } from "@/i18n/navigation";
 import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
+import { Badge } from "@/components/status/badge";
 import { UserPicker } from "@/components/groups/user-picker";
 import { useToast } from "@/components/toast/toast-provider";
 
@@ -77,6 +78,9 @@ export function MemberManager({
     <div className="grid gap-6 lg:grid-cols-2">
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-medium">{t("staff.title")}</h3>
+        {/* Where the operator first went looking for it: the role that lets a teacher open a
+            subgroup is an instance role set on the person, not a membership set here. */}
+        <p className="text-xs text-muted-foreground">{t("staff.explain")}</p>
         {members.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("staff.empty")}</p>
         ) : (
@@ -84,7 +88,18 @@ export function MemberManager({
             {members.map((member) => (
               <li key={member.id} className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium">{member.fullName || member.id}</span>
-                {canEditMembers ? (
+                {/* **An inherited administrator is not editable here.** They administer this group
+                    because they administer something above it, and core-api's own membership lookup
+                    skips inherited rows -- so changing the role would silently mint a second,
+                    direct membership shadowing the first, and removing would do nothing at all.
+                    Both are offers that cannot succeed, so neither is made; the row says where the
+                    role actually comes from instead. */}
+                {member.inherited ? (
+                  <>
+                    <span className="text-muted-foreground">{t(`staff.roles.${member.role}`)}</span>
+                    <Badge tone="neutral">{t("staff.inherited")}</Badge>
+                  </>
+                ) : canEditMembers ? (
                   <>
                     <select
                       aria-label={t("staff.role", { name: member.fullName })}

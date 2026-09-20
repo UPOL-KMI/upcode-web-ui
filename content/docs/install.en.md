@@ -111,6 +111,27 @@ password `admin`.
 Everything else is done through the interface: creating real accounts, granting somebody the
 administrator role, and then disabling the seeded account.
 
+### Roles across the whole system
+
+Every person holds one **instance role**. A system administrator sets it under _People → Users →
+the person → Role_, and it is **not the same thing as group membership** (administrator /
+supervisor / observer), which is set on a particular course. Neither replaces the other: the
+instance role decides what somebody may do at all, membership decides where.
+
+| Role                 | What it adds                                                              |
+| -------------------- | ------------------------------------------------------------------------- |
+| Student              | Sees only the groups they belong to, and solves what is set there.        |
+| Supervisor & student | Both at once — teaching in some groups, studying in others.               |
+| Supervisor           | Runs their own groups, sets assignments and creates exercises.            |
+| Empowered supervisor | Additionally may write pipelines and **open subgroups** where they teach. |
+| Administrator        | May do anything, in every instance they belong to.                        |
+
+**When to grant _Empowered supervisor_.** When a teacher is to run their own course under a shared
+parent and open it themselves. The alternative — making them an administrator of that parent — has
+an unwanted consequence: administrator membership inherits downward, so they would administer every
+colleague's course under the same parent as well. Supervisor membership does not inherit, which is
+what keeps each of them to their own.
+
 ## The services
 
 | Service      | Role                                                                                                           |

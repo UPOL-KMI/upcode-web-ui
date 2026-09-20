@@ -24,6 +24,18 @@ export interface GroupMember {
   id: string;
   fullName: string;
   role: "admin" | "supervisor" | "observer";
+  /**
+   * They administer this group because they administer something above it, not because anybody
+   * named them here.
+   *
+   * core-api inherits group-admin membership down the whole subtree (`Group::getAdminIdsInternal`
+   * walks the parent chain) and reports the two sets separately: `privateData.admins` includes the
+   * inherited ones, `primaryAdminsIds` does not. Until this was read, both kinds arrived in this
+   * list indistinguishable -- and the settings screen offered to change the role of, or remove,
+   * somebody whose membership is not held here at all. Supervisors and observers are always direct;
+   * neither of those types inherits.
+   */
+  inherited: boolean;
 }
 
 export interface GroupRef {
@@ -101,6 +113,8 @@ interface GroupPayload {
   parentGroupId?: string | null;
   parentGroupsIds?: string[];
   childGroups?: string[];
+  /** Administrators named on this group itself -- see `GroupMember.inherited`. */
+  primaryAdminsIds?: string[];
   privateData?: {
     admins?: string[];
     supervisors?: string[];
@@ -142,6 +156,8 @@ export const getGroupDetail = cache(async function getGroupDetail(
     ...(priv?.observers ?? []).map((id): [string, GroupMember["role"]] => [id, "observer"]),
   ];
   const memberIds = [...new Set(memberRoles.map(([id]) => id))];
+  // Everyone in `admins` who is not also in `primaryAdminsIds` holds the role somewhere above.
+  const directAdmins = new Set(group.primaryAdminsIds ?? []);
 
   const [ancestors, subgroups, people, statsByGroup] = await Promise.all([
     // Named one by one rather than from the group list: an ancestor can be a group this reader is
@@ -195,6 +211,7 @@ export const getGroupDetail = cache(async function getGroupDetail(
       // the role is the fact this list is about.
       fullName: names.get(id) ?? "",
       role,
+      inherited: role === "admin" && !directAdmins.has(id),
     })),
     studentCount: priv?.students?.length ?? null,
     assignmentCount: priv?.assignments?.length ?? 0,

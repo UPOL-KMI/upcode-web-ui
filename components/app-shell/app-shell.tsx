@@ -110,13 +110,18 @@ async function Sidebar() {
     getMyGroups(locale),
   ]);
 
-  // **An organizational group is not something anybody teaches** (DEC-140): it has no students and
-  // no assignments, and listing it here put a container under the heading "My teaching". Admin
-  // rights are inherited down the tree in core-api, so an administrator of a department sees every
-  // level of it -- the operator's own sidebar named two containers and one actual course. They stay
-  // reachable through the group list, the parent link and the breadcrumbs, which is how a container
-  // is reached anyway.
-  const teaching = groups.teaching.filter((group) => !group.organizational);
+  // **The groups this person is named on, not every group they may act in** (DEC-150). core-api
+  // inherits group-admin membership down the whole subtree, so an administrator of a department
+  // container administers every course beneath it -- and the operator's own menu listed his whole
+  // department under "My teaching", none of which he teaches. `teachingDirect` is a direct
+  // supervisor membership or an administrator named on the group itself. The wider `teaching` is
+  // still the right answer elsewhere, which is why both exist and only this one reads this.
+  //
+  // **An organizational group is not something anybody teaches** (DEC-140) either: it has no
+  // students and no assignments, so a container has no business under this heading. Containers stay
+  // reachable through the group list, the parent link and the breadcrumbs, which is how one is
+  // reached anyway.
+  const teaching = groups.teachingDirect.filter((group) => !group.organizational);
 
   const sections: NavSection[] = [
     // No heading: `IA.md` §3.1 gives this section a Calendar as well, and until it exists the

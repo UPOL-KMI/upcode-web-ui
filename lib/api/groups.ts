@@ -70,12 +70,19 @@ interface GroupPayload {
   parentGroupId?: string | null;
   parentGroupsIds?: string[];
   childGroups?: string[];
+  /**
+   * Administrators named **on this group itself**, as opposed to `privateData.admins`, which is
+   * every administrator including the ones inherited from ancestors (`Group::getAdminIdsInternal`
+   * walks up the parent chain; `getPrimaryAdminsIds` does not). Top-level and public, so unlike
+   * `privateData` it survives a reader who may not see the group's detail.
+   */
+  primaryAdminsIds?: string[];
   privateData?: {
     admins?: string[];
     supervisors?: string[];
     students?: string[];
     assignments?: string[];
-  };
+  } | null;
   permissionHints?: Record<string, boolean>;
 }
 
@@ -113,8 +120,15 @@ const fetchUserGroups = cache(async function fetchUserGroups(): Promise<UserGrou
  *
  * Needed because **`/v1/users/{id}/groups` does not report group administrators** (S-001, DEC-058):
  * its `supervisor` key is `User::getGroupsAsSupervisor()`, one specific membership type, so a user
- * who *administers* a group appears in neither list. Group admins are only discoverable from the
- * group's own `privateData.admins`, which is how the legacy app derives the same thing.
+ * who *administers* a group appears in neither list. Group admins are discoverable only from the
+ * group's own payload, which is how the legacy app derives the same thing.
+ *
+ * **Two fields there, not one**, and `getMyGroups` reads both: `privateData.admins` is every
+ * administrator *including the inherited ones*, `primaryAdminsIds` only those named on the group
+ * itself. DEC-058 rejected `primaryAdminsIds` and that rejection still stands where it was made --
+ * on the `/v1/users/{id}/groups` payload, which carries it only for groups already in one of the
+ * two lists, i.e. never for the case that needs it. Here, on the group's own payload, it is
+ * present for everything in scope.
  */
 const fetchGroupsInScope = cache(async function fetchGroupsInScope(
   scope: "active" | "archived",
@@ -149,9 +163,25 @@ export async function canCreateRootGroup(): Promise<boolean> {
   );
 }
 
+/**
+ * The caller's own groups: the ones they study in, the ones they may act in as staff, and the
+ * narrower list of the ones they are actually named on.
+ *
+ * **`teaching` and `teachingDirect` differ by inheritance, and the difference is the point.**
+ * core-api inherits group-admin membership down the whole subtree, so an administrator of a
+ * department container administers every course beneath it -- genuinely, with every right that
+ * implies. `teaching` is that set, and the screens that ask "what may this person act on" want it:
+ * the group pickers, the teacher dashboard's fetch, the "teacher" badge on the group list.
+ *
+ * `teachingDirect` is the set a person is *named on* -- a direct supervisor, or an administrator of
+ * this very group rather than of something above it. That is the honest answer to "whose courses
+ * are these", and it is what the sidebar's "My teaching" is built from: the operator's own menu
+ * listed every course in his department, none of which he teaches. Reported by him, and the reason
+ * both lists exist rather than one.
+ */
 export async function getMyGroups(
   locale: string,
-): Promise<{ member: SidebarGroup[]; teaching: SidebarGroup[] }> {
+): Promise<{ member: SidebarGroup[]; teaching: SidebarGroup[]; teachingDirect: SidebarGroup[] }> {
   const [session, payload, visible] = await Promise.all([
     requireSession(),
     fetchUserGroups(),
@@ -165,18 +195,27 @@ export async function getMyGroups(
   });
 
   const teaching = new Map<string, SidebarGroup>();
+  const teachingDirect = new Map<string, SidebarGroup>();
+  // Supervisor membership is direct-only in core-api (`Group::getMemberships` never walks the
+  // parent chain), so this half is the same in both lists.
   for (const group of payload.supervisor ?? []) {
     teaching.set(group.id, toSidebarGroup(group));
+    teachingDirect.set(group.id, toSidebarGroup(group));
   }
   for (const group of visible) {
     if (group.privateData?.admins?.includes(session.userId)) {
       teaching.set(group.id, toSidebarGroup(group));
     }
+    if (group.primaryAdminsIds?.includes(session.userId)) {
+      teachingDirect.set(group.id, toSidebarGroup(group));
+    }
   }
 
+  const byName = (a: SidebarGroup, b: SidebarGroup) => a.name.localeCompare(b.name, locale);
   return {
     member: (payload.student ?? []).map(toSidebarGroup),
-    teaching: [...teaching.values()].sort((a, b) => a.name.localeCompare(b.name, locale)),
+    teaching: [...teaching.values()].sort(byName),
+    teachingDirect: [...teachingDirect.values()].sort(byName),
   };
 }
 

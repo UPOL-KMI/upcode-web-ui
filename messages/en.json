@@ -741,6 +741,8 @@
         "noMatches": "Nobody matches.",
         "staff": {
           "title": "Teachers and observers",
+          "explain": "Subgroups may be opened by a group's administrator, and by a supervisor holding the instance role Empowered supervisor — which is set on the person, not here.",
+          "inherited": "Inherited from a parent group",
           "empty": "Nobody teaches or observes this group.",
           "role": "Role of {name}",
           "roles": {

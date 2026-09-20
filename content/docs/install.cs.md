@@ -108,6 +108,26 @@ První start založí jediného správce s přihlašovacím jménem `admin@admin
 Vše ostatní se provádí přes rozhraní: založení skutečných účtů, přidělení role správce a následné
 zablokování seedovaného účtu.
 
+### Role v celém systému
+
+Každý člověk má jednu **instanční roli**. Nastavuje ji správce systému v _Lidé → Uživatelé →
+vybraný člověk → Role_, a je to **něco jiného než členství ve skupině** (správce / cvičící /
+pozorovatel), které se nastavuje u konkrétního kurzu. Jedno nenahrazuje druhé: instanční role
+určuje, co člověk smí vůbec, členství určuje, ve kterých skupinách.
+
+| Role                        | Co přidává                                                      |
+| --------------------------- | --------------------------------------------------------------- |
+| Student                     | Vidí jen skupiny, do kterých patří, a řeší, co je tam zadáno.   |
+| Cvičící a student           | Obojí zároveň — v některých skupinách učí, v jiných studuje.    |
+| Cvičící                     | Vede vlastní skupiny, zadává úlohy a vytváří nové.              |
+| Cvičící s rozšířenými právy | Navíc smí psát pipeline a **zakládat podskupiny** tam, kde učí. |
+| Správce                     | Smí cokoli ve všech instancích, do kterých patří.               |
+
+**Kdy dát _Cvičící s rozšířenými právy_.** Když má vyučující vést vlastní kurz pod společným
+rodičem a zakládat si ho sám. Alternativa — udělat z něj správce toho rodiče — má nechtěný následek:
+správcovství se dědí dolů, takže by spravoval i kurzy všech kolegů pod stejným rodičem. Členství
+typu cvičící se nedědí, proto tahle kombinace drží každého ve svém.
+
 ## Přehled služeb
 
 | Služba       | Role                                                                                       |

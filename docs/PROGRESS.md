@@ -6638,3 +6638,47 @@ _inside_ it rather than by being narrower. And a fenced code block had no surfac
 background is `#fff`, which is the page, so every command in the install guide was white on white —
 present, selectable and invisible. Light mode takes the app's muted surface; dark keeps
 `--shiki-dark-bg`, where DEC-145's contrast was measured.
+
+### 2026-09-20 — a teacher opens their own course, and the menu stops naming everyone else's
+
+**The two walls the operator hit are one asymmetry.** A group's supervisor cannot open a subgroup --
+upstream withholds `addSubgroup` from everyone but an administrator -- and making teachers
+administrators of a shared parent is no answer, because administrator membership inherits down the
+whole subtree (`Group::getAdminIdsInternal` walks the parent chain). Supervisor membership does not
+inherit. Both halves of this round rest on that.
+
+**core-api: a _Cvičící s rozšířenými právy_ may open a subgroup where they teach.** One appended
+block in `permissions.neon` -- the fork's first edit to that file, kept surgical so upstream rebases
+cleanly. Verified through the DI container rather than by reasoning: with no membership both
+supervisor roles are refused; with a direct supervisor membership a plain supervisor is still
+refused and the empowered one is allowed; marking the group as an exam or archiving it refuses both
+again. The probe also demonstrated `BasePermissionPolicy::$membershipCache` live -- asking about the
+same group twice in one process returned the first answer, because the cache is keyed by group id
+and not by user.
+
+Three consequences the plan had not noticed, now written down: **the creator becomes a full
+administrator of the new subgroup** (not merely "can make a folder"), `actionAddGroup` accepts
+`isExam`/`isOrganizational` with **no permission check** of their own, and omitting `parentGroupId`
+falls back to the instance root -- so the grant widens root-group creation to a direct supervisor of
+the root. This deployment's root group has no memberships at all, but that is worth checking on any
+instance before shipping.
+
+**The sidebar is built from direct membership now** (DEC-150). `getMyGroups` returns
+`teachingDirect` alongside `teaching`, and only `components/app-shell/app-shell.tsx` reads it.
+Narrowing `teaching` itself was the obvious move and the wrong one: it has **eleven** consumers,
+five of which ask what a person may _act on_, where the inherited answer is the correct one -- the
+"teacher" badge on the group list, the assignment picker's targets, the teacher dashboard's fetch,
+the deadline calendar, the profile form. A department administrator would have lost review queues
+for courses they are genuinely entitled to review.
+
+**And the settings screen says which rights are held here.** The member list was built from
+`privateData.admins`, the inherited set, so an administrator inherited from a parent looked exactly
+like one named on this group -- and the screen offered to change their role or remove them. Neither
+could work: core-api's membership lookup skips inherited rows, so a role change would have minted a
+second, direct membership shadowing the first, and a removal would have done nothing. Such a row is
+read-only now and says where the role comes from.
+
+**Not visible on this deployment, and that is expected.** The operator is a direct administrator of
+all five of his groups, so `teachingDirect` equals `teaching` and no member is inherited. The
+difference appears the moment a colleague is given supervisor membership on a shared parent, which
+is the arrangement the round exists to make possible.

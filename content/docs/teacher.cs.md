@@ -51,6 +51,21 @@ v detailu kurzu a u každého je vidět, kdo jej vystavil a do kdy platí.
 V nastavení kurzu dále určíte, zda mohou studenti skupinu opustit sami, a zda se jim zobrazují
 souhrnné statistiky skupiny.
 
+### Kdo smí založit podskupinu
+
+Podskupinu zakládá **správce skupiny**, a dále **cvičící, který má v celém UPolníčku roli _Cvičící
+s rozšířenými právy_**. Tu nastavuje správce systému u konkrétního člověka (Lidé → Uživatelé →
+_Role_), ne v členech skupiny — je to jiná osa než správce/cvičící/pozorovatel uvnitř kurzu.
+
+**Kdo skupinu založí, ten ji spravuje.** Zakladatel je v nové skupině veden jako správce se všemi
+právy: může ji přejmenovat, archivovat, přidávat vyučující i zakládat další podskupiny. Nahoru se to
+nepřenáší — na nadřazený kurz tím práva nezíská.
+
+To je celé smyslem toho uspořádání. Správcovství se totiž **dědí dolů**: kdo spravuje `Výuku`,
+spravuje i každý kurz pod ní. Chcete-li, aby si každý vyučující vedl vlastní kurz a do cizích
+neviděl, nedělejte z nich správce společného rodiče — dejte jim u něj roli **cvičící** a instanční
+roli _Cvičící s rozšířenými právy_. Členství typu cvičící se nedědí, takže každý uvidí jen to své.
+
 ## Příprava úlohy
 
 Novou úlohu založíte v sekci **Úlohy**. Než ji bude možné zadat, musí být její konfigurace úplná;

@@ -54,6 +54,23 @@ long it remains valid.
 The course settings further determine whether students may leave the group on their own, and whether
 they see the group's aggregate statistics.
 
+### Who may open a subgroup
+
+A subgroup is opened by a group's **administrator**, and by a **supervisor holding the instance role
+_Empowered supervisor_**. That role is set by a system administrator on the person (People → Users →
+_Role_), not among the group's members — it is a different axis from
+administrator/supervisor/observer inside a course.
+
+**Whoever opens a group administers it.** The creator is listed as an administrator of the new group
+with every right that carries: renaming it, archiving it, adding staff, opening further subgroups.
+It does not reach upward — no rights over the parent course come with it.
+
+That is the whole point of the arrangement. Administrator membership **inherits downward**: whoever
+administers `Teaching` administers every course beneath it. If each teacher is to run their own
+course and see nothing of anyone else's, do not make them administrators of the shared parent --
+give them **supervisor** membership there and the instance role _Empowered supervisor_. Supervisor
+membership does not inherit, so each of them sees only their own.
+
 ## Preparing an exercise
 
 A new exercise is created in the **Exercises** section. Before it can be assigned its configuration
