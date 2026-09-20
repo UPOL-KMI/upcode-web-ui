@@ -51,6 +51,11 @@ async function seededGroup(token: string): Promise<{
   return matches[0]!;
 }
 
+/** The seeded course's id, for the specs that only need somewhere to point at. */
+export async function seededGroupId(): Promise<string> {
+  return (await seededGroup(await coreApiToken())).id;
+}
+
 /**
  * The id of the seeded student who is *not* the one the specs sign in as (PF-013).
  *

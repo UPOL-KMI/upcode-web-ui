@@ -44,9 +44,41 @@ Po skončení semestru nebo akademického roku lze neaktivní skupiny archivovat
 skupinám se lze v budoucnu vracet, ale tyto skupiny studentům i vyučujícím zmizí ze seznamu
 aktivních kurzů.
 
-Studenty lze do kurzu zařadit třemi způsoby: zapíší se sami, je-li kurz veřejný; přidáte je ručně ze
-seznamu uživatelů; nebo jim zašlete **pozvánkový odkaz** s omezenou platností. Odkazy spravujete
-v detailu kurzu a u každého je vidět, kdo jej vystavil a do kdy platí.
+Studenty lze do kurzu zařadit čtyřmi způsoby: zapíší se sami, je-li kurz veřejný; přidáte je ručně
+ze seznamu uživatelů; zašlete jim **pozvánkový odkaz** s omezenou platností; nebo je **naimportujete
+ze seznamu** (viz níže). Odkazy spravujete v detailu kurzu a u každého je vidět, kdo jej vystavil
+a do kdy platí.
+
+### Import seznamu studentů
+
+Na kartě **Studenti** je tlačítko _Naimportovat lidi do této skupiny_. Vidí ho každý, kdo do kurzu
+smí zvát studenty — tedy správce i cvičící. U archivovaných a organizačních skupin tlačítko není,
+protože do nich zvát nelze.
+
+Nahrajte soubor se seznamem, nebo tabulku vložte do textového pole. **Export ze STAGu
+(`getStudentiByPredmet`) funguje rovnou, jak je** — stačí ho stáhnout a vybrat; přečte se
+i v původním binárním formátu `.xls`. Z jeho šestatřiceti sloupců se použije šest: osobní číslo,
+jméno, příjmení, oba tituly a e-mail. Ostatní se vypíšou pod polem a zahodí. Příjmení, která STAG
+vyváží verzálkami (`BENEŠ`), se opraví na běžný tvar (`Beneš`) — také je to vidět. Soubor se čte ve
+vašem prohlížeči a nikam se neodesílá; do systému jde teprve tabulka, kterou před odesláním vidíte
+a můžete ji upravit.
+
+**Co se stane s každým řádkem, závisí na tom, jestli ten člověk už účet má.** Rozhoduje e-mailová
+adresa, takže nikdo není přidán dvakrát.
+
+- **Účet nemá.** Dorazí mu e-mail s pozvánkou a odkazem na nastavení hesla. **Pozvánka účet
+  nezakládá** — účet vznikne, až odkaz otevře a heslo si zvolí, a **teprve tím se zařadí do kurzu**.
+  Do té doby ho v seznamu studentů neuvidíte. Odkaz má omezenou platnost (ve výchozím nastavení
+  jeden den); po jejím vypršení stačí import spustit znovu. Osobní číslo ze STAGu jede spolu
+  s pozvánkou a zapíše se v okamžiku vzniku účtu.
+- **Účet už má.** Je do kurzu přidán **okamžitě** a **žádný e-mail mu nechodí**. V seznamu studentů
+  se objeví hned.
+
+Odškrtnutím _Poslat pozvánku_ se nikomu nic neodešle — jen se vypíše, kdo už účet má a jestli jsou
+osobní čísla volná. Lidé s účtem se ale do kurzu přidají tak jako tak.
+
+Osobní číslo ze STAGu se u **už existujícího** účtu nezapíše — u takového účtu ho smí doplnit jen
+správce systému. Import to u příslušného řádku napíše; kurzu samotného se to nijak netýká.
 
 V nastavení kurzu dále určíte, zda mohou studenti skupinu opustit sami, a zda se jim zobrazují
 souhrnné statistiky skupiny.

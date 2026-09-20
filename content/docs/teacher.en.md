@@ -46,10 +46,44 @@ themselves without the teacher's involvement.
 Once a term or an academic year ends, inactive groups can be archived. An archived group can still
 be returned to, but it disappears from the list of active courses for students and teachers alike.
 
-Students can be brought into a course in three ways: they enrol themselves where the course is
-public; you add them by hand from the list of users; or you send them an **invitation link** with a
-limited validity. The links are managed in the course detail, and each shows who issued it and how
-long it remains valid.
+Students can be brought into a course in four ways: they enrol themselves where the course is
+public; you add them by hand from the list of users; you send them an **invitation link** with a
+limited validity; or you **import a list of them** (below). The links are managed in the course
+detail, and each shows who issued it and how long it remains valid.
+
+### Importing a list of students
+
+The **Students** tab carries an _Import people into this group_ button. Everyone who may invite
+students into the course sees it — administrators and supervisors alike. It is absent on archived
+and organizational groups, which cannot be invited into at all.
+
+Upload a file listing the people, or paste the table into the text box. **A STAG export
+(`getStudentiByPredmet`) works exactly as downloaded**, including in its original binary `.xls`
+form. Six of its thirty-six columns are used: the study number, the given name, the surname, both
+titles and the email address. The rest are listed below the box and dropped. Surnames that STAG
+exports in capitals (`BENEŠ`) are repaired to their ordinary form (`Beneš`) — that is shown too.
+The file is read in your own browser and sent nowhere; what reaches the system is the table you see
+and can edit before sending.
+
+**What happens to each row depends on whether that person already has an account.** The email
+address is what decides, so nobody is added twice.
+
+- **No account.** They receive an email with an invitation link for choosing a password. **The
+  invitation does not create the account** — the account comes into being when they open the link
+  and choose a password, and **only then do they join the course**. Until that moment they do not
+  appear in the student list. The link has a limited validity (one day by default); once it lapses,
+  simply run the import again. The STAG study number travels with the invitation and is written the
+  moment the account exists.
+- **An account already exists.** They are added to the course **immediately**, and **no mail is
+  sent**. They appear in the student list at once.
+
+Unticking _Send an invitation_ sends nothing to anybody — it only reports who already has an account
+and whether the study numbers are free. People who already have an account are added to the course
+either way.
+
+A STAG study number is **not** written onto an account that already exists — only a system
+administrator may add it there. The import says so on the row in question; the course itself is
+unaffected.
 
 The course settings further determine whether students may leave the group on their own, and whether
 they see the group's aggregate statistics.

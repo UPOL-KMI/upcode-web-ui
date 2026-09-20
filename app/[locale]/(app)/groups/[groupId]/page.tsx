@@ -487,10 +487,12 @@ async function StudentsTab({ groupId }: { groupId: string }) {
 
   // AD-009, and above the empty state on purpose: a group with nobody in it is exactly when a
   // cohort gets imported, and a link only reachable once there are students already would be
-  // missing at the one moment it is wanted. The import screen is the superadmin's, so the link is
-  // too -- there is no hint to ask (DEC-110).
+  // missing at the one moment it is wanted. **Offered on `inviteStudents`** (X-015), which is the
+  // same question the import screen asks and the same one core-api asks per invitation, so a
+  // cvičící sees it for their own course. It used to be the superadmin's alone, which left a
+  // teacher with no way at all to bring in students who have no account yet.
   const importLink =
-    viewer.role === "superadmin" ? (
+    group.can.inviteStudents === true && !group.archived && !group.organizational ? (
       <div>
         <Link href={`/users/import?group=${groupId}`} className={buttonClasses("outline", "sm")}>
           {t("import")}

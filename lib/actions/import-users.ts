@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/api/current-user";
 import { MAX_ROWS, type ImportOutcome, type RosterRow } from "@/lib/users/import-roster";
 
 /**
- * The bulk import of people (AD-009).
+ * The bulk import of people (AD-009, reopened by X-015).
  *
  * **core-api has no bulk endpoint, and this is not pretending otherwise**: it walks the rows and
  * calls the one-person endpoints, reporting each row's own outcome. What makes that bearable is
@@ -25,6 +25,14 @@ import { MAX_ROWS, type ImportOutcome, type RosterRow } from "@/lib/users/import
  * already in somebody's inbox by then. So core-api refuses the invitation outright if an
  * identifier is already held by another account, naming the owner -- and this file surfaces that
  * refusal against the row that caused it.
+ *
+ * **The two halves of the import are genuinely different operations**, and the screen says so:
+ * somebody without an account is *invited* and joins the group only when they accept, while
+ * somebody who already has one is *added* to the group then and there, with no mail sent. The
+ * second half is the one that was missing (X-015): an existing account used to be reported as
+ * handled and never actually joined anything, so an import into a second-year cohort -- where
+ * nearly everybody already has an account -- looked entirely successful and enrolled almost
+ * nobody.
  *
  * Rows are processed a few at a time rather than all at once: each invitation sends mail through
  * the deployment's SMTP relay, and a hundred at once is how a relay decides you are spam.
@@ -46,6 +54,43 @@ async function findByEmail(email: string): Promise<string | null> {
   return hit?.id ?? null;
 }
 
+/**
+ * What the caller may do in one target group, and who is already in it.
+ *
+ * `inviteStudents` is a genuine permission hint -- `canInviteStudents(Group)` takes one argument,
+ * so `PermissionHints::get` reflects it onto every group payload -- which is why this screen can
+ * be offered to whoever core-api would actually let use it rather than to a role guessed at from
+ * outside (X-015, DEC-151). core-api checks the same thing again per invitation; asking here only
+ * buys a refusal in one sentence instead of one per row.
+ */
+interface GroupGate {
+  id: string;
+  canInvite: boolean;
+  students: Set<string>;
+}
+
+async function readGroupGate(id: string): Promise<GroupGate> {
+  try {
+    const group = await apiRead<{
+      permissionHints?: Record<string, boolean>;
+      privateData?: { students?: string[] } | null;
+      archived?: boolean;
+      organizational?: boolean;
+    }>("/v1/groups/{id}", { pathParams: { id } });
+
+    return {
+      id,
+      canInvite:
+        group.permissionHints?.inviteStudents === true &&
+        group.archived !== true &&
+        group.organizational !== true,
+      students: new Set(group.privateData?.students ?? []),
+    };
+  } catch {
+    return { id, canInvite: false, students: new Set() };
+  }
+}
+
 async function writeIdentifiers(
   userId: string,
   externalIds: Record<string, string>,
@@ -62,14 +107,23 @@ async function writeIdentifiers(
       );
       identifiersSet.push(service);
     } catch (error) {
-      identifiersFailed.push({
-        service,
-        code: error instanceof ApiError ? error.code : "unknown",
-      });
+      identifiersFailed.push({ service, code: identifierFailure(error) });
     }
   }
 
   return { identifiersSet, identifiersFailed };
+}
+
+/**
+ * **A 403 here is ordinary, not a fault.** `user.setExternalIds` is granted to the superadmin
+ * alone, so a teacher importing their own cohort cannot write a study number onto an account that
+ * already exists -- only onto one their invitation brings into being, where the identifier rides
+ * in the token and is written by the registration itself. Reported as its own code so the screen
+ * can say who has to finish the job, rather than showing core-api's bare English refusal.
+ */
+function identifierFailure(error: unknown): string {
+  if (!(error instanceof ApiError)) return "unknown";
+  return error.httpStatus === 403 ? "forbidden" : error.code;
 }
 
 /**
@@ -113,7 +167,7 @@ async function checkIdentifiers(
     } catch (error) {
       // 404 is "nobody holds it", which is what we were hoping for.
       if (error instanceof ApiError && error.httpStatus === 404) continue;
-      identifiersFailed.push({ service, code: error instanceof ApiError ? error.code : "unknown" });
+      identifiersFailed.push({ service, code: identifierFailure(error) });
     }
   }
 
@@ -123,7 +177,7 @@ async function checkIdentifiers(
 async function importRow(
   row: RosterRow,
   instanceId: string,
-  groups: string[],
+  gates: GroupGate[],
   locale: string,
   invite: boolean,
 ): Promise<ImportOutcome> {
@@ -134,18 +188,44 @@ async function importRow(
     identifiersFailed: [],
   };
 
-  let existingId: string | null;
+  // Whether the directory can be read at all depends on the reader's instance role, not on the
+  // group: `user.viewAll` starts at `supervisor`, while `group.inviteStudents` reaches down to
+  // `supervisor-student`. Somebody in that gap may legitimately open this screen and still be
+  // refused the search, and then existing and new accounts simply cannot be told apart -- so the
+  // invitation is attempted and core-api's "email already taken" becomes the answer.
+  let existingId: string | null = null;
+  let directoryReadable = true;
   try {
     existingId = await findByEmail(row.email);
   } catch (error) {
-    return { ...base, reason: refusal(error) };
+    if (error instanceof ApiError && error.httpStatus === 403) {
+      directoryReadable = false;
+    } else {
+      return { ...base, reason: refusal(error) };
+    }
   }
 
   if (existingId !== null) {
+    const userId = existingId;
+    const joining = gates.filter((gate) => !gate.students.has(userId));
+    try {
+      for (const gate of joining) {
+        await apiPost("/v1/groups/{id}/students/{userId}", undefined, {
+          pathParams: { id: gate.id, userId },
+        });
+      }
+    } catch (error) {
+      return {
+        ...base,
+        reason: refusal(error),
+        ...(await writeIdentifiers(userId, row.externalIds)),
+      };
+    }
+
     return {
       ...base,
-      state: "matched",
-      ...(await writeIdentifiers(existingId, row.externalIds)),
+      state: joining.length > 0 ? "added" : "matched",
+      ...(await writeIdentifiers(userId, row.externalIds)),
     };
   }
 
@@ -168,7 +248,7 @@ async function importRow(
       ...(row.titlesBeforeName !== "" && { titlesBeforeName: row.titlesBeforeName }),
       ...(row.titlesAfterName !== "" && { titlesAfterName: row.titlesAfterName }),
       instanceId,
-      groups,
+      groups: gates.map((gate) => gate.id),
       locale,
       ...(Object.keys(row.externalIds).length > 0 && { externalIds: row.externalIds }),
       // Two people of the same name is ordinary in a cohort, and core-api answers a collision by
@@ -177,6 +257,11 @@ async function importRow(
       ignoreNameCollision: true,
     });
   } catch (error) {
+    // The one refusal worth translating: it means the person exists and this reader could not
+    // look them up, so somebody with the directory has to add them by hand.
+    if (!directoryReadable && error instanceof ApiError && error.code === "400-110") {
+      return { ...base, reasonCode: "emailTaken" };
+    }
     return { ...base, reason: refusal(error) };
   }
 
@@ -190,8 +275,16 @@ async function importRow(
 export async function importRoster(
   rows: RosterRow[],
   options: { groups: string[]; locale: string; invite: boolean },
-): Promise<{ outcomes: ImportOutcome[] }> {
-  const viewer = await getCurrentUser();
+): Promise<{ outcomes: ImportOutcome[]; refused?: "notAllowed" }> {
+  const [viewer, gates] = await Promise.all([
+    getCurrentUser(),
+    Promise.all(options.groups.map(readGroupGate)),
+  ]);
+
+  // The screen is gated on the same hint, so reaching this is either a stale page or a forged
+  // call. core-api would refuse every row anyway; refusing once is the readable version.
+  if (gates.some((gate) => !gate.canInvite)) return { outcomes: [], refused: "notAllowed" };
+
   const instanceId = viewer.instanceIds[0] ?? "";
   const capped = rows.slice(0, MAX_ROWS);
   const outcomes: ImportOutcome[] = new Array<ImportOutcome>(capped.length);
@@ -202,7 +295,7 @@ export async function importRoster(
       outcomes[index] = await importRow(
         capped[index]!,
         instanceId,
-        options.groups,
+        gates,
         options.locale,
         options.invite,
       );

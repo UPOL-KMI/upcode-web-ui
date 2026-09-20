@@ -17,16 +17,26 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Importing a list of people (AD-009).
+ * Importing a list of people (AD-009, reopened by X-015).
  *
- * Offered on the reader's role, like every other administrative screen here, because a user object
- * carries no permission hints (DEC-110). `user.inviteForRegistration` is core-api's own gate and
- * reaches down to `supervisor-student`, but everything else this screen does -- searching the whole
- * directory, writing external identifiers -- is the superadmin's, so that is where the line is
- * drawn until someone needs it lower.
+ * **Two screens sharing a route, gated differently, because they are different powers.**
  *
- * `?group=` puts everyone invited straight into that group, which is the ordinary case: a cohort is
- * imported into the course it studies.
+ * `?group=` puts everyone invited straight into that group, and that is the ordinary case: a
+ * cohort imported into the course it studies. It is offered on `permissionHints.inviteStudents`
+ * -- core-api's own answer, computed for the group by `PermissionHints::get` because
+ * `canInviteStudents(Group)` takes a single argument. So a cvičící who may invite people into
+ * their own course may import a list of them, which is the same act done a hundred times. The
+ * operator found the old gate by asking the obvious question: how is a teacher supposed to get
+ * students in, when the students do not have accounts yet?
+ *
+ * Without `?group=` it is an import into the instance at large, with nothing scoping it, and that
+ * stays the superadmin's. DEC-110 is the reason the two cannot be gated the same way: a *user*
+ * carries no permission hints, so there is nothing to ask about "may this person invite anybody at
+ * all" -- only about a particular group.
+ *
+ * Archived and organizational groups are refused here as well as by core-api
+ * (`RegistrationPresenter.php:308`), so the screen does not open onto an import that every row
+ * would fail.
  */
 export default async function ImportUsersPage({
   searchParams,
@@ -39,12 +49,18 @@ export default async function ImportUsersPage({
     getCurrentUser(),
   ]);
 
-  if (viewer.role !== "superadmin") forbidden();
+  const groupDetail = group === undefined ? null : await getGroupDetail(group, locale);
+  const mayImportHere =
+    groupDetail !== null &&
+    groupDetail.can.inviteStudents === true &&
+    !groupDetail.archived &&
+    !groupDetail.organizational;
 
-  const [t, breadcrumbs, groupDetail] = await Promise.all([
+  if (viewer.role !== "superadmin" && !mayImportHere) forbidden();
+
+  const [t, breadcrumbs] = await Promise.all([
     getTranslations("UserImport"),
     resolveBreadcrumbs("/users/import", locale),
-    group === undefined ? null : getGroupDetail(group, locale),
   ]);
 
   return (

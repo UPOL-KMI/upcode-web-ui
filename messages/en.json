@@ -3717,15 +3717,32 @@
   },
   "UserImport": {
     "title": "Import users",
-    "subtitle": "Import users from a CSV file.",
+    "subtitle": "Import people from a file or from a pasted table.",
     "backToUsers": "All users",
-    "explain": "Paste the contents of your table into the field below, in the format described here. Nobody is added twice — the email address is what makes a person unique. Where an account already exists, it is checked and anything missing is filled in. Check the table generated below before you send anything.",
-    "explainGroup": "Paste the contents of your table into the field below, in the format described here. Everyone invited joins {group} when they accept. Nobody is added twice — the email address is what makes a person unique. Where an account already exists, it is checked and anything missing is filled in. Check the table generated below before you send anything.",
+    "explain": "Upload a file listing the people, or paste the contents of your table into the field below. The email address is what makes a person unique, so nobody is added twice. Anyone without an account is sent an invitation by email; anyone who already has one simply has the missing details filled in. Check the table below before you send anything.",
+    "explainGroup": "Upload a file listing the people, or paste the contents of your table into the field below. Anyone without an account is sent an invitation by email and joins {group} when they accept. Anyone who already has an account is added to the group straight away and is sent no mail. The email address is what makes a person unique, so nobody is added twice. Check the table below before you send anything.",
     "format": {
       "title": "What the table has to look like",
       "columns": "The first line names the columns. Three are required — email, first name, last name — and two more are understood: titles before and titles after the name. Czech names work too (e-mail, jméno, příjmení, titul před, titul za).",
-      "identifiers": "Every other column becomes an identifier in another system, named after the column. A column headed “stag” records each person's STAG number.",
+      "identifiers": "In a pasted table, every other column becomes an identifier in another system, named after the column. A column headed “stag” records each person's STAG number.",
+      "file": "An uploaded file works the other way round: only the columns this app recognises are taken — from a STAG export that means osCislo, jmeno, prijmeni, titulPred, titulZa and email. The rest are listed and dropped, since the export carries over thirty of them and none can become an identifier. Surnames written in capitals are repaired.",
       "example": "email;jméno;příjmení;titul před;stag\nnovak@upol.cz;Jan;Novák;Bc.;F230123\nsvoboda@upol.cz;Petr;Svoboda;;F230124"
+    },
+    "file": {
+      "label": "File listing the students",
+      "hint": "A STAG export (getStudentiByPredmet), an Excel workbook or a CSV. The file is read here in your browser and sent nowhere — it only fills in the table below, which you can still edit.",
+      "read": "Read {rows, plural, one {# row} other {# rows}} from {name}.",
+      "kept": "Columns used: {columns}",
+      "ignored": "Ignored {count, plural, one {# column} other {# columns}}: {columns}",
+      "recased": "Capitals repaired: {names}",
+      "errors": {
+        "unsupported": "This file cannot be read. An Excel workbook (.xls or .xlsx), a CSV and an HTML table are understood.",
+        "empty": "The file is empty.",
+        "legacyBiff": "This is a workbook in an older Excel format (BIFF5). Open it and save it again as .xlsx or CSV.",
+        "noInflate": "This browser cannot unpack an .xlsx. Save the file as CSV, or use a newer browser.",
+        "noHeader": "No row naming the columns could be found. It has to carry an email column and a first or last name column.",
+        "unknown": "The file could not be read."
+      }
     },
     "paste": "The table",
     "preview": "{count, plural, one {# person read} few {# people read} many {# people read} other {# people read}}",
@@ -3743,7 +3760,7 @@
       "duplicate": "Line {line}: this address appears earlier in the table. The later line is ignored."
     },
     "invite": "Send an invitation to everyone without an account",
-    "inviteHint": "An invitation does not create the account — a link for choosing a password arrives at the address given. The account comes into being with that step, and the identifiers are written with it. Untick this and nothing is sent: it only reports who already has an account and whether the identifiers are free.",
+    "inviteHint": "An invitation does not create the account — a link for choosing a password arrives at the address given. The account comes into being with that step, and the identifiers are written with it. Untick this and nothing is sent: it only reports who already has an account and whether the identifiers are free. People who already have an account are added to the group either way.",
     "mailLanguage": "Language of the invitation email",
     "locales": {
       "cs": "Czech",
@@ -3752,15 +3769,23 @@
     "run": "Import {count, plural, one {# person} few {# people} many {# people} other {# people}}",
     "running": "Importing…",
     "tooMany": "That is more than {max} rows, which is more than one run can carry. Split the table and import it in parts.",
-    "result": "{invited} invited · {matched} already had an account · {skipped} not sent · {failed} refused",
+    "refused": {
+      "notAllowed": "You are not allowed to invite students into this group. Reload the page — your rights may have changed in the meantime."
+    },
+    "result": "{invited} invited · {added} added to the group · {matched} already had an account · {skipped} not sent · {failed} refused",
     "outcomes": {
       "invited": "Invitation sent",
+      "added": "Added to the group",
       "matched": "Already had an account",
       "failed": "Refused",
+      "skipped": "No account — no invitation sent",
       "identifiersSet": "identifiers: {services}",
       "identifierFailed": "the {service} identifier was refused",
-      "skipped": "No account — no invitation sent",
-      "identifierTaken": "the {service} identifier already belongs to another user ({owner})"
+      "identifierForbidden": "the {service} identifier was not written — on an existing account only an administrator may add it",
+      "identifierTaken": "the {service} identifier already belongs to another user ({owner})",
+      "reasons": {
+        "emailTaken": "An account with this address already exists, but you are not allowed to look it up. Add them to the group by hand, or ask an administrator."
+      }
     }
   },
   "Instances": {

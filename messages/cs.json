@@ -3717,15 +3717,32 @@
   },
   "UserImport": {
     "title": "Import uživatel",
-    "subtitle": "Importovat uživatele z CSV souboru.",
+    "subtitle": "Naimportovat lidi ze souboru nebo z vložené tabulky.",
     "backToUsers": "Všichni uživatelé",
-    "explain": "Zkopírujte obsah tabulky do textového pole podle níže popsaného formátu. Uživatelé nejsou přidáváni duplikovaně — unikátnost zajišťuje jejich e-mailová adresa. Pokud již uživatel účet má, dojde ke kontrole a případnému doplnění informací. Před odesláním zkontrolujte správnost údajů v generované tabulce níže.",
-    "explainGroup": "Zkopírujte obsah tabulky do textového pole podle níže popsaného formátu. Každý pozvaný se po přijetí pozvánky zařadí do skupiny {group}. Uživatelé nejsou přidáváni duplikovaně — unikátnost zajišťuje jejich e-mailová adresa. Pokud již uživatel účet má, dojde ke kontrole a případnému doplnění informací. Před odesláním zkontrolujte správnost údajů v generované tabulce níže.",
+    "explain": "Nahrajte soubor se seznamem lidí, nebo obsah tabulky vložte do pole níže. Unikátnost zajišťuje e-mailová adresa, takže nikdo není přidán dvakrát. Kdo účet ještě nemá, dostane pozvánku e-mailem; komu už účet existuje, tomu se jen doplní chybějící údaje. Před odesláním zkontrolujte tabulku níže.",
+    "explainGroup": "Nahrajte soubor se seznamem lidí, nebo obsah tabulky vložte do pole níže. Kdo účet ještě nemá, dostane pozvánku e-mailem a do skupiny {group} se zařadí, až ji přijme. Kdo účet už má, je do skupiny přidán rovnou a žádný e-mail mu nechodí. Unikátnost zajišťuje e-mailová adresa, takže nikdo není přidán dvakrát. Před odesláním zkontrolujte tabulku níže.",
     "format": {
       "title": "Jak má tabulka vypadat",
       "columns": "První řádek pojmenuje sloupce. Tři jsou povinné — e-mail, jméno, příjmení — a další dva se rozpoznají: titul před a titul za jménem. Anglické názvy fungují taky (email, firstName, lastName, titlesBeforeName, titlesAfterName).",
-      "identifiers": "Každý další sloupec se stane identifikátorem v jiném systému, pojmenovaným podle toho sloupce. Sloupec „stag“ zapíše každému jeho číslo ze STAGu.",
+      "identifiers": "Ve vložené tabulce se každý další sloupec stane identifikátorem v jiném systému, pojmenovaným podle toho sloupce. Sloupec „stag“ zapíše každému jeho číslo ze STAGu.",
+      "file": "Z nahraného souboru se naopak vezmou jen sloupce, které systém zná — z exportu ze STAGu tedy osCislo, jmeno, prijmeni, titulPred, titulZa a email. Ostatní se vypíšou a zahodí; export jich má přes třicet a identifikátor z nich udělat nelze. Příjmení psaná verzálkami se opraví.",
       "example": "email;jméno;příjmení;titul před;stag\nnovak@upol.cz;Jan;Novák;Bc.;F230123\nsvoboda@upol.cz;Petr;Svoboda;;F230124"
+    },
+    "file": {
+      "label": "Soubor se seznamem studentů",
+      "hint": "Export ze STAGu (getStudentiByPredmet), sešit Excelu nebo CSV. Soubor se čte tady v prohlížeči a nikam se neodesílá — jen se z něj vyplní tabulka níže, kterou můžete ještě upravit.",
+      "read": "Ze souboru {name} načteno {rows, plural, one {# řádek} few {# řádky} many {# řádků} other {# řádků}}.",
+      "kept": "Použité sloupce: {columns}",
+      "ignored": "Ignorováno {count, plural, one {# sloupec} few {# sloupce} many {# sloupců} other {# sloupců}}: {columns}",
+      "recased": "Opraveno psaní verzálkami: {names}",
+      "errors": {
+        "unsupported": "Tenhle soubor přečíst neumíme. Podporovaný je sešit Excelu (.xls i .xlsx), CSV a HTML tabulka.",
+        "empty": "Soubor je prázdný.",
+        "legacyBiff": "Tohle je sešit ve formátu staršího Excelu (BIFF5). Otevřete ho a uložte znovu jako .xlsx nebo CSV.",
+        "noInflate": "Tenhle prohlížeč neumí rozbalit .xlsx. Uložte soubor jako CSV, nebo použijte novější prohlížeč.",
+        "noHeader": "V souboru se nepodařilo najít řádek se jmény sloupců. Musí mezi nimi být e-mail a k tomu jméno nebo příjmení.",
+        "unknown": "Soubor se nepodařilo přečíst."
+      }
     },
     "paste": "Tabulka",
     "preview": "{count, plural, one {Přečten # člověk} few {Přečteni # lidé} many {Přečteno # lidí} other {Přečteno # lidí}}",
@@ -3743,7 +3760,7 @@
       "duplicate": "Řádek {line}: tahle adresa je v tabulce už výš. Pozdější řádek se přeskočí."
     },
     "invite": "Poslat pozvánku každému, kdo účet nemá",
-    "inviteHint": "Pozvánka nové účty nezakládá — na vyplněný e-mail dorazí pozvánka s odkazem pro nastavení hesla. Až tímto úkonem dojde k vytvoření účtu a jeho propsání do systému; identifikátory se zapíšou spolu s ním. Odškrtnutím se nic neodešle — jen se zkontroluje, kdo už účet má a jestli jsou identifikátory volné.",
+    "inviteHint": "Pozvánka nové účty nezakládá — na vyplněný e-mail dorazí pozvánka s odkazem pro nastavení hesla. Až tímto úkonem dojde k vytvoření účtu a jeho propsání do systému; identifikátory se zapíšou spolu s ním. Odškrtnutím se nic neodešle — jen se zkontroluje, kdo už účet má a jestli jsou identifikátory volné. Lidé, kteří účet už mají, se do skupiny přidají tak jako tak.",
     "mailLanguage": "Jazyk pozvánkového e-mailu",
     "locales": {
       "cs": "česky",
@@ -3752,15 +3769,23 @@
     "run": "Naimportovat {count, plural, one {# člověka} few {# lidi} many {# lidí} other {# lidí}}",
     "running": "Importuji…",
     "tooMany": "To je víc než {max} řádků, což je víc, než unese jeden běh. Rozdělte tabulku a naimportujte ji po částech.",
-    "result": "{invited} pozváno · {matched} už účet mělo · {skipped} bez odeslání · {failed} odmítnuto",
+    "refused": {
+      "notAllowed": "Do téhle skupiny nemáte právo zvát studenty. Načtěte stránku znovu — vaše práva se mezitím mohla změnit."
+    },
+    "result": "{invited} pozváno · {added} přidáno do skupiny · {matched} už účet mělo · {skipped} bez odeslání · {failed} odmítnuto",
     "outcomes": {
       "invited": "Pozvánka odeslána",
+      "added": "Přidán do skupiny",
       "matched": "Účet už existoval",
       "failed": "Odmítnuto",
+      "skipped": "Účet nemá — pozvánka neodeslána",
       "identifiersSet": "identifikátory: {services}",
       "identifierFailed": "identifikátor {service} byl odmítnut",
-      "skipped": "Účet nemá — pozvánka neodeslána",
-      "identifierTaken": "identifikátor {service} už patří jinému uživateli ({owner})"
+      "identifierForbidden": "identifikátor {service} se nezapsal — u existujícího účtu ho smí doplnit jen administrátor",
+      "identifierTaken": "identifikátor {service} už patří jinému uživateli ({owner})",
+      "reasons": {
+        "emailTaken": "Účet s touhle adresou už existuje, ale nemáte právo ho vyhledat. Přidejte ho do skupiny ručně, nebo požádejte administrátora."
+      }
     }
   },
   "Instances": {

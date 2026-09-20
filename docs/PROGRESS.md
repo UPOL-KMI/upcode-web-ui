@@ -6705,3 +6705,68 @@ puts them in both. It is read off the ancestors now, which the page already fetc
 the button would be, and what the role does, in the role's own description. The operator gave a
 colleague the _group_ role Cvičící and expected subgroups to follow -- reasonable, since the
 instance role that decides it carries the same word and an absent button explained nothing.
+
+### 2026-09-20 — the import opens to teachers, and learns to read a STAG export
+
+**The operator asked the question that exposes the gate.** Why can a plain cvičící not import people
+into a group, and how are they supposed to get students in when the students have no accounts yet?
+The answer was that the bulk import (AD-009) existed and was fenced off by
+`viewer.role === "superadmin"` in three places — the page, the group's Students tab and the user
+directory. DEC-110's reasoning was right where it was made and did not transfer: a _user_ payload
+carries no permission hints, so nothing can be asked about "may this person invite anybody"; a
+_group_ payload carries them, and `canInviteStudents(Group)` takes one argument, so `inviteStudents`
+has been on the wire the whole time. Two of the three gates now read it. The third — an import with
+no `?group=`, scoped by nothing — stays the superadmin's.
+
+**The probe lied to me first, and the reason is worth keeping.** Asking four roles for one group's
+hints inside a single PHP process reported `false` for all four, including the one that was already
+allowed. `BasePermissionPolicy::$membershipCache` is static and keyed by group id **without the user
+id**, so the first identity's membership level answers for every identity after it — and the first
+one I tried was `student`, which is capped at student level everywhere. One role per process gives
+the real answer, and it matches `permissions.neon` exactly: `inviteStudents` from `supervisor-student`
+up on `isSupervisorOrAdmin`, `addStudent` from `supervisor`. That cache was noted as a trap in the
+subgroup round's plan; this is it being sprung.
+
+**The hint alone was not enough, and the deployment said so.** `inviteStudents` comes back `true` for
+an **organizational** group, while `RegistrationPresenter` refuses every invitation into one — so the
+hint by itself would have offered a screen on which every row fails. Archived and organizational are
+checked beside it, in the page and in the action.
+
+**The defect underneath was worse than the gate.** For somebody who already had an account the import
+wrote identifiers and returned `matched` — it never put them in the group. Green, plausible, and
+wrong: run it over a second-year cohort, where nearly everybody has an account, and it reports
+complete success while enrolling almost nobody. `POST /v1/groups/{id}/students/{userId}` was missing,
+and it is exactly what a cvičící is allowed to call. `added` and `matched` are separate states now,
+told apart by the group's own `studentIds`, read once per run.
+
+**Verified on the running deployment rather than reasoned about.** Učitel 123 sees the link on the
+course they administer and not on the organizational parent, not on a course they do not teach, and
+not on the instance-wide import; a student sees neither the link nor the page. As that teacher,
+`POST …/students/…` really does add an existing account — added, checked, removed again, so the
+instance ended where it started. And writing a study number onto an existing account really is a 403
+for them, with nothing landing in `external_login`; the row says so in Czech now instead of relaying
+core-api's English.
+
+**Reading the file was the largest piece and has no dependency.** `xlsx` is the only mainstream
+reader of the legacy binary format and the maintained build is not the one on npm. `spreadsheet.ts`
+decides the format from the first bytes — OLE2/BIFF8, OOXML over `DecompressionStream`, an HTML
+table, delimited text — because the operator's own file is named `.xls`, is a binary workbook Excel
+re-saved, and portals of this kind are known to serve HTML under the same name. The awkward part is
+the shared string table, which continues into `CONTINUE` records and can be cut **in the middle of a
+string**, with the remainder carrying its own flag byte; a reader that ignores that works on small
+files and fails on any real cohort, so it is implemented and it is tested. Fixtures are built byte by
+byte in the tests rather than committed — the real export carries a student's name, address and study
+number.
+
+**The narrowing is an inversion of the paste rule.** Pasted text turns an unknown column into an
+identifier, which is right for a table somebody typed; the STAG export has thirty-six columns, `stav`
+is `S` for every student, and identifiers are unique per service, so that rule would have produced
+thirty collisions per row. An uploaded file keeps only what is recognised — six columns — and prints
+what it dropped. Surnames arrive in capitals (`BENEŠ`) and are repaired to `Beneš`, also in view: all
+of it lands in the same text box the reader already checks, so every guess can be typed over before
+anything is sent.
+
+**Not done.** The e2e spec for this is written and **has not run** — the suite still cannot, since
+the clean install has no `[seed]` fixtures. `MAX_ROWS` stays at 200. A study number still cannot be
+filled onto an existing account by a teacher: core-api was deliberately left untouched this round,
+and the comment at `RegistrationPresenter.php:441-445` promising a screen for it remains wrong.

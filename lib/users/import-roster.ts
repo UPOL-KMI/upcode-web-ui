@@ -37,7 +37,7 @@ export interface ParsedRoster {
 }
 
 /** A person's own fields, and the header spellings each answers to once normalised. */
-const PERSON_COLUMNS: Record<keyof Omit<RosterRow, "externalIds">, readonly string[]> = {
+export const PERSON_COLUMNS: Record<keyof Omit<RosterRow, "externalIds">, readonly string[]> = {
   email: ["email", "mail", "eemail", "emailovaadresa", "adresa"],
   firstName: ["firstname", "jmeno", "krestnijmeno", "given", "givenname"],
   lastName: ["lastname", "prijmeni", "surname", "family", "familyname"],
@@ -45,8 +45,11 @@ const PERSON_COLUMNS: Record<keyof Omit<RosterRow, "externalIds">, readonly stri
   titlesAfterName: ["titlesaftername", "titulza", "titulyza"],
 };
 
-/** Lower-cased, stripped of diacritics and of anything that is not a letter or a digit. */
-function normaliseHeader(header: string): string {
+/** Lower-cased, stripped of diacritics and of anything that is not a letter or a digit.
+ *  Exported because `lib/users/column-map.ts` has to recognise the *same* headers this does --
+ *  a file reader that disagreed with the parser about what `titul před` means would drop a column
+ *  the parser was waiting for. */
+export function normaliseHeader(header: string): string {
   return header
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -190,14 +193,25 @@ export interface ImportOutcome {
   email: string;
   /**
    * `invited` -- mail sent, and the identifiers ride along in the token, so the account arrives
-   * complete. `matched` -- the account already existed and was brought up to date. `skipped` --
-   * no account, and this was a dry run. `failed` -- nothing happened, and `reason` says why.
+   * complete. `added` -- the account already existed and has now been put into the group.
+   * `matched` -- the account existed and was already a member, so only identifiers were touched.
+   * `skipped` -- no account, and this was a dry run. `failed` -- nothing happened, and `reason`
+   * says why.
+   *
+   * **`added` and `matched` used to be one state, and that was a defect** rather than a
+   * simplification: an existing account was reported as handled and never actually joined the
+   * group. In a second-year cohort, where most people already have an account, that meant an
+   * import which looked entirely successful and put almost nobody in the course.
    */
-  state: "invited" | "matched" | "skipped" | "failed";
+  state: "invited" | "added" | "matched" | "skipped" | "failed";
   /** Services whose identifier was written, or will be written when the invitation is accepted. */
   identifiersSet: string[];
   /** Services whose identifier was refused, with core-api's own code and, for a clash, the
-   *  address of whoever holds it. */
+   *  address of whoever holds it. `forbidden` is the ordinary one: only an administrator may write
+   *  an identifier onto an account that already exists. */
   identifiersFailed: { service: string; code: string; owner?: string }[];
+  /** core-api's own sentence, shown as it came. */
   reason?: string;
+  /** A refusal this app has words of its own for, preferred over `reason` when both are set. */
+  reasonCode?: "emailTaken";
 }
