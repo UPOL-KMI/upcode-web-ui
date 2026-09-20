@@ -181,10 +181,8 @@ export const getGroupDetail = cache(async function getGroupDetail(
   const directAdmins = new Set(group.primaryAdminsIds ?? []);
   const supervisors = new Set(priv?.supervisors ?? []);
   const observers = new Set(priv?.observers ?? []);
-  const inheritedAdmins = new Set((priv?.admins ?? []).filter((id) => !directAdmins.has(id)));
-
   const memberIds = [
-    ...new Set([...directAdmins, ...supervisors, ...observers, ...inheritedAdmins]),
+    ...new Set([...directAdmins, ...supervisors, ...observers, ...(priv?.admins ?? [])]),
   ];
   const roleOf = (id: string): GroupMember["role"] =>
     directAdmins.has(id)
@@ -210,6 +208,19 @@ export const getGroupDetail = cache(async function getGroupDetail(
   ]);
 
   const names = new Map(people.map((person) => [person.id, person.fullName]));
+
+  // **Who administers this group from above, read off the ancestors rather than subtracted here.**
+  // `privateData.admins` is direct *and* inherited together and `primaryAdminsIds` is direct only,
+  // so "in the first and not the second" finds somebody who inherits and holds nothing here -- and
+  // silently misses somebody who inherits *and* was also named here, because the direct row puts
+  // them in both. That is exactly the state the operator landed in by setting a colleague back to
+  // Správce to undo a role: a direct administrator who also inherits one, told they would lose
+  // their access when they would lose nothing of the sort. Each ancestor's own direct
+  // administrators, unioned, answers the question whatever is held here. An ancestor the reader
+  // may not fetch contributes nothing, so this can only under-report, never invent.
+  const inheritedAdmins = new Set(
+    ancestors.flatMap((ancestor) => ancestor?.primaryAdminsIds ?? []),
+  );
 
   return {
     id: group.id,
