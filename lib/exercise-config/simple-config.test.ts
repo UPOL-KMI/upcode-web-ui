@@ -315,7 +315,55 @@ describe("writeSimpleConfig", () => {
       "data-01.txt",
       "data-02.txt",
     ]);
-    expect(execution.find((v) => v.name === "actual-inputs")?.value).toEqual(["input.txt", ""]);
+    // **The second name is the file's own**, because the field says the new name is optional.
+    // Writing the empty string through produced `<directory>/` as the destination and killed the
+    // whole job on the worker with a message naming a directory and no field.
+    expect(execution.find((v) => v.name === "actual-inputs")?.value).toEqual([
+      "input.txt",
+      "data-02.txt",
+    ]);
+  });
+
+  it("keeps a renamed file renamed, and does not touch a name that was typed", () => {
+    const values = readSimpleConfig(SEEDED, TESTS, ["python3"]);
+    values.tests[0]!.inputFiles = [{ file: "data-01.txt", name: "  input.txt  " }];
+
+    const execution = writeSimpleConfig(values, ["python3"], PIPELINES, SEEDED)[0]!.tests[0]!
+      .pipelines[1]!.variables;
+    expect(execution.find((v) => v.name === "actual-inputs")?.value).toEqual(["input.txt"]);
+  });
+
+  it("drops a row where no file was chosen, rather than writing an empty one", () => {
+    const values = readSimpleConfig(SEEDED, TESTS, ["python3"]);
+    values.tests[0]!.inputFiles = [
+      { file: "", name: "" },
+      { file: "data-01.txt", name: "" },
+      { file: "", name: "orphan.txt" },
+    ];
+
+    const execution = writeSimpleConfig(values, ["python3"], PIPELINES, SEEDED)[0]!.tests[0]!
+      .pipelines[1]!.variables;
+    expect(execution.find((v) => v.name === "input-files")?.value).toEqual(["data-01.txt"]);
+    expect(execution.find((v) => v.name === "actual-inputs")?.value).toEqual(["data-01.txt"]);
+  });
+
+  it("applies the same rule to the extra files a test compiles with", () => {
+    const values = readSimpleConfig(SEEDED, TESTS, ["python3"]);
+    values.tests[0]!.environments.python3!.extraFiles = [
+      { file: "main.py", name: "" },
+      { file: "helper.py", name: "lib.py" },
+    ];
+
+    const compilation = writeSimpleConfig(values, ["python3"], PIPELINES, SEEDED)[0]!.tests[0]!
+      .pipelines[0]!.variables;
+    expect(compilation.find((v) => v.name === "extra-files")?.value).toEqual([
+      "main.py",
+      "helper.py",
+    ]);
+    expect(compilation.find((v) => v.name === "extra-file-names")?.value).toEqual([
+      "main.py",
+      "lib.py",
+    ]);
   });
 
   it("writes one branch per environment, sharing the values that are shared", () => {

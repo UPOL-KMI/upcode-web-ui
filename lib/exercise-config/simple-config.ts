@@ -330,7 +330,20 @@ function writeVariables(
       return [{ name: descriptor.variable, type: descriptor.type, value: test.entryPointString }];
     case "inputFiles":
     case "extraFiles": {
-      const entries = descriptor.prop === "inputFiles" ? test.inputFiles : environment.extraFiles;
+      // **An empty name means "keep the one it already has", which is what the field promises.**
+      // The second box is labelled "(optional) new file name" and used to be written through as
+      // an empty string, which is not a name at all: the worker builds the destination as
+      // `<directory>/<name>`, so an empty one resolves to the directory itself and the job dies
+      // with `Cannot open file /var/recodex-worker-wd/.../01-dot-product/ for writing` -- a
+      // message that names neither the field nor the test row that caused it. Reproduced on a live
+      // deployment before this was written, and confirmed fixed the same way.
+      //
+      // A row with no file chosen at all is dropped rather than written as an empty entry, for the
+      // same reason: the select offers "no file", and passing that through only moves the failure
+      // somewhere it cannot be read.
+      const entries = (
+        descriptor.prop === "inputFiles" ? test.inputFiles : environment.extraFiles
+      ).filter((entry) => entry.file !== "");
       return [
         {
           name: descriptor.variable,
@@ -340,7 +353,7 @@ function writeVariables(
         {
           name: descriptor.namesVariable!,
           type: "file[]",
-          value: entries.map((entry) => entry.name.trim()),
+          value: entries.map((entry) => entry.name.trim() || entry.file),
         },
       ];
     }

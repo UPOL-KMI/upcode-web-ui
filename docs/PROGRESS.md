@@ -6770,3 +6770,28 @@ anything is sent.
 the clean install has no `[seed]` fixtures. `MAX_ROWS` stays at 200. A study number still cannot be
 filled onto an existing account by a teacher: core-api was deliberately left untouched this round,
 and the comment at `RegistrationPresenter.php:441-445` promising a screen for it remains wrong.
+
+### 2026-09-21 — an optional file name that was not optional
+
+The operator's H02 exercise died on every test with a message from the worker:
+`Cannot fetch files. Error: Cannot open file /var/recodex-worker-wd/.../brp2l5s17x/ for writing`.
+The trailing slash is the whole story — the destination is built as `<directory>/<name>`, and the
+name was the empty string, so the fetch tried to write to the directory itself. Nothing upstream
+objected: the form's `fileEntrySchema` is two bare `z.string()`s, core-api's config validator
+accepts the empty entry, and the failure surfaces at the far end as a path with no field and no
+test row attached to it. Reproduced on the local deployment by setting one test's
+`extra-file-names` to `[""]`, which produced the identical message, and confirmed fixed by putting
+it back.
+
+**The field's own placeholder already promised the right behaviour** — "(optional) new file name" —
+so the fix is to honour it rather than to forbid the empty value: an empty name now means the file
+keeps the one it has. `writeSimpleConfig` also drops a pair whose file is `— none —`, which the
+select offers and which had the same failure mode one step further along. Both halves live in the
+one place the pairs are serialised, so "Input files" gets the same treatment as "Extra files"
+without a second code path.
+
+**What this does not fix, and is filed separately:** the entry-point control offers the exercise's
+own files and delivering them is a different field entirely. Selecting `main.py` there writes a
+name into the run command and copies nothing, which is how the operator arrived at a job whose
+first error was `FileNotFoundError: '/box/main.py'`. The two variables are orthogonal by design in
+core-api; it is this screen that puts them side by side without saying so.
