@@ -1283,6 +1283,7 @@
       "name": "Exercise",
       "difficulty": "Difficulty",
       "environments": "Languages",
+      "group": "Group",
       "tags": "Tags",
       "author": "Author",
       "updated": "Updated"
@@ -1316,6 +1317,9 @@
       "apply": "Search",
       "author": "Author",
       "anyAuthor": "Anyone",
+      "group": "Group",
+      "anyGroup": "All groups",
+      "groupExplain": "Listed are the exercises that can be assigned in the selected group — including the ones stored in its parent groups. The Group column may therefore name a different group than the one you filtered by.",
       "mine": "Only mine",
       "everyone": "Everyone's"
     },

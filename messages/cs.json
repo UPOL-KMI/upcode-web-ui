@@ -1283,6 +1283,7 @@
       "name": "Úloha",
       "difficulty": "Obtížnost",
       "environments": "Jazyky",
+      "group": "Skupina",
       "tags": "Štítky",
       "author": "Autor",
       "updated": "Změněno"
@@ -1316,6 +1317,9 @@
       "apply": "Hledat",
       "author": "Autor",
       "anyAuthor": "Kdokoliv",
+      "group": "Skupina",
+      "anyGroup": "Všechny skupiny",
+      "groupExplain": "Vypsané jsou úlohy, které lze ve vybrané skupině zadat — tedy i ty uložené v nadřazených skupinách. Ve sloupci Skupina proto může být napsaná jiná skupina, než podle které filtrujete.",
       "mine": "Jen moje",
       "everyone": "Od všech"
     },

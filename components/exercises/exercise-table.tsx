@@ -7,6 +7,7 @@ import { DateTime } from "@/components/format/date-time";
 import { isDataOnly } from "@/lib/status/exercise-validation";
 
 import { Badge } from "@/components/status/badge";
+import { Hint } from "@/components/status/hint";
 
 /**
  * The catalog itself (T-020): one row per exercise, ordered by name.
@@ -20,7 +21,15 @@ import { Badge } from "@/components/status/badge";
  * because it will not compile, one that is deliberately locked, one still without a reference
  * solution -- which is the fifth condition on assigning and, contrary to DEC-093, visible here.
  */
-export async function ExerciseTable({ page }: { page: ExerciseCatalogPage }) {
+export async function ExerciseTable({
+  page,
+  groups,
+}: {
+  page: ExerciseCatalogPage;
+  /** Names for the groups an exercise is attached to; a group this reader cannot see is absent
+   *  and prints as nothing rather than as an id (X-016). */
+  groups: Map<string, { name: string; path: string[] }>;
+}) {
   const t = await getTranslations("Exercises");
   // core-api serves an empty difficulty for an exercise nobody set one on, and next-intl answers a
   // missing key with the key path -- so the catalog used to show readers `difficulty.` and log a
@@ -41,6 +50,9 @@ export async function ExerciseTable({ page }: { page: ExerciseCatalogPage }) {
             </th>
             <th scope="col" className="px-3 py-2 text-left font-medium">
               {t("columns.environments")}
+            </th>
+            <th scope="col" className="px-3 py-2 text-left font-medium">
+              {t("columns.group")}
             </th>
             <th scope="col" className="px-3 py-2 text-left font-medium">
               {t("columns.tags")}
@@ -86,6 +98,25 @@ export async function ExerciseTable({ page }: { page: ExerciseCatalogPage }) {
               <td className="px-3 py-2 whitespace-nowrap">{difficulty(exercise.difficulty)}</td>
               <td className="px-3 py-2 text-muted-foreground">
                 {exercise.environments.join(", ") || "—"}
+              </td>
+              <td className="px-3 py-2 text-muted-foreground">
+                <span className="flex flex-col gap-0.5">
+                  {exercise.groupIds
+                    .map((id) => groups.get(id))
+                    .filter((entry) => entry !== undefined).length === 0 ? (
+                    <span>—</span>
+                  ) : (
+                    exercise.groupIds.map((id) => {
+                      const entry = groups.get(id);
+                      if (entry === undefined) return null;
+                      return (
+                        <Hint key={id} plain text={[...entry.path, entry.name].join(" / ")}>
+                          <span className="whitespace-nowrap">{entry.name}</span>
+                        </Hint>
+                      );
+                    })
+                  )}
+                </span>
               </td>
               <td className="px-3 py-2">
                 <span className="flex flex-wrap gap-1">

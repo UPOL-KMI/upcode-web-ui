@@ -6770,3 +6770,35 @@ anything is sent.
 the clean install has no `[seed]` fixtures. `MAX_ROWS` stays at 200. A study number still cannot be
 filled onto an existing account by a teacher: core-api was deliberately left untouched this round,
 and the comment at `RegistrationPresenter.php:441-445` promising a screen for it remains wrong.
+
+### 2026-09-22 — the catalogue admits which group an exercise belongs to
+
+**The whole ticket was a field the type refused to read.** `groupsIds` has been on every
+`/v1/exercises` row since forever (`ExerciseViewFactory.php:60`); `ExercisePayload` simply never
+declared it, so TypeScript would not let anybody look. Declaring it, carrying it onto
+`ExerciseListItem`, and resolving the names from `getGroupList` -- which is built on the same
+memoized `/v1/groups` fetch the group screens already make -- is the entire Group column.
+
+**The filter needed no work at all, which is the part worth knowing.** `filters[groupsIds][]` is
+not "attached to this group": core-api expands the id through `groupsIdsAncestralClosure` before
+matching, so a lab inherits whatever its course holds. The assign screen's picker has relied on
+that since G-010. Measured here before trusting it: the child group returns its parent's five
+exercises, an unrelated branch returns none.
+
+**So the screen now shows two different answers at once**, and that is the one thing that needed
+design rather than plumbing. Filter by a lab and rows appear whose Group column names the course
+above it -- correct, and indistinguishable from a bug without a word of explanation. One sentence
+appears above the table whenever a group filter is on, and only then.
+
+**Two smaller decisions.** The option labels are the immediate parent and the name: the chain from
+the instance root is _Univerzita Palackého v Olomouci / Katedra Informatiky / Výuka / KMI/ALGO1 -
+Alg. 1 / ALGO1 - Úterý_, which a `<select>` truncates to nothing useful, and `group-info.tsx` had
+already settled on showing one parent. The full path is on the option's `title` and on the
+column's hint. And a group the reader cannot see prints as nothing rather than as a UUID, matching
+what `GroupListEntry.path` does for an invisible ancestor.
+
+**One thing the change broke and fixed.** Putting Group before Tags moved Author from the fifth
+cell to the sixth, and `exercise-catalog.spec.ts` asserted `td:nth-child(5)` with a comment naming
+the old column order. Corrected, with the reason written beside it -- the suite cannot run on this
+deployment, so a stale index would have survived until somebody re-seeded and blamed the author
+filter.
