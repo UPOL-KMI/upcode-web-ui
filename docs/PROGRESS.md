@@ -6844,3 +6844,34 @@ its own `aria-label`: the eye reads the indentation, a screen reader hears
 seven of them new). **Not run:** the e2e suite, which still cannot run on this deployment; the
 catalogue spec's group step was rewritten from `selectOption` to the combobox anyway, so it does not
 rot in place.
+
+### 2026-09-25 — the dashboard stops showing other people's courses
+
+**The same complaint as DEC-150, in the two places that round left alone.** The sidebar's "Moje
+výuka" has followed direct membership since X-014; the dashboard's calendar and teaching section
+still read `teaching`, the inherited-plus-direct set, so an administrator of a department opened
+the app onto every colleague's deadlines. `getMyGroups` has returned `teachingDirect` since X-014,
+so there was no API work to do — the ticket is which of two lists each call site reads.
+
+**Three things stay wide, and each for its own reason.** `member`, because a student's deadlines
+belong in their month whatever they teach. The review queues, because core-api decides whose plate
+a review is on (`/v1/users/{id}/pending-reviews`) and deriving them from a group list would hide
+work that was genuinely assigned. And `groupNames`, because it resolves the names those queues
+print — narrowed, a review in a group the reader administers without teaching would render without
+one. Whether the teaching half appears at all is likewise still the wide question.
+
+**It is not reproducible on this deployment, and that is worth saying plainly.** The issue named
+`ALGO1 - Úterý` — a real course under a parent the operator administers, belonging to somebody else
+— as the thing that should disappear. It holds **zero assignments**, so it contributes no deadlines
+and the dashboard renders identically before and after. Measured both ways rather than assumed: the
+change was stashed, the page re-read, and the output compared character for character.
+
+**So the behaviour is pinned by unit tests instead of by the page.** The choice moved into
+`lib/groups/deadline-sources.ts`, a pure module — `lib/api/dashboard.ts` imports `server-only` and
+nothing in it can be reached from a test — with five cases: an inherited course is in neither list,
+a studied group survives, a group both studied in and taught appears once, containers are dropped
+from both, and nobody's dashboard is not an error. The e2e seed has no inherited-but-not-taught
+group to assert against; worth adding the next time the seed changes, and recorded on the ticket.
+
+**Run:** five checks green (`typecheck`, `lint`, `format:check`, `build`, `test` — 407 unit tests,
+five of them new). **Not run:** the e2e suite, which still cannot run on this deployment.
