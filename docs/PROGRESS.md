@@ -6918,3 +6918,30 @@ and carries ten tests instead — including that a part the reader could not tic
 guards a stale selection surviving a refresh.
 
 **Run:** five checks green (419 unit tests). **Not run:** the e2e suite, as ever on this deployment.
+### 2026-09-25 — the exercise form stops arguing with itself
+
+**The operator could save an exercise once.** The second save was refused with "the exercise was
+edited in the meantime and the version has changed" — by his own first save, seconds earlier.
+
+`version` is core-api's optimistic lock and it lived in the form's own schema, so it held whatever
+the page was rendered with. Save one sent 4 and left the server on 5; save two sent 4 again. The
+form does call `router.refresh()`, and that does bring 5 down as a prop, but React Hook Form reads
+`defaultValues` at mount and the component outlives a refresh.
+
+**It is a parameter now, read from the props on every submit** — which is what
+`assignment-texts-form.tsx` and both pipeline editors have always done, and the reason they were
+never reported. Every other versioned form was checked; none of them holds the lock in form state.
+
+**Pinned by a schema test, because nothing else could catch it.** It is a component-lifecycle fault:
+types, lint and the rest of the suite were all perfectly happy with the broken version. The test
+asserts the schema does not carry `version` at all, which is the thing that must stay true.
+
+**Measured on the running deployment, the operator's own way in:** three consecutive saves of a real
+exercise, no refusal, no error banner, three `200`s with a refresh between each. Saving unchanged
+values is safe to do to somebody else's data, which is why it could be tested at all —
+`Localizations::updateCollection` replaces a localized entity only when it actually differs, so the
+assignments made from that exercise were not marked as drifted by the test.
+
+**Left alone, deliberately:** the refusal arrives in English, because `failure()` passes core-api's
+message through verbatim (DEC-092). After this it is only reachable when a colleague really did save
+first. Translating server-action errors by code is its own round, and its own ticket when asked for.

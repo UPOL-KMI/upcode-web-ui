@@ -23,9 +23,14 @@ export const exerciseTextSchema = z.object({
   link: z.string(),
 });
 
+/**
+ * **`version` is deliberately not here.** core-api's optimistic lock has to be whatever the *server*
+ * last said, and a value inside the form is whatever it said when the form mounted: a second save
+ * after a successful first one would send the stale number and be refused. It is passed to the
+ * action from the current props instead, as every other versioned form in this app does.
+ */
 export const exerciseSettingsSchema = z
   .object({
-    version: z.number().check(z.int()),
     texts: z.array(exerciseTextSchema).check(z.minLength(1)),
     difficulty: z.enum(DIFFICULTIES),
     isPublic: z.boolean(),
