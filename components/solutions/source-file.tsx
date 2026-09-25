@@ -5,9 +5,12 @@ import type { ReviewComment } from "@/lib/api/solution-review";
 import { highlightToLines } from "@/lib/code/highlight";
 import { formatBytes } from "@/lib/format/bytes";
 import { isBinaryFilename } from "@/lib/code/binary-files";
+import { isPreviewable, previewKindOf } from "@/lib/code/preview";
 import { languageForFilename } from "@/lib/code/languages";
 
 import { CodeBlock, CodeLine } from "@/components/code/code-block";
+import { FileComments } from "@/components/solutions/file-comments";
+import { FilePreview } from "@/components/solutions/file-preview";
 import { ReviewableCode } from "@/components/solutions/reviewable-code";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
@@ -102,20 +105,80 @@ export async function SourceFile({
     isBinaryFilename(file.entry ?? file.name) || content?.malformedCharacters === true;
 
   if (unreadable) {
+    // **Shown where it can be, offered always, and commentable either way** (X-025). A preview
+    // needs a download route to point at, so an entry inside a submitted archive gets none -- its
+    // bytes exist only inside the zip and core-api has no endpoint that extracts one. It still
+    // takes comments: those are bound to the file's name, not to a picture of it.
+    const kind = downloadHref ? previewKindOf(file.name) : null;
+    const previewable = kind !== null && isPreviewable(file.name, file.size);
+
     return (
-      <figure id={anchor} className="flex flex-col overflow-hidden rounded-lg border border-border">
-        {caption}
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <span className="text-sm text-muted-foreground">
-            {downloadHref === null ? t("inArchive") : t("notShown")}
+      <details
+        id={anchor}
+        data-source-file
+        open
+        className="group overflow-hidden rounded-lg border border-border"
+      >
+        <summary
+          className={`${captionClass} cursor-pointer list-none marker:content-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none`}
+        >
+          <span className="flex flex-wrap items-center gap-2">
+            <svg
+              className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+            {nameSide}
           </span>
-          {downloadHref && (
-            <a href={downloadHref} className={buttonClasses("outline", "sm")}>
-              {t("downloadFile")}
-            </a>
+          {sizeSide}
+        </summary>
+
+        <div className="flex flex-col gap-3 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* A shown file needs no sentence: the preview is the answer. The other three cases
+                each need a different one, and "this type is not shown" is the wrong thing to say
+                about a PNG that was merely too big to be worth fetching. */}
+            {!previewable && (
+              <span className="text-sm text-muted-foreground">
+                {downloadHref === null
+                  ? t("inArchive")
+                  : kind !== null
+                    ? t("preview.tooLarge")
+                    : t("notShown")}
+              </span>
+            )}
+            {downloadHref && (
+              <a href={downloadHref} className={buttonClasses("outline", "sm")}>
+                {t("downloadFile")}
+              </a>
+            )}
+          </div>
+
+          {previewable && downloadHref && (
+            <FilePreview kind={kind} href={`${downloadHref}?inline`} name={file.name} />
           )}
         </div>
-      </figure>
+
+        {review && (
+          <FileComments
+            solutionId={solutionId}
+            fileName={file.name}
+            comments={review.comments}
+            bodies={review.bodies}
+            canComment={review.canComment}
+            canModerate={review.canModerate}
+            currentUserId={review.currentUserId}
+            reviewClosed={review.reviewClosed}
+          />
+        )}
+      </details>
     );
   }
 

@@ -360,6 +360,7 @@ export const ROUTE_MESSAGE_NAMESPACES: Record<string, readonly string[]> = {
     "Palette",
     "ReferenceSolutions.detail.runs",
     "Review",
+    "Sources",
     "Status",
     "SystemMessages.active",
     "SystemMessages.types",
