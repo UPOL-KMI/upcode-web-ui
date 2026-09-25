@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { stalePartsOf, type SynchronizationInfo } from "./assignment";
 import { apiRead } from "./read";
 
 /**
@@ -49,6 +50,8 @@ export interface AssignmentSettings {
   version: number;
   groupId: string | null;
   exerciseId: string | null;
+  /** Parts that have fallen behind the exercise -- what the re-sync dialog may offer (X-020). */
+  staleParts: string[];
   isPublic: boolean;
   isBonus: boolean;
   isExam: boolean;
@@ -109,6 +112,7 @@ interface SettingsPayload {
     studentHint?: string;
   }[];
   permissionHints?: Record<string, boolean>;
+  exerciseSynchronizationInfo?: SynchronizationInfo;
 }
 
 export const getAssignmentSettings = cache(async function getAssignmentSettings(
@@ -137,6 +141,7 @@ export const getAssignmentSettings = cache(async function getAssignmentSettings(
     version: assignment.version,
     groupId: assignment.groupId,
     exerciseId: assignment.exerciseId,
+    staleParts: stalePartsOf(assignment.exerciseSynchronizationInfo),
     isPublic: assignment.isPublic,
     isBonus: assignment.isBonus,
     isExam: assignment.isExam,

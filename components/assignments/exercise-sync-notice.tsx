@@ -1,6 +1,8 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import type { AssignmentDetail } from "@/lib/api/assignment";
+import { isSyncPart } from "@/lib/assignments/sync-parts";
+import { getExerciseName } from "@/lib/api/exercise-detail";
 
 import { SyncWithExercise } from "./sync-with-exercise";
 
@@ -17,32 +19,8 @@ import { SyncWithExercise } from "./sync-with-exercise";
  * The deleted-exercise case is the same field saying something else: `exerciseId` is null, no
  * further synchronisation is possible, and no new assignment can be made from it.
  */
-// core-api's own field names, carrying the legacy app's labels for them (`getSyncMessages` in
-// `repos/web-app/src/components/helpers/assignments.js`). An unknown part renders as its raw key
-// rather than being dropped: a part core-api grows later is still something a teacher should see.
-const KNOWN_PARTS = [
-  "files",
-  "fileLinks",
-  "exerciseTests",
-  "localizedTexts",
-  "configurationType",
-  "scoreConfig",
-  "exerciseConfig",
-  "runtimeEnvironments",
-  "exerciseEnvironmentConfigs",
-  "hardwareGroups",
-  "limits",
-  "mergeJudgeLogs",
-] as const;
-
-type SyncPart = (typeof KNOWN_PARTS)[number];
-
-function isKnownPart(part: string): part is SyncPart {
-  return (KNOWN_PARTS as readonly string[]).includes(part);
-}
-
 export async function ExerciseSyncNotice({ assignment }: { assignment: AssignmentDetail }) {
-  const t = await getTranslations("Assignment.sync");
+  const [t, locale] = await Promise.all([getTranslations("Assignment.sync"), getLocale()]);
   if (!assignment.can.update) return null;
 
   if (assignment.exerciseId === null) {
@@ -64,10 +42,18 @@ export async function ExerciseSyncNotice({ assignment }: { assignment: Assignmen
       </p>
       <ul className="mt-2 list-inside list-disc text-muted-foreground">
         {assignment.staleParts.map((part) => (
-          <li key={part}>{isKnownPart(part) ? t(`parts.${part}`) : part}</li>
+          <li key={part}>{isSyncPart(part) ? t(`parts.${part}`) : part}</li>
         ))}
       </ul>
-      {assignment.syncPossible && <SyncWithExercise assignmentId={assignment.id} />}
+      {assignment.syncPossible && (
+        <SyncWithExercise
+          assignmentId={assignment.id}
+          exerciseId={assignment.exerciseId}
+          exerciseName={await getExerciseName(assignment.exerciseId, locale)}
+          stale={assignment.staleParts}
+          from="drift"
+        />
+      )}
     </div>
   );
 }
