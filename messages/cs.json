@@ -1192,8 +1192,15 @@
     },
     "reviewOpenNote": "Revize je otevřená. Vaše komentáře autor neuvidí, dokud ji neuzavřete; uzavřením mu odejde e-mail.",
     "reviewClosedNote": "Revize je uzavřená a autor si ji může přečíst. Každá další změna mu pošle další e-mail — pro rozsáhlejší úpravy revizi nejprve znovu otevřete.",
-    "reviewedWithIssues": "Vaše řešení bylo zrevidováno. Máte {issues, plural, one {# připomínku} few {# připomínky} many {# připomínek} other {# připomínek}} k vyřešení.",
-    "reviewedNoIssues": "Vaše řešení bylo zrevidováno a nebyly nalezeny žádné připomínky."
+    "reviewedWithIssues": "Vaše řešení bylo zrevidováno. Máte {issues, plural, one {# připomínku} few {# připomínky} many {# připomínek} other {# připomínek}} k vyřešení. Pokud si přejete reagovat na připomínky, použijte diskuzi.",
+    "reviewedNoIssues": "Vaše řešení bylo zrevidováno a nebyly nalezeny žádné připomínky.",
+    "preview": {
+      "tooLarge": "Tento soubor je na náhled příliš velký — stáhněte si ho.",
+      "enlarge": "Zvětšit {name}",
+      "document": "Dokument {name}",
+      "loading": "Načítám tabulku…",
+      "sheetFailed": "Tabulku se nepodařilo přečíst — stáhněte si soubor."
+    }
   },
   "Review": {
     "actions": {
@@ -1228,6 +1235,8 @@
       "suppressNotification": "Neposílat autorovi e-mail o této změně",
       "add": "Přidat komentář",
       "addOnLine": "Přidat komentář k řádku {line}",
+      "onFile": "Komentáře k souboru",
+      "addOnFile": "Přidat komentář k souboru",
       "save": "Uložit",
       "cancel": "Zrušit",
       "edit": "Upravit",
@@ -2719,7 +2728,7 @@
     "empty": {
       "exercise": "Máte dotaz k úloze? Zanechte zprávu pomocí formuláře níže.",
       "assignment": "Máte dotaz k úkolu? Zanechte zprávu pomocí formuláře níže.",
-      "solution": "Máte dotaz k řešení? Zanechte zprávu pomocí formuláře níže.",
+      "solution": "Máte dotaz k řešení nebo revizi? Zanechte zprávu pomocí formuláře níže.",
       "referenceSolution": "Máte dotaz ke vzorovému řešení? Zanechte zprávu pomocí formuláře níže."
     },
     "unknownAuthor": "Někdo, koho nevidíte",

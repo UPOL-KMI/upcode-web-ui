@@ -21,7 +21,19 @@ import { readSessionToken } from "@/lib/auth/session-cookie";
  * and not JSON**, and anything else is forwarded with core-api's own status so the reason survives
  * instead of becoming this app's 500.
  */
-export async function streamFromCoreApi(path: string, fallbackFilename: string): Promise<Response> {
+export async function streamFromCoreApi(
+  path: string,
+  fallbackFilename: string,
+  /**
+   * Serve the bytes for the browser to *render* rather than save (X-025).
+   *
+   * core-api answers `application/octet-stream` with `Content-Disposition: attachment` for every
+   * file it has, so a browser handed one in an `<img>` or an `<iframe>` saves it instead of showing
+   * it. Passing a media type here replaces both headers. Only `lib/code/preview.ts` decides what
+   * may be passed, and it answers `null` for anything a student could make execute.
+   */
+  inlineContentType?: string | null,
+): Promise<Response> {
   const token = await readSessionToken();
   if (!token) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
@@ -69,11 +81,17 @@ export async function streamFromCoreApi(path: string, fallbackFilename: string):
   }
 
   const headers = new Headers();
-  headers.set("Content-Type", contentType || "application/zip");
+  headers.set("Content-Type", inlineContentType || contentType || "application/zip");
   headers.set(
     "Content-Disposition",
-    response.headers.get("content-disposition") ?? `attachment; filename="${fallbackFilename}"`,
+    inlineContentType
+      ? `inline; filename="${fallbackFilename}"`
+      : (response.headers.get("content-disposition") ??
+          `attachment; filename="${fallbackFilename}"`),
   );
+  // Belt and braces for the one thing this must never do: a type that slipped through would still
+  // not be sniffed into something executable.
+  headers.set("X-Content-Type-Options", "nosniff");
   const length = response.headers.get("content-length");
   if (length) headers.set("Content-Length", length);
 

@@ -7011,3 +7011,51 @@ files" line, and raises exactly one more warning -- no reload. And a test delive
 `run.py` offers `run.py`, warns while the entry point still says `main.py`, and falls quiet the
 moment `run.py` is chosen. That is the whole point of watching the values rather than reading them
 once, and of scoping the check per test.
+
+### 2026-09-25 — a submitted file can be looked at, and anything can be commented on
+
+**The blocker was never the frontend.** core-api serves every file as `application/octet-stream`
+with `Content-Disposition: attachment`, so an `<iframe>` pointing at one downloads it whatever the
+page does. `?inline` on the per-solution route relabels it -- and only for names
+`lib/code/preview.ts` vouches for, which is a short list of raster images, PDF and the two
+spreadsheet formats.
+
+**That list is the opposite shape to `binary-files.ts`, on purpose.** DEC-146's list of what is
+_not_ text may be incomplete without harm: an unlisted type is fetched anyway and caught by
+core-api's own `malformedCharacters`. This one must be complete in the other direction, because a
+type nobody vetted must not be handed to a browser to interpret. **`svg`, `html` and `xml` are
+absent and that is the single most important thing in the file** -- until now nothing submitted
+could execute, and only because the headers made everything a download. That was safety by
+accident, and inlining removes it.
+
+**Two things were measured and one of them contradicted the plan.** The headers flip exactly as
+intended: `application/pdf` and `inline` with `?inline`, `application/octet-stream` and `attachment`
+without. But a PDF in a fully closed `sandbox=""` painted nothing -- and then the same URL opened
+at the top level _downloaded_, which says the browser used for checking has no PDF viewer at all
+and that the black rectangle proved nothing either way. The attribute is `allow-scripts` without
+`allow-same-origin` on the argument that Chromium's viewer is script and an opaque origin cannot
+reach this page; **that reasoning has not been confirmed in a real browser and the code says so.**
+
+**Commenting is where the real design was.** A review comment is `(file, line)` and a PDF has no
+line twelve. core-api validates neither field, so such a comment was always legal -- what was
+missing was anywhere to write or read one. `line` is now an ordinal, several comments per file are
+the point, and because nothing enforces uniqueness the order falls back on creation time.
+
+**The operator's own data made the case better than the issue did.** Among the existing comments on
+that solution is one with an empty `file` whose text begins _"Vouchery-1.pdf"_ and then asks what
+the file is for -- he had been typing the file name into the comment because there was nowhere to
+attach it.
+
+**Still open.** Whether a PDF, an image or a spreadsheet actually paints is unverified: the checking
+browser has no PDF viewer, and the deployment has no image or spreadsheet submission to point at.
+The download button sits above every preview and is conditional on none of it, so the worst case is
+a blank frame beside a working download.
+
+**The sandbox came off, after two measurements rather than one.** `sandbox=""` painted nothing
+here, which proved little once the same URL turned out to download at the top level -- this
+browser has no PDF viewer. The operator then saw the same blank frame with `sandbox="allow-scripts"`
+in a real one, which is the answer: Chromium will not instantiate its PDF plugin for a frame in an
+opaque origin, and putting `allow-same-origin` back beside `allow-scripts` is no sandbox at all for
+same-origin content. The attribute is gone and the reasoning is written where it is made: what
+keeps this narrow is that unvetted types are never relabelled, so HTML and SVG never reach a frame,
+plus `nosniff`, plus the fact that a PDF's own script cannot touch the page embedding it.

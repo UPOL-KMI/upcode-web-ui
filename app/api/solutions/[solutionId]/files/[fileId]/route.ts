@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSolutionFiles } from "@/lib/api/solution-files";
+import { inlineContentType } from "@/lib/code/preview";
 import { streamFromCoreApi } from "@/lib/http/stream-download";
 
 /**
@@ -19,10 +20,14 @@ import { streamFromCoreApi } from "@/lib/http/stream-download";
  * it rather than streaming the enclosing archive under the entry's name.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ solutionId: string; fileId: string }> },
 ) {
   const { solutionId, fileId } = await params;
+  // `?inline` asks for the bytes labelled so a browser will render them. What that may be is not
+  // this route's decision -- `inlineContentType` answers `null` for anything unvetted, and the
+  // header then stays the attachment it has always been.
+  const wantsInline = new URL(request.url).searchParams.has("inline");
 
   const files = await getSolutionFiles(solutionId);
   const file = files.find((candidate) => candidate.fileId === fileId && candidate.entry === null);
@@ -33,5 +38,6 @@ export async function GET(
   return streamFromCoreApi(
     `/uploaded-files/${encodeURIComponent(fileId)}/download`,
     file.name || "solution-file",
+    wantsInline ? inlineContentType(file.name) : null,
   );
 }

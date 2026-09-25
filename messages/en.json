@@ -1192,8 +1192,15 @@
     },
     "reviewOpenNote": "The review is open. Your comments stay hidden from the author until you close it, and closing it sends them an email.",
     "reviewClosedNote": "The review is closed and the author can read it. Every further change emails them again — to make larger changes, reopen the review first.",
-    "reviewedWithIssues": "Your solution was reviewed. You have {issues, plural, one {# issue} other {# issues}} to fix.",
-    "reviewedNoIssues": "Your solution was reviewed and no issues were reported."
+    "reviewedWithIssues": "Your solution was reviewed. You have {issues, plural, one {# issue} other {# issues}} to fix. If you want to reply to them, use the discussion.",
+    "reviewedNoIssues": "Your solution was reviewed and no issues were reported.",
+    "preview": {
+      "tooLarge": "This file is too large to preview — download it instead.",
+      "enlarge": "Enlarge {name}",
+      "document": "Document {name}",
+      "loading": "Reading the spreadsheet…",
+      "sheetFailed": "The spreadsheet could not be read — download the file instead."
+    }
   },
   "Review": {
     "actions": {
@@ -1228,6 +1235,8 @@
       "suppressNotification": "Do not email the author about this change",
       "add": "Add comment",
       "addOnLine": "Comment on line {line}",
+      "onFile": "Comments on the file",
+      "addOnFile": "Add a comment on the file",
       "save": "Save",
       "cancel": "Cancel",
       "edit": "Edit",
@@ -2719,7 +2728,7 @@
     "empty": {
       "exercise": "Have a question about this exercise? Leave a message using the form below.",
       "assignment": "Have a question about this assignment? Leave a message using the form below.",
-      "solution": "Have a question about this solution? Leave a message using the form below.",
+      "solution": "Have a question about this solution or its review? Leave a message using the form below.",
       "referenceSolution": "Have a question about this reference solution? Leave a message using the form below."
     },
     "unknownAuthor": "Somebody you cannot see",
