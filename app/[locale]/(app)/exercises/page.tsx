@@ -16,6 +16,7 @@ import { resolveBreadcrumbsForNamespace } from "@/lib/breadcrumbs/manifest";
 import { Link } from "@/i18n/navigation";
 import { CreateExercise } from "@/components/exercises/create-exercise";
 import { ExerciseTable } from "@/components/exercises/exercise-table";
+import { GroupFilter } from "@/components/exercises/group-filter";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
@@ -248,33 +249,15 @@ export default async function ExercisesPage({
           )}
 
           {teachableGroups.length > 0 && (
-            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              {t("filters.group")}
-              <select
-                name="group"
-                defaultValue={group ?? ""}
-                title={t("filters.groupExplain")}
-                className="max-w-72 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">{t("filters.anyGroup")}</option>
-                {/* The immediate parent and the name, which is what `group-info.tsx` shows and
-                    what a `<select>` can hold; the whole chain from the instance root is a
-                    hundred characters and would be truncated to uselessness. The full path is
-                    on the option's own title for anybody who needs it. */}
-                {teachableGroups.map((entry) => {
-                  const parent = entry.path[entry.path.length - 1];
-                  return (
-                    <option
-                      key={entry.id}
-                      value={entry.id}
-                      title={[...entry.path, entry.name].join(" / ")}
-                    >
-                      {parent ? `${parent} / ${entry.name}` : entry.name}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
+            <GroupFilter
+              name="group"
+              value={group}
+              groups={teachableGroups.map((entry) => ({
+                id: entry.id,
+                name: entry.name,
+                path: entry.path,
+              }))}
+            />
           )}
 
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">

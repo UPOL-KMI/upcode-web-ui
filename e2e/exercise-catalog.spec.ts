@@ -138,8 +138,12 @@ test("narrows the catalogue to what a group may be given, ancestors included", a
   // The column exists and names where each exercise is stored.
   await expect(main.getByRole("columnheader", { name: "Group" })).toBeVisible();
 
-  // Filtering by the seeded course narrows the list without emptying it.
-  await main.getByLabel("Group").selectOption({ index: 1 });
+  // Filtering by the seeded course narrows the list without emptying it. The filter is a combobox
+  // since X-022, and its list is portalled out of `main`, so the options are looked for on `page`.
+  await main.getByRole("combobox", { name: "Group" }).click();
+  const groups = page.getByRole("listbox");
+  // The first option clears the filter; the second is the outermost group the reader teaches.
+  await groups.getByRole("option").nth(1).click();
   await main.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page).toHaveURL(/[?&]group=[0-9a-f-]+/);
 

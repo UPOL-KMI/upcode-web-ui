@@ -46,6 +46,20 @@ describe("groupRows", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it("prints a group that is also a container once", () => {
+    // The catalogue filter (X-022) offers the course and the lab beneath it, so the course is both
+    // a row somebody can choose and the heading its child hangs under. It is the former.
+    const rows = groupRows([
+      { id: "course", name: "KMI/JP - Jazyk Python", path: ["Výuka"] },
+      { id: "lab", name: "2025/26 (36b)", path: ["Výuka", "KMI/JP - Jazyk Python"] },
+    ]);
+    expect(rows.map((row) => `${row.depth} ${row.kind} ${row.name}`)).toEqual([
+      "0 heading Výuka",
+      "1 group KMI/JP - Jazyk Python",
+      "2 group 2025/26 (36b)",
+    ]);
+  });
+
   it("handles a group with no visible ancestors", () => {
     // A student may not see the faculty their course hangs under, so the path arrives empty and
     // the row is simply not indented.

@@ -1321,7 +1321,10 @@
       "anyGroup": "Všechny skupiny",
       "groupExplain": "Vypsané jsou úlohy, které lze ve vybrané skupině zadat — tedy i ty uložené v nadřazených skupinách. Ve sloupci Skupina proto může být napsaná jiná skupina, než podle které filtrujete.",
       "mine": "Jen moje",
-      "everyone": "Od všech"
+      "everyone": "Od všech",
+      "groupSearchPlaceholder": "Hledat skupinu…",
+      "groupNoMatch": "Žádná skupina neodpovídá.",
+      "groupMatchCount": "{count, plural, =0 {Žádná skupina} one {# skupina} few {# skupiny} other {# skupin}}"
     },
     "pagination": {
       "label": "Stránky katalogu",

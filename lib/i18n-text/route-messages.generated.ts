@@ -229,6 +229,7 @@ export const ROUTE_MESSAGE_NAMESPACES: Record<string, readonly string[]> = {
     "Dialog",
     "Error",
     "Exercises.create",
+    "Exercises.filters",
     "Nav",
     "Nav.brand",
     "Nav.locale",

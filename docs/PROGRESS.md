@@ -6802,3 +6802,45 @@ cell to the sixth, and `exercise-catalog.spec.ts` asserted `td:nth-child(5)` wit
 the old column order. Corrected, with the reason written beside it -- the suite cannot run on this
 deployment, so a stale index would have survived until somebody re-seeded and blamed the author
 filter.
+
+### 2026-09-25 — the group filter becomes searchable, and starts showing what sits inside what
+
+**The complaint was that the filter is unreadable, and it was right.** X-016 shipped a `<select>`
+whose options were `parent / name` and nothing else: seven strings, several of them beginning with
+the same faculty, with no indication that `KMI/JP - Jazyk Python` contains `2025/26 - Jazyk Python
+(36b)`. That containment is the entire decision — filtering by the course returns what the seminar
+group would return and more (DEC-153) — and the control withheld it.
+
+**Matching against the full path is what makes one query answer the question.** A search for
+`KMI/JP` matches the course by its own name and the seminar group by its path, so both arrive
+together; `groupRows`, the assign offer's tree flattener from T-012, then puts each match under the
+containers it hangs in. The indentation is therefore the real hierarchy rather than an artefact of
+which rows happened to survive the filter — which is the property the new
+`lib/groups/group-search.test.ts` pins, using the operator's own tree from the screenshot.
+
+**One latent bug in `groupRows` fell out of reusing it.** It recorded a group's path as shown but
+not the group's own name, so a group that was both selectable and somebody's container was printed
+twice: once as a row, once as the heading above its children. The assign offer never hit it because
+a container there cannot take an assignment and is absent from the list in the first place. Fixed
+where it lives, with a test naming the case.
+
+**Punctuation is deliberately not folded.** Case and diacritics are (`utery` finds `ALGO1 - Úterý`),
+but course codes are written `KMI/JP`, and stripping the slash would turn that query into a fuzzy
+match on every path whose letters happen to line up.
+
+**The screen still works without JavaScript**, which is not sentiment: every filter here is a URL and
+a round trip, and a shareable narrowed view is the point of the design. The native `<select>` is what
+the server renders and what a reader without scripting keeps; the combobox replaces it on the first
+client render. `useSyncExternalStore` does that rather than a `setState` in an effect — React
+provides it exactly for a value that differs between server and client, and
+`react-hooks/set-state-in-effect` rejects the alternative outright.
+
+**Accessibility is where the indentation had to be paid for.** A listbox may contain nothing but
+options, so the heading rows are `aria-hidden` decoration and each option carries the full chain on
+its own `aria-label`: the eye reads the indentation, a screen reader hears
+`Výuka / KMI/JP - Jazyk Python / 2025/26 - Jazyk Python (36b)`.
+
+**Run:** five checks green (`typecheck`, `lint`, `format:check`, `build`, `test` — 402 unit tests,
+seven of them new). **Not run:** the e2e suite, which still cannot run on this deployment; the
+catalogue spec's group step was rewritten from `selectOption` to the combobox anyway, so it does not
+rot in place.
