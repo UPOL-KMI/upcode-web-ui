@@ -66,7 +66,8 @@ test("runs a solution again, and carries the monitor channel of the new job", as
   // precisely the drift that broke `assignment-solutions.spec.ts` before G-001 fixed it.
   const before = await solutionSubmissionIds(id);
   try {
-    await signIn(page, SUPERADMIN, `/en/solutions/${id}`);
+    // Re-running lives under "Automatic tests" since X-026, and the tab is part of the address.
+    await signIn(page, SUPERADMIN, `/en/solutions/${id}?tab=tests`);
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { name: "Running it again" })).toBeVisible();
 
@@ -89,7 +90,7 @@ test("runs a solution again, and carries the monitor channel of the new job", as
 
 test("offers a debug run beside the ordinary one", async ({ page }) => {
   const { id } = await firstSeededSolution(SEEDED_WRONG_NOTE);
-  await signIn(page, SUPERADMIN, `/en/solutions/${id}`);
+  await signIn(page, SUPERADMIN, `/en/solutions/${id}?tab=tests`);
   const main = page.getByRole("main");
 
   await expect(main.getByRole("button", { name: "Run it again in debug mode" })).toBeVisible();
@@ -103,7 +104,7 @@ test("lists the runs behind a solution, and reads or removes one", async ({ page
   const { id } = await firstSeededSolution(SEEDED_WRONG_NOTE);
   const before = await solutionSubmissionIds(id);
   try {
-    await signIn(page, SUPERADMIN, `/en/solutions/${id}`);
+    await signIn(page, SUPERADMIN, `/en/solutions/${id}?tab=tests`);
     const main = page.getByRole("main");
 
     // One run, so there is nothing to choose between and core-api would refuse to delete it.
@@ -128,6 +129,8 @@ test("lists the runs behind a solution, and reads or removes one", async ({ page
     // Each run is a URL of its own, and the page says when the one on screen is not the scored one.
     await runs.last().getByRole("link").first().click();
     await expect(page).toHaveURL(new RegExp(`/en/solutions/${id}\\?submission=[0-9a-f-]+$`));
+    // The link carries no `tab=`, so this also asserts that a URL naming a run opens the tab the
+    // runs are on rather than the overview (X-026).
     await expect(main.getByText("This is not the run the solution is scored by")).toBeVisible();
 
     // An id that belongs to no run of this solution is a wrong address, not the last run.
@@ -144,7 +147,7 @@ test("lists the runs behind a solution, and reads or removes one", async ({ page
 test("deletes a solution, saying first what goes with it", async ({ page }) => {
   const solutionId = await submitThrowaway(page);
   try {
-    await signIn(page, SUPERADMIN, `/en/solutions/${solutionId}`);
+    await signIn(page, SUPERADMIN, `/en/solutions/${solutionId}?tab=tests`);
     const main = page.getByRole("main");
 
     await main.getByRole("button", { name: "Delete this solution" }).click();
@@ -175,8 +178,10 @@ test("offers re-running every solution from the assignment's own list", async ({
 
 test("is offered to no student", async ({ page }) => {
   const { id } = await firstSeededSolution(SEEDED_WRONG_NOTE);
-  await signIn(page, STUDENT, `/en/solutions/${id}`);
+  await signIn(page, STUDENT, `/en/solutions/${id}?tab=tests`);
 
+  // Asked for on the tab the buttons would be on, so this says they are refused rather than merely
+  // elsewhere.
   await expect(page.getByRole("heading", { name: "Running it again" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Run it again", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Delete this solution" })).toHaveCount(0);

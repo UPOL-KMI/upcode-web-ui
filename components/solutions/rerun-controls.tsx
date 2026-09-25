@@ -25,17 +25,25 @@ import { buttonClasses } from "@/components/button";
  * Deleting is the one irreversible action here and it takes everything -- the review and its
  * comments, every submission's archives, the source. Its confirmation says so, because core-api
  * will not ask.
+ *
+ * **On a data-only exercise this is only the delete button** (X-026). Nothing is run for such a
+ * submission, so "run it again" is an offer to repeat nothing and the prose beside it -- fix a
+ * test, a limit, a judge -- describes machinery the exercise does not have. core-api would accept
+ * the resubmit; that is not a reason to offer it. The delete button stays, because it is the one
+ * thing a teacher does need here, and the heading and explanation change to say what is left.
  */
 export function RerunControls({
   solutionId,
   assignmentId,
   canResubmit,
   canDelete,
+  dataOnly = false,
 }: {
   solutionId: string;
   assignmentId: string;
   canResubmit: boolean;
   canDelete: boolean;
+  dataOnly?: boolean;
 }) {
   const t = useTranslations("Solution.rerun");
   const router = useRouter();
@@ -46,7 +54,8 @@ export function RerunControls({
   // the two dialogs are the same dialog with different words, and two flags could both be true.
   const [confirmingRerun, setConfirmingRerun] = useState<"plain" | "debug" | null>(null);
 
-  if (!canResubmit && !canDelete) return null;
+  const offerRerun = canResubmit && !dataOnly;
+  if (!offerRerun && !canDelete) return null;
 
   async function rerun(debug: boolean) {
     setConfirmingRerun(null);
@@ -88,12 +97,15 @@ export function RerunControls({
   return (
     <section aria-labelledby="solution-rerun" className="flex flex-col gap-3">
       <h2 id="solution-rerun" className="text-base font-semibold tracking-tight">
-        {t("title")}
+        {t(dataOnly ? "dataOnlyTitle" : "title")}
       </h2>
-      <p className="text-sm text-muted-foreground">{t("explain")}</p>
+      {/* No sentence under the data-only heading: *Smazání řešení* over a button reading *Smazat
+          toto řešení* says the whole thing, and explaining why there is nothing to re-run answers
+          a question the screen no longer raises. The operator's call. */}
+      {!dataOnly && <p className="text-sm text-muted-foreground">{t("explain")}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
-        {canResubmit && (
+        {offerRerun && (
           <>
             <button
               type="button"

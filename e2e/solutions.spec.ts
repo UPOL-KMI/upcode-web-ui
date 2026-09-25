@@ -33,6 +33,8 @@ test("shows what happened to a submitted solution", async ({ page, context }) =>
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { name: /^Attempt \d+$/ })).toBeVisible();
   await expect(main.getByRole("heading", { name: "Summary" })).toBeVisible();
+  // The summary lands first; the evaluation is a tab away since X-026.
+  await main.getByRole("link", { name: "Automatic tests" }).click();
   await expect(main.getByRole("heading", { name: "Evaluation" })).toBeVisible();
 });
 
@@ -53,8 +55,10 @@ test("shows a per-test verdict for a solution that was actually evaluated", asyn
   await page.goto(`/en/solutions/${id}`);
 
   const main = page.getByRole("main");
-  await expect(main.getByRole("heading", { name: "Evaluation" })).toBeVisible();
+  // The tally is on the overview beside the points; the table it summarises is on the tests tab.
   await expect(main.getByText("1 of 1 tests passed")).toBeVisible();
+  await main.getByRole("link", { name: "Automatic tests" }).click();
+  await expect(main.getByRole("heading", { name: "Evaluation" })).toBeVisible();
   await expect(main.getByRole("cell", { name: "Test 1" })).toBeVisible();
   await expect(main.getByRole("cell", { name: "Passed", exact: true })).toBeVisible();
 });
