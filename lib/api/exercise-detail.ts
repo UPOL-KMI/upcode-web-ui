@@ -118,6 +118,26 @@ const fetchExercise = cache(async function fetchExercise(
 });
 
 /**
+ * Just the name, for a screen that only has to say which exercise an assignment came from (X-020).
+ *
+ * On the same memoized fetch `getExerciseDetail` makes, so it costs nothing on the exercise's own
+ * page and one call elsewhere. **A refusal is an absent name, not an error**: an assignment may
+ * outlive the reader's permission to look at the exercise behind it, and the sentence that needs
+ * the name reads perfectly well without it.
+ */
+export const getExerciseName = cache(async function getExerciseName(
+  exerciseId: string,
+  locale: string,
+): Promise<string | null> {
+  try {
+    return localizedName((await fetchExercise(exerciseId)).localizedTexts, locale) || null;
+  } catch (error) {
+    if (error instanceof ApiError && error.httpStatus === 403) return null;
+    throw error;
+  }
+});
+
+/**
  * core-api writes its validation failures as one string of `@key message` pairs, one per line
  * (`"@no-runtimes There are no runtime environments\n@no-tests ..."`, verified live). The keys are
  * a closed set the legacy app translates; anything unknown keeps core-api's own English, which is

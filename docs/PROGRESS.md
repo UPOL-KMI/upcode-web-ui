@@ -6876,6 +6876,48 @@ group to assert against; worth adding the next time the seed changes, and record
 **Run:** five checks green (`typecheck`, `lint`, `format:check`, `build`, `test` — 407 unit tests,
 five of them new). **Not run:** the e2e suite, which still cannot run on this deployment.
 
+### 2026-09-25 — a re-sync asks which parts, and there is a way back from an override
+
+**Synchronise sent nothing, and nothing is core-api's "everything".** So a teacher picking up a
+changed test file also lost the text they had adjusted for their own group — silently, with no undo,
+and then permanently out of reach: an override makes the assignment's copy the newer one, core-api
+stops calling the locale out of sync, the drift notice goes quiet, and the only sync button lived
+inside that notice. Two halves of one gap, closed together.
+
+**The dialog lists every part, not only the drifted ones.** That reverses what the ticket asked for,
+on the operator's say-so, and he was right: a short list leaves "is that everything, or is the rest
+hidden?" unanswered, while a disabled row marked _Aktuální_ answers it. There is no choice to be
+paralysed by — the rows that match cannot be ticked.
+
+**The texts are the one part that is never disabled, and the reason is worth keeping.** For eleven
+parts `upToDate` is a genuine equality check. `Assignment::areLocalizedTextsInSync` is not: it
+returns true whenever the assignment's copy is not _older_, so an overridden text reports as up to
+date while differing, and nothing core-api publishes distinguishes that from an identical one.
+Disabling it on that evidence would lock away exactly what the second button is for.
+
+**`files` and `fileLinks` are one checkbox.** Both branches of `syncWithExercise` clear the
+assignment's collection and refill it from the exercise, and a link holds a reference to an
+`ExerciseFile` — so the links alone point at files the assignment does not hold, and the files alone
+leave the existing links pointing at what was just cleared. One box, both names, drifted when either
+half is.
+
+**The two entry points default oppositely, deliberately.** From the drift notice everything stale
+except the texts; from the texts form's own button only the texts. Syncing a text destroys work with
+no undo; skipping one is fixed by syncing again. Said in the code, or it reads as an inconsistency
+and gets "fixed".
+
+**Measured on the deployment, both ways in, against a real drifted assignment** — `Cvičení 01 - Úkol`
+had genuinely drifted on `limits`. From the drift notice: _Limity_ ticked, _Texty zadání_ offered and
+unticked, the other nine disabled. From the texts form: _Texty zadání_ ticked, _Limity_ offered and
+unticked, the rest disabled. The exercise is named in the sentence and links to the catalogue in a
+new tab; a reader who may not read it gets the sentence without the name rather than a failure.
+
+**What was not pressed: the confirm button.** It overwrites real content irreversibly, and there was
+no assignment on this deployment whose loss would have been acceptable. The selection logic is pure
+and carries ten tests instead — including that a part the reader could not tick is never sent, which
+guards a stale selection surviving a refresh.
+
+**Run:** five checks green (419 unit tests). **Not run:** the e2e suite, as ever on this deployment.
 ### 2026-09-25 — the exercise form stops arguing with itself
 
 **The operator could save an exercise once.** The second save was refused with "the exercise was

@@ -3,6 +3,7 @@ import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { getAssignmentSettings } from "@/lib/api/assignment-edit";
+import { getExerciseName } from "@/lib/api/exercise-detail";
 import { resolveBreadcrumbs } from "@/lib/breadcrumbs/manifest";
 
 import { routing } from "@/i18n/routing";
@@ -54,7 +55,11 @@ export default async function EditAssignmentPage({
   ]);
   if (assignment.can.update !== true) forbidden();
 
-  const breadcrumbs = await resolveBreadcrumbs(`/assignments/${assignmentId}/edit`, locale);
+  const [breadcrumbs, exerciseName] = await Promise.all([
+    resolveBreadcrumbs(`/assignments/${assignmentId}/edit`, locale),
+    // Named in the re-sync dialog the texts form opens; `null` for an exercise since deleted.
+    assignment.exerciseId === null ? null : getExerciseName(assignment.exerciseId, locale),
+  ]);
 
   // **Four tabs over two forms**, which is why the panels are hidden rather than unrendered: the
   // text has its own save, everything else shares one, and a teacher who fills in a deadline and
@@ -90,7 +95,11 @@ export default async function EditAssignmentPage({
       }
     >
       <div className="flex max-w-3xl flex-col gap-10">
-        <AssignmentTextsForm assignment={assignment} hidden={current !== "texts"} />
+        <AssignmentTextsForm
+          assignment={assignment}
+          exerciseName={exerciseName}
+          hidden={current !== "texts"}
+        />
         <AssignmentForm assignment={assignment} activeTab={current} />
         {/* Deleting is not one of the four subjects; it is what to do with the whole assignment,
             so it stays below them rather than hiding on one. */}
