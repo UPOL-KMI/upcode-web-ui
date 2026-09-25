@@ -1038,18 +1038,18 @@
       },
       "awaitingReview": {
         "title": "Čeká na hodnocení vyučujícím",
-        "explain": "Tato úloha se nevyhodnocuje automaticky — nic se nespouští ani neporovnává. Body udělí vyučující ručně; jeho poznámky k řešení najdete v diskuzi níže."
+        "explain": "Tato úloha se nevyhodnocuje automaticky — nic se nespouští ani neporovnává. Body udělí vyučující ručně; jeho poznámky k řešení najdete v záložce Diskuze."
       },
       "reviewed": {
         "title": "Vyhodnoceno vyučujícím: {points}",
-        "explain": "Body udělil vyučující. Jeho poznámky k řešení mohou být v diskuzi níže."
+        "explain": "Body udělil vyučující. Jeho poznámky k řešení mohou být v záložce Diskuze."
       }
     },
     "plagiarisms": "Podobnosti",
     "pageTitle": "Řešení",
     "verdict": {
       "title": "Rozhodnutí vyučujícího",
-      "explain": "Kolik tento pokus platí, bez ohledu na výsledek testů. Zde nastavené body nahradí ty, které spočítalo vyhodnocení.",
+      "explain": "Nastavte výsledné hodnocení řešení. Zde nastavené hodnoty mohou přepsat hodnocení určené automatickými testy.",
       "accept": "Uznat tento pokus",
       "unaccept": "Přestat uznávat tento pokus",
       "acceptNote": "Standardně se počítá řešení s nejlepším hodnocením. Pokud si přejete vynutit započítání tohoto pokusu do celkového hodnocení, klikněte na tlačítko.",
@@ -1065,14 +1065,16 @@
       "overrideNote": "Ponechte první pole prázdné, aby rozhodlo vyhodnocení. Bonus může být i záporný.",
       "overMax": "Zadáváte více bodů ({points}) než je maximum ({max}). <action>Kliknutím zde</action> převedete přebytečné body na bonusové.",
       "confirmSave": {
-        "title": "Uložit tyto body?",
+        "title": "Zadat body ručně",
         "description": "Studentovi se za tento pokus zapíše {summary}. Nastavené body nahradí to, co spočítalo vyhodnocení, a studentovi se o změně posílá upozornění.",
+        "descriptionEvaluated": "Studentovi se za tento pokus zapíše {summary}. Studentovi se o změně hodnocení posílá upozornění.",
         "confirm": "Uložit body"
       },
       "summary": {
         "evaluated": "tolik bodů, kolik spočítalo vyhodnocení",
+        "evaluatedWithBonus": "tolik bodů, kolik spočítalo vyhodnocení {sign} {bonus} (bonus)",
         "points": "{points} z {max} bodů",
-        "withBonus": "{points} z {max} bodů a bonus {bonus}"
+        "withBonus": "{points} z {max} bodů {sign} {bonus} (bonus)"
       },
       "confirmAccept": {
         "title": "Uznat tento pokus?",
@@ -1104,7 +1106,8 @@
     },
     "rerun": {
       "title": "Nové spuštění",
-      "explain": "Spustit toto řešení znovu skrz pipeline – to se hodí po opravě testu, limitu nebo soudce, který je vyhodnotil špatně. Výsledek nahradí to, co je uvedeno výše.",
+      "explain": "Spustit toto řešení znovu skrz pipeline – to se hodí po opravě testu, limitu nebo soudce, který je vyhodnotil špatně. Výsledek nahradí stávající vyhodnocení.",
+      "dataOnlyTitle": "Smazání řešení",
       "resubmit": "Spustit znovu",
       "resubmitDebug": "Spustit znovu v ladicím režimu",
       "delete": "Smazat toto řešení",
@@ -1165,6 +1168,12 @@
         "weighted": "Každý test má ve skóre vlastní váhu.",
         "universal": "Skóre je vlastní výraz nad testy."
       }
+    },
+    "tabs": {
+      "label": "Sekce řešení",
+      "overview": "Přehled",
+      "tests": "Automatické testy",
+      "discussion": "Diskuze"
     }
   },
   "Sources": {
@@ -1200,6 +1209,11 @@
       "document": "Dokument {name}",
       "loading": "Načítám tabulku…",
       "sheetFailed": "Tabulku se nepodařilo přečíst — stáhněte si soubor."
+    },
+    "tabs": {
+      "label": "Sekce souborů",
+      "review": "Revize",
+      "discussion": "Diskuze"
     }
   },
   "Review": {
@@ -2718,7 +2732,7 @@
     "cancel": "Zrušit"
   },
   "Comments": {
-    "title": "Diskuse",
+    "title": "Diskuze",
     "explain": {
       "exercise": "Diskuze, která je společná pro všechny uživatele s přístupem k této úloze.",
       "assignment": "Diskuze, která je společná pro všechny uživatele s přístupem k úkolu.",

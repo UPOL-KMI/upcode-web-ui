@@ -78,12 +78,29 @@ export function VerdictControls({
   // are unit-tested.
   const overMax = manualValid && isOverMax(typedOverride, maxPoints);
 
-  const manualSummary =
-    typedOverride === null
+  /**
+   * What the dialog reads back, and **which dialog it is**.
+   *
+   * An empty points field is not a value being set, it is the evaluation being handed the decision
+   * back -- the save sends `overriddenPoints: null`. The confirmation therefore cannot be the one
+   * that says "what you set here replaces what the evaluation worked out": that sentence directly
+   * contradicts the summary beside it, which is what the operator read. It gets its own wording.
+   *
+   * The bonus is saved either way, so it has to be read back either way: leaving the points empty
+   * and typing a bonus used to be summarised as "whatever the evaluation worked out" with the
+   * bonus not mentioned at all, and then saved.
+   */
+  const evaluationDecides = typedOverride === null;
+  // The sign travels separately from the number so that a negative bonus -- which the form invites,
+  // and says so -- reads as "- 3 (bonus)" rather than "+ -3 (bonus)".
+  const bonusParts = { sign: typedBonus < 0 ? "-" : "+", bonus: Math.abs(typedBonus) };
+  const manualSummary = evaluationDecides
+    ? typedBonus === 0
       ? t("summary.evaluated")
-      : typedBonus === 0
-        ? t("summary.points", { points: typedOverride, max: maxPoints })
-        : t("summary.withBonus", { points: typedOverride, max: maxPoints, bonus: typedBonus });
+      : t("summary.evaluatedWithBonus", bonusParts)
+    : typedBonus === 0
+      ? t("summary.points", { points: typedOverride, max: maxPoints })
+      : t("summary.withBonus", { points: typedOverride, max: maxPoints, ...bonusParts });
 
   function moveExcessToBonus() {
     if (typedOverride === null) return;
@@ -308,7 +325,10 @@ export function VerdictControls({
         open={confirmingSave}
         onOpenChange={(open) => !open && setConfirmingSave(false)}
         title={t("confirmSave.title")}
-        description={t("confirmSave.description", { summary: manualSummary })}
+        description={t(
+          evaluationDecides ? "confirmSave.descriptionEvaluated" : "confirmSave.description",
+          { summary: manualSummary },
+        )}
         confirmLabel={t("confirmSave.confirm")}
         destructive={false}
         pending={pending}

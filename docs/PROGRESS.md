@@ -7059,3 +7059,94 @@ opaque origin, and putting `allow-same-origin` back beside `allow-scripts` is no
 same-origin content. The attribute is gone and the reasoning is written where it is made: what
 keeps this narrow is that unvetted types are never relabelled, so HTML and SVG never reach a frame,
 plus `nosniff`, plus the fact that a PDF's own script cannot touch the page embedding it.
+
+## X-026 — the attempt screen becomes tabs
+
+The detail of a submitted attempt was one column of five sections; it is now **Přehled**,
+**Automatické testy** and **Diskuze**, and the files screen beside it is **Revize** and
+**Diskuze**. Both reuse `PageTabs` and `?tab=`, so a tab is an address a teacher can send to
+another teacher. The discussion shown in both places is the solution's own thread, the same one,
+placed twice rather than forked.
+
+**The interesting part was not the splitting but what the splitting would have hidden.** A
+data-only exercise runs nothing, so _Automatické testy_ was left out rather than shown empty — and
+that tab was carrying three things that still mean something for such a submission: the box saying
+it is waiting to be marked, the runs, and the button that deletes the solution. They fall back to
+_Přehled_ through one variable rather than being duplicated, so the tab can disappear without
+taking a destructive action out of reach with it.
+
+**A job to watch now opens on the tab that shows it.** A submit and a re-run both land here with
+`?monitor=`, and each run in the table links to `?submission=`; all of that is on the tests tab,
+and the default before this would have been _Přehled_ — watching an evaluation from the one screen
+that does not display it. An explicit `?tab=` still wins, because a reader who asked for a tab
+asked for it.
+
+**One link was deleted rather than filed.** The evaluation section carried a second _Soubory
+řešení_ button, added because that is where a reader wants it next; the header carries one too.
+With tabs the copy would have been the same name twice with the findable one behind a tab, so it
+went. Four sentences that said "výše" or "níže" about something now a tab away were rewritten with
+it, and the discussion heading became _Diskuze_ — it read _Diskuse_ directly under a tab spelling
+it the other way.
+
+Verified on the local stack against both shapes: an evaluated Python attempt shows three tabs with
+the test table under the second, and a data-only attempt shows two, with `?tab=tests` falling back
+to _Přehled_ rather than rendering nothing. Six e2e assertions were repointed at the tab their
+content moved to, with the reason written beside each; the suite still cannot run here.
+
+**The tabs then got figures on them.** _Automatické testy_ carries `2/3` -- passed over total --
+and _Diskuze_ the number of posts. `PageTab` already had a `count` that hides itself at zero, which
+is right for posts and wrong for a tally: `2/3` is not a count, and a component cannot apply
+"nothing when it is zero" to a string it does not parse. So `badge` sits beside `count` and is
+rendered verbatim, with the rule that a caller who has nothing to say omits it. The tally is
+omitted while an evaluation is still running, where `0/0` would read as a failure rather than as a
+wait.
+
+The count is not free: the thread used to be fetched only when its own tab was open, and now every
+load of either screen asks for it. It is one GET, and `getCommentThread` is wrapped in React's
+`cache`, so the `Discussion` on the tab reuses that same answer instead of asking again -- the
+extra request is paid on the tabs that do not show the thread, and buys the reader the number
+without opening it.
+
+**Then the operator asked the question the fallback had begged.** If _Automatické testy_ is hidden
+because nothing runs, why was _Nové spuštění_ still on the screen? It should not have been:
+re-running a data-only submission repeats nothing, and the sentence beside the buttons offers to
+fix a test, a limit or a judge that the exercise does not have. `RerunControls` now takes
+`dataOnly` and, when it is set, offers the delete button by itself under the heading _Smazání
+řešení_. core-api would have accepted the resubmit, which is not a reason to offer it.
+
+The first version of that block also carried a sentence explaining why there was nothing to run
+again, and the operator cut it: a heading reading _Smazání řešení_ over a button reading _Smazat
+toto řešení_ says everything, and the explanation answered a question the screen had stopped
+raising once the buttons were gone.
+
+Its place moved with it. The controls are one variable rendered in one of two positions: before the
+result on the tests tab, where re-running is what a teacher reaches for before reading what it will
+replace, and last on a data-only overview, where all that is left is a destructive button and that
+belongs after what it would destroy rather than between the points and the verdict.
+
+## X-027 -- the confirmation for saving points contradicted itself
+
+The operator read the dialog and asked whether it made sense: "the student is recorded as having
+whatever the evaluation worked out for this attempt. What you set here replaces what the evaluation
+worked out." It did not. The manual form has two meanings on one button -- a number in the points
+field overrides the evaluation, an empty one sends `overriddenPoints: null` and hands the decision
+back to it -- and the confirmation had a single wording for both, so in the second case its own two
+sentences denied each other.
+
+The same three lines were hiding something else. With the points field empty and a bonus typed, the
+summary said only "whatever the evaluation worked out" and never mentioned the bonus, which was
+saved all the same. A dialog whose stated purpose is catching a mis-typed digit was reading back a
+number the teacher had not been shown. Both cases now have their own wording, and the bonus is named
+whichever way the form is filled.
+
+Measured through the interface rather than reasoned about: all three shapes were opened on a real
+solution and cancelled -- empty points, empty points with a bonus of 5, and 7 with a bonus of 5 --
+and each read back what it would actually send.
+
+The wording that shipped is the operator's, not this round's first draft. The title is _Zadat body
+ručně_ rather than a question; the evaluation case lost the sentence explaining who decides the
+points, because the summary beside it already says so; a bonus is read back as `+ 3 (bonus)` after
+the figure rather than folded into a phrase. The sign is interpolated separately from the number,
+so a negative bonus -- which the form invites in as many words -- reads `- 3 (bonus)` rather than
+`+ -3 (bonus)`. The heading over the whole form went with it: _Nastavte výsledné hodnocení řešení.
+Zde nastavené hodnoty mohou přepsat hodnocení určené automatickými testy._

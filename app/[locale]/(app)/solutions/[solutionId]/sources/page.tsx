@@ -21,10 +21,12 @@ import {
   type ReviewComment,
   type SolutionReview,
 } from "@/lib/api/solution-review";
+import { getCommentThread } from "@/lib/api/comments";
 import { resolveBreadcrumbs } from "@/lib/breadcrumbs/manifest";
 
 import { Link } from "@/i18n/navigation";
 import { PageShell } from "@/components/page-shell";
+import { PageTabs, type PageTab } from "@/components/page-tabs";
 import { Discussion } from "@/components/comments/discussion";
 import { Markdown } from "@/components/markdown/markdown";
 import { EmptyState } from "@/components/state/empty-state";
@@ -66,10 +68,12 @@ export async function generateMetadata({
  */
 export default async function SolutionSourcesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ solutionId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
-  const [{ solutionId }, locale] = await Promise.all([params, getLocale()]);
+  const [{ solutionId }, query, locale] = await Promise.all([params, searchParams, getLocale()]);
   const [t, status, solution, files, currentUser] = await Promise.all([
     getTranslations("Sources"),
     getTranslations("Status"),
@@ -105,6 +109,22 @@ export default async function SolutionSourcesPage({
 
   const displayLimit = fileDisplayLimit(files);
 
+  /**
+   * Two tabs (X-026): the files with their review, and the discussion.
+   *
+   * **The discussion is the solution's own thread**, the very one its detail screen shows -- this
+   * is a second place to reach one conversation, not a second conversation. An unknown `?tab=`
+   * falls back to the review rather than rendering nothing.
+   */
+  // Read here for the number on its tab; `getCommentThread` is `cache`d, so the `Discussion`
+  // below reuses this answer rather than asking for the thread a second time.
+  const thread = await getCommentThread(solutionId);
+  const tabs: PageTab[] = [
+    { id: "review", label: t("tabs.review") },
+    { id: "discussion", label: t("tabs.discussion"), count: thread?.comments.length ?? 0 },
+  ];
+  const currentTab = tabs.some((tab) => tab.id === query.tab) ? query.tab! : "review";
+
   return (
     <PageShell
       title={t("title")}
@@ -130,123 +150,137 @@ export default async function SolutionSourcesPage({
           </Link>
         </div>
       }
+      tabs={
+        <PageTabs
+          basePath={`/solutions/${solutionId}/sources`}
+          tabs={tabs}
+          current={currentTab}
+          label={t("tabs.label")}
+        />
+      }
     >
       <div className="flex flex-col gap-8">
-        {/* An open review is a warning, not a note. It says the author cannot see any of this yet
+        {currentTab === "review" && (
+          <>
+            {/* An open review is a warning, not a note. It says the author cannot see any of this yet
             and that closing it sends mail -- the two facts a reviewer most needs in mind -- and in
             grey on grey the operator could not see it at all. The surfaces are the opaque `-surface`
             tokens rather than a `/10` tint, here and on its two neighbours, so a box reads the same
             over the page and over a card. */}
-        {canReview && review.startedAt !== null && review.closedAt === null && (
-          <p className="rounded-lg border border-warning bg-warning-surface p-4 text-sm">
-            {t("reviewOpenNote")}
-          </p>
-        )}
-        {canReview && review.closedAt !== null && (
-          <p className="rounded-lg border border-success bg-success-surface p-4 text-sm">
-            {t("reviewClosedNote")}
-          </p>
-        )}
-        {!canReview && solution.authorId === currentUser.id && review.closedAt !== null && (
-          <p
-            className={`rounded-lg border p-4 text-sm ${
-              solution.reviewIssues > 0
-                ? "border-warning bg-warning-surface"
-                : "border-success bg-success-surface"
-            }`}
-          >
-            {solution.reviewIssues > 0
-              ? t("reviewedWithIssues", { issues: solution.reviewIssues })
-              : t("reviewedNoIssues")}
-          </p>
-        )}
+            {canReview && review.startedAt !== null && review.closedAt === null && (
+              <p className="rounded-lg border border-warning bg-warning-surface p-4 text-sm">
+                {t("reviewOpenNote")}
+              </p>
+            )}
+            {canReview && review.closedAt !== null && (
+              <p className="rounded-lg border border-success bg-success-surface p-4 text-sm">
+                {t("reviewClosedNote")}
+              </p>
+            )}
+            {!canReview && solution.authorId === currentUser.id && review.closedAt !== null && (
+              <p
+                className={`rounded-lg border p-4 text-sm ${
+                  solution.reviewIssues > 0
+                    ? "border-warning bg-warning-surface"
+                    : "border-success bg-success-surface"
+                }`}
+              >
+                {solution.reviewIssues > 0
+                  ? t("reviewedWithIssues", { issues: solution.reviewIssues })
+                  : t("reviewedNoIssues")}
+              </p>
+            )}
 
-        <ReviewSummary
-          solutionId={solutionId}
-          comments={grouped.get("") ?? []}
-          bodies={bodies}
-          canComment={canComment}
-          canModerate={canModerate}
-          currentUserId={currentUser.id}
-          reviewClosed={review.closedAt !== null}
-        />
+            <ReviewSummary
+              solutionId={solutionId}
+              comments={grouped.get("") ?? []}
+              bodies={bodies}
+              canComment={canComment}
+              canModerate={canModerate}
+              currentUserId={currentUser.id}
+              reviewClosed={review.closedAt !== null}
+            />
 
-        {files.length === 0 ? (
-          <EmptyState title={t("empty.title")} description={t("empty.description")} />
-        ) : displayLimit !== null ? (
-          <EmptyState
-            title={t("tooMany.title")}
-            description={
-              displayLimit === "count"
-                ? t("tooMany.byCount", { count: files.length, max: MAX_DISPLAYED_FILES })
-                : t("tooMany.bySize")
-            }
-          />
-        ) : (
-          <>
-            {/* The index and the fold controls share a row: both are about getting around the
+            {files.length === 0 ? (
+              <EmptyState title={t("empty.title")} description={t("empty.description")} />
+            ) : displayLimit !== null ? (
+              <EmptyState
+                title={t("tooMany.title")}
+                description={
+                  displayLimit === "count"
+                    ? t("tooMany.byCount", { count: files.length, max: MAX_DISPLAYED_FILES })
+                    : t("tooMany.bySize")
+                }
+              />
+            ) : (
+              <>
+                {/* The index and the fold controls share a row: both are about getting around the
                 files below, and the controls belong at the top right of what they act on. The
                 index keeps the left even with one file, where it is absent. */}
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              {files.length > 1 ? (
-                <nav aria-label={t("fileListLabel")} className="flex flex-wrap gap-2">
-                  {files.map((file) => (
-                    <a
-                      key={file.name}
-                      href={`#${fileAnchorId(file.name)}`}
-                      className="rounded-md border border-input px-2 py-1 font-mono text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                      {file.name}
-                    </a>
-                  ))}
-                </nav>
-              ) : (
-                <span />
-              )}
-              <ToggleAllFiles />
-            </div>
-            <ErrorBoundary>
-              <Suspense fallback={<TableSkeleton label={status("loading")} />}>
-                <SourceFileList
-                  solutionId={solutionId}
-                  files={files}
-                  comments={grouped}
-                  bodies={bodies}
-                  canComment={canComment}
-                  canModerate={canModerate}
-                  currentUserId={currentUser.id}
-                  reviewClosed={review.closedAt !== null}
-                />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        )}
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  {files.length > 1 ? (
+                    <nav aria-label={t("fileListLabel")} className="flex flex-wrap gap-2">
+                      {files.map((file) => (
+                        <a
+                          key={file.name}
+                          href={`#${fileAnchorId(file.name)}`}
+                          className="rounded-md border border-input px-2 py-1 font-mono text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        >
+                          {file.name}
+                        </a>
+                      ))}
+                    </nav>
+                  ) : (
+                    <span />
+                  )}
+                  <ToggleAllFiles />
+                </div>
+                <ErrorBoundary>
+                  <Suspense fallback={<TableSkeleton label={status("loading")} />}>
+                    <SourceFileList
+                      solutionId={solutionId}
+                      files={files}
+                      comments={grouped}
+                      bodies={bodies}
+                      canComment={canComment}
+                      canModerate={canModerate}
+                      currentUserId={currentUser.id}
+                      reviewClosed={review.closedAt !== null}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </>
+            )}
 
-        {/* Comparing is a teacher's tool: the list it offers is *other* attempts, which is exactly
+            {/* Comparing is a teacher's tool: the list it offers is *other* attempts, which is exactly
             what `viewAssignmentSolutions` grants and what the solution's own `viewDetail` does not
             -- an author has that for their own work and must not be shown a picker whose reader
             would be refused. */}
-        {solution.canViewSolutions && (
-          <ComparePicker
-            solutionId={solutionId}
-            assignmentId={solution.assignmentId}
-            authorId={solution.authorId}
-          />
+            {solution.canViewSolutions && (
+              <ComparePicker
+                solutionId={solutionId}
+                assignmentId={solution.assignmentId}
+                authorId={solution.authorId}
+              />
+            )}
+          </>
         )}
 
         {/* The **solution's** thread, the same one its own screen shows -- the legacy app mounts
             it in both places, and the sources are where a remark about the code belongs. Not the
             same thing as S-018's inline review comments, which are attached to a line. */}
-        <ErrorBoundary>
-          <Suspense fallback={<TableSkeleton label={status("loading")} />}>
-            <Discussion
-              threadId={solutionId}
-              subject="solution"
-              canModerate={solution.can.review === true}
-              teacherIds={solution.groupTeacherIds}
-            />
-          </Suspense>
-        </ErrorBoundary>
+        {currentTab === "discussion" && (
+          <ErrorBoundary>
+            <Suspense fallback={<TableSkeleton label={status("loading")} />}>
+              <Discussion
+                threadId={solutionId}
+                subject="solution"
+                canModerate={solution.can.review === true}
+                teacherIds={solution.groupTeacherIds}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        )}
       </div>
     </PageShell>
   );

@@ -19,6 +19,13 @@ export interface PageTab {
    * zero**: "Diskuze 0" is a worse way of saying "Diskuze".
    */
   count?: number;
+  /**
+   * A short string in the same pill, for a tab whose figure is not a plain count -- "2/3" passed
+   * tests, say. **Rendered verbatim**, so a caller that has nothing to say must omit it rather
+   * than pass an empty string; `count`'s "nothing when it is zero" rule cannot apply to text this
+   * component does not understand. When both are given, this one wins.
+   */
+  badge?: string;
 }
 
 export function PageTabs({
@@ -49,9 +56,9 @@ export function PageTabs({
             }`}
           >
             {tab.label}
-            {tab.count !== undefined && tab.count > 0 && (
+            {(tab.badge !== undefined || (tab.count !== undefined && tab.count > 0)) && (
               <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums text-muted-foreground">
-                {tab.count}
+                {tab.badge ?? tab.count}
               </span>
             )}
           </Link>

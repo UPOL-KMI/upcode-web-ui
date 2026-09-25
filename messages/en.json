@@ -1038,18 +1038,18 @@
       },
       "awaitingReview": {
         "title": "Waiting to be marked by a teacher",
-        "explain": "This exercise is not graded automatically — nothing is run and nothing is compared. A teacher awards the points by hand; anything they have to say about the solution is in the discussion below."
+        "explain": "This exercise is not graded automatically — nothing is run and nothing is compared. A teacher awards the points by hand; anything they have to say about the solution is under Discussion."
       },
       "reviewed": {
         "title": "Marked by a teacher: {points}",
-        "explain": "The points were awarded by a teacher. Anything they had to say may be in the discussion below."
+        "explain": "The points were awarded by a teacher. Anything they had to say may be under Discussion."
       }
     },
     "plagiarisms": "Similarities",
     "pageTitle": "Solution",
     "verdict": {
       "title": "The teacher's verdict",
-      "explain": "What this attempt is worth, whatever the tests said. Points set here replace the ones the evaluation computed.",
+      "explain": "Set the final marks for this solution. What is set here can replace the marks the automatic tests worked out.",
       "accept": "Accept this attempt",
       "unaccept": "Stop accepting this attempt",
       "acceptNote": "The best-scoring attempt counts by default. Use the button to force this one into the overall result instead.",
@@ -1065,14 +1065,16 @@
       "overrideNote": "Leave the first field empty to let the evaluation decide. A bonus may be negative.",
       "overMax": "You are awarding more points ({points}) than the maximum ({max}). <action>Click here</action> to move the excess into the bonus.",
       "confirmSave": {
-        "title": "Save these points?",
+        "title": "Set the points by hand",
         "description": "The student is recorded as having {summary} for this attempt. What you set here replaces what the evaluation worked out, and a notification is sent to the student.",
+        "descriptionEvaluated": "The student is recorded as having {summary} for this attempt. A notification about the change is sent to the student.",
         "confirm": "Save the points"
       },
       "summary": {
         "evaluated": "whatever the evaluation worked out",
+        "evaluatedWithBonus": "whatever the evaluation worked out {sign} {bonus} (bonus)",
         "points": "{points} of {max} points",
-        "withBonus": "{points} of {max} points plus a bonus of {bonus}"
+        "withBonus": "{points} of {max} points {sign} {bonus} (bonus)"
       },
       "confirmAccept": {
         "title": "Accept this attempt?",
@@ -1104,7 +1106,8 @@
     },
     "rerun": {
       "title": "Running it again",
-      "explain": "Run this solution through the pipeline again -- what to do after fixing a test, a limit or a judge that graded it wrongly. The result replaces what is shown above.",
+      "explain": "Run this solution through the pipeline again -- what to do after fixing a test, a limit or a judge that graded it wrongly. The result replaces the current evaluation.",
+      "dataOnlyTitle": "Removing the solution",
       "resubmit": "Run it again",
       "resubmitDebug": "Run it again in debug mode",
       "delete": "Delete this solution",
@@ -1165,6 +1168,12 @@
         "weighted": "Each test carries its own weight in the score.",
         "universal": "The score is a custom expression over the tests."
       }
+    },
+    "tabs": {
+      "label": "Solution sections",
+      "overview": "Overview",
+      "tests": "Automatic tests",
+      "discussion": "Discussion"
     }
   },
   "Sources": {
@@ -1200,6 +1209,11 @@
       "document": "Document {name}",
       "loading": "Reading the spreadsheet…",
       "sheetFailed": "The spreadsheet could not be read — download the file instead."
+    },
+    "tabs": {
+      "label": "File sections",
+      "review": "Review",
+      "discussion": "Discussion"
     }
   },
   "Review": {
