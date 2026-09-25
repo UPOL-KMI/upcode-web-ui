@@ -43,8 +43,15 @@ export async function createExercise(groupId: string): Promise<ActionResult<{ id
   }
 }
 
+/**
+ * `version` is a parameter rather than a form field: it is core-api's optimistic lock, and the only
+ * correct value is the one the *server* last sent. Held in form state it froze at mount, so a
+ * second save after a successful first one was refused with `400-010` -- the reader's own earlier
+ * save reported back as somebody else's.
+ */
 export async function updateExercise(
   exerciseId: string,
+  version: number,
   values: ExerciseSettingsValues,
 ): Promise<ActionResult<{ id: string }>> {
   const t = await getTranslations("ExerciseEdit.errors");
@@ -67,7 +74,7 @@ export async function updateExercise(
     await apiPost(
       "/v1/exercises/{id}",
       {
-        version: parsed.data.version,
+        version,
         difficulty: parsed.data.difficulty,
         localizedTexts: texts,
         isPublic: parsed.data.isPublic,
