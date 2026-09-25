@@ -132,6 +132,7 @@ export const ROUTE_MESSAGE_NAMESPACES: Record<string, readonly string[]> = {
     "Toast",
   ],
   "/assignments/[assignmentId]/edit": [
+    "Assignment.sync",
     "AssignmentEdit",
     "AssignmentEdit.delete",
     "Dialog",
@@ -229,6 +230,7 @@ export const ROUTE_MESSAGE_NAMESPACES: Record<string, readonly string[]> = {
     "Dialog",
     "Error",
     "Exercises.create",
+    "Exercises.filters",
     "Nav",
     "Nav.brand",
     "Nav.locale",

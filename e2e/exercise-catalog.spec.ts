@@ -74,9 +74,10 @@ test("narrows to one author, and offers the author their own in one click", asyn
   expect(mine).toBeGreaterThan(0);
   expect(mine).toBeLessThan(everyone);
 
-  // Every row on screen is now that author's, which is the claim the filter makes. The fifth
-  // column, not the second: name, difficulty, environments, tags, author.
-  const authorCells = main.locator("tbody tr td:nth-child(5)");
+  // Every row on screen is now that author's, which is the claim the filter makes. The sixth
+  // column: name, difficulty, environments, group, tags, author. (X-016 inserted Group before
+  // Tags, which moved this by one -- the reason the index is spelled out rather than guessed.)
+  const authorCells = main.locator("tbody tr td:nth-child(6)");
   for (const text of await authorCells.allInnerTexts()) {
     expect(text.trim()).toBe("Sam Supervisor");
   }
@@ -122,4 +123,41 @@ test("never prints a message key where a difficulty belongs", async ({ page }) =
 
   await expect(main.getByText(/^Showing 1–20 of \d+\.$/)).toBeVisible();
   await expect(main).not.toContainText("difficulty.");
+});
+
+test("narrows the catalogue to what a group may be given, ancestors included", async ({ page }) => {
+  await signIn(page, SUPERVISOR, "/en/exercises");
+  const main = page.getByRole("main");
+
+  const countOf = async () =>
+    Number(
+      (await main.getByText(/^Showing \d+–\d+ of \d+\.$/).innerText()).match(/of (\d+)\./)![1],
+    );
+  const everyone = await countOf();
+
+  // The column exists and names where each exercise is stored.
+  await expect(main.getByRole("columnheader", { name: "Group" })).toBeVisible();
+
+  // Filtering by the seeded course narrows the list without emptying it. The filter is a combobox
+  // since X-022, and its list is portalled out of `main`, so the options are looked for on `page`.
+  await main.getByRole("combobox", { name: "Group" }).click();
+  const groups = page.getByRole("listbox");
+  // The first option clears the filter; the second is the outermost group the reader teaches.
+  await groups.getByRole("option").nth(1).click();
+  await main.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page).toHaveURL(/[?&]group=[0-9a-f-]+/);
+
+  const narrowed = await countOf();
+  expect(narrowed).toBeGreaterThan(0);
+  expect(narrowed).toBeLessThanOrEqual(everyone);
+
+  // **The sentence that stops the closure reading as a bug.** Filtering by one group lists
+  // exercises stored in its ancestors, so the Group column can name a different group than the
+  // filter does -- which is correct and needs saying.
+  await expect(main.getByText(/including the ones stored in its parent groups/i)).toBeVisible();
+
+  // And it is a shareable address, like every other filter on this screen.
+  const url = page.url();
+  await page.goto(url);
+  expect(await countOf()).toBe(narrowed);
 });

@@ -1,6 +1,8 @@
 "use client";
 
 import { FormProvider, useFormContext } from "react-hook-form";
+
+import { entryPointChoices, entryPointIsUndelivered } from "@/lib/exercise-config/entry-point";
 import { useTranslations } from "next-intl";
 
 import { updateExerciseConfig } from "@/lib/actions/exercise-config";
@@ -360,7 +362,13 @@ function EnvironmentFields({
   onlyOne: boolean;
 }) {
   const t = useTranslations("ExerciseConfig.config");
-  const { register } = useFormContext<ConfigValues>();
+  const { register, watch } = useFormContext<ConfigValues>();
+
+  // Watched rather than read once: the warning below is about the relationship between two fields
+  // in this very fieldset, and it has to answer while the author is still fixing it.
+  const path = `tests.${index}.environments.${environmentId}` as const;
+  const entryPoint = watch(`${path}.entryPoint`) ?? "";
+  const extraFiles = watch(`${path}.extraFiles`) ?? [];
 
   if (!fields) return null;
   const shown =
@@ -372,8 +380,6 @@ function EnvironmentFields({
     fields.execTargets;
   if (!shown) return null;
 
-  const path = `tests.${index}.environments.${environmentId}` as const;
-
   return (
     <fieldset className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/20 p-3">
       <legend className="px-1 text-xs font-semibold tracking-wide uppercase">
@@ -384,9 +390,20 @@ function EnvironmentFields({
           <FileSelect
             name={`${path}.entryPoint`}
             label={t("entryPoint")}
-            files={files}
+            // Only what this test's extra files deliver. Offering the exercise's attachments was
+            // the trap: they look available and are not.
+            files={entryPointChoices(extraFiles)}
             readOnly={readOnly}
-            description={t("entryPointExplain")}
+            description={
+              entryPointChoices(extraFiles).length === 0
+                ? t("entryPointNeedsExtraFiles")
+                : t("entryPointExplain")
+            }
+            warning={
+              entryPointIsUndelivered(entryPoint, extraFiles, files)
+                ? t("entryPointNotDelivered")
+                : undefined
+            }
           />
         )}
         {fields.successExitCodes && (

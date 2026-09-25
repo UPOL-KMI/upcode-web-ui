@@ -9,13 +9,14 @@ import {
   type ArchivedScope,
 } from "@/lib/api/exercises";
 import { getCurrentUser } from "@/lib/api/current-user";
-import { getMyGroups } from "@/lib/api/groups";
+import { getGroupList, getMyGroups } from "@/lib/api/groups";
 import { getRuntimeEnvironments } from "@/lib/api/runtime-environments";
 import { resolveBreadcrumbsForNamespace } from "@/lib/breadcrumbs/manifest";
 
 import { Link } from "@/i18n/navigation";
 import { CreateExercise } from "@/components/exercises/create-exercise";
 import { ExerciseTable } from "@/components/exercises/exercise-table";
+import { GroupFilter } from "@/components/exercises/group-filter";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
@@ -59,6 +60,7 @@ export default async function ExercisesPage({
     env?: string;
     tag?: string;
     author?: string;
+    group?: string;
     page?: string;
   }>;
 }) {
@@ -69,22 +71,52 @@ export default async function ExercisesPage({
   const environments = query.env ? [query.env] : [];
   const tags = query.tag ? [query.tag] : [];
   const authors = query.author ? [query.author] : [];
+  const group = query.group || null;
   const page = Math.max(0, Number(query.page ?? "0") || 0);
 
-  const [t, tImport, catalog, allEnvironments, allTags, allAuthors, viewer, mine, breadcrumbs] =
-    await Promise.all([
-      getTranslations("Exercises"),
-      getTranslations("ExerciseImport"),
-      getExerciseCatalog({ search, archived, environments, tags, authors, page }, locale),
-      getRuntimeEnvironments(),
-      getExerciseTags(),
-      getExerciseAuthors(),
-      getCurrentUser(),
-      // Where a new exercise could go: core-api's `createExercise` wants a group the reader
-      // supervises or administers, which is exactly this list (T-008).
-      getMyGroups(locale),
-      resolveBreadcrumbsForNamespace("Exercises", locale),
-    ]);
+  const [
+    t,
+    tImport,
+    catalog,
+    allEnvironments,
+    allTags,
+    allAuthors,
+    viewer,
+    mine,
+    allGroups,
+    breadcrumbs,
+  ] = await Promise.all([
+    getTranslations("Exercises"),
+    getTranslations("ExerciseImport"),
+    getExerciseCatalog({ search, archived, environments, tags, authors, group, page }, locale),
+    getRuntimeEnvironments(),
+    getExerciseTags(),
+    getExerciseAuthors(),
+    getCurrentUser(),
+    // Where a new exercise could go: core-api's `createExercise` wants a group the reader
+    // supervises or administers, which is exactly this list (T-008).
+    getMyGroups(locale),
+    // Every group this reader can see: the names the Group column prints, and -- narrowed to the
+    // ones they teach -- the filter's own options (X-016). Built on the same memoized fetch the
+    // line above uses, so it is not a second round trip.
+    getGroupList(locale),
+    resolveBreadcrumbsForNamespace("Exercises", locale),
+  ]);
+
+  /**
+   * Names for the Group column, and the paths that disambiguate them.
+   *
+   * **A group the reader cannot see is simply absent**, and the column then prints nothing for it
+   * rather than a raw id -- the same choice `GroupListEntry.path` already makes for an invisible
+   * ancestor. An exercise whose every group is invisible looks unattached, which is the honest
+   * rendering of what this reader is allowed to know.
+   */
+  const groupNames = new Map(
+    allGroups.map((entry) => [entry.id, { name: entry.name, path: entry.path }]),
+  );
+  // The filter offers what the reader may act on -- inherited administration included (DEC-150),
+  // which is what `membership: "teacher"` already means on this list.
+  const teachableGroups = allGroups.filter((entry) => entry.membership === "teacher");
 
   // Whether anything is narrowing the list, which decides what "nothing here" means: an empty
   // catalog and a filter that matched nothing are different sentences.
@@ -93,7 +125,8 @@ export default async function ExercisesPage({
     archived !== "default" ||
     environments.length > 0 ||
     tags.length > 0 ||
-    authors.length > 0;
+    authors.length > 0 ||
+    group !== null;
   const lastPage = Math.max(0, Math.ceil(catalog.totalCount / CATALOG_PAGE_SIZE) - 1);
 
   /** The same view with one filter swapped, keeping the rest and dropping the page. */
@@ -103,6 +136,7 @@ export default async function ExercisesPage({
     if (archived !== "default") params.set("archived", archived);
     if (environments[0]) params.set("env", environments[0]);
     if (tags[0]) params.set("tag", tags[0]);
+    if (group) params.set("group", group);
     if (change.author !== null) params.set("author", change.author);
     const serialized = params.toString();
     return serialized ? `/exercises?${serialized}` : "/exercises";
@@ -124,6 +158,7 @@ export default async function ExercisesPage({
     if (environments[0]) params.set("env", environments[0]);
     if (tags[0]) params.set("tag", tags[0]);
     if (authors[0]) params.set("author", authors[0]);
+    if (group) params.set("group", group);
     if (target > 0) params.set("page", String(target));
     const serialized = params.toString();
     return serialized ? `/exercises?${serialized}` : "/exercises";
@@ -213,6 +248,18 @@ export default async function ExercisesPage({
             </label>
           )}
 
+          {teachableGroups.length > 0 && (
+            <GroupFilter
+              name="group"
+              value={group}
+              groups={teachableGroups.map((entry) => ({
+                id: entry.id,
+                name: entry.name,
+                path: entry.path,
+              }))}
+            />
+          )}
+
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             {t("filters.archived")}
             <select
@@ -257,7 +304,14 @@ export default async function ExercisesPage({
               })}
             </p>
 
-            <ExerciseTable page={catalog} />
+            {/* The closure is correct and surprising: filter by one lab and rows appear whose
+                Group column names the course above it, because that is where they are stored and
+                the lab can assign them all the same. Said once, above the table. */}
+            {group !== null && (
+              <p className="text-sm text-muted-foreground">{t("filters.groupExplain")}</p>
+            )}
+
+            <ExerciseTable page={catalog} groups={groupNames} />
 
             {lastPage > 0 && (
               <nav aria-label={t("pagination.label")} className="flex items-center gap-3 text-sm">

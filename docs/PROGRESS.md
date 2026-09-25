@@ -6795,3 +6795,219 @@ own files and delivering them is a different field entirely. Selecting `main.py`
 name into the run command and copies nothing, which is how the operator arrived at a job whose
 first error was `FileNotFoundError: '/box/main.py'`. The two variables are orthogonal by design in
 core-api; it is this screen that puts them side by side without saying so.
+
+### 2026-09-22 — the catalogue admits which group an exercise belongs to
+
+**The whole ticket was a field the type refused to read.** `groupsIds` has been on every
+`/v1/exercises` row since forever (`ExerciseViewFactory.php:60`); `ExercisePayload` simply never
+declared it, so TypeScript would not let anybody look. Declaring it, carrying it onto
+`ExerciseListItem`, and resolving the names from `getGroupList` -- which is built on the same
+memoized `/v1/groups` fetch the group screens already make -- is the entire Group column.
+
+**The filter needed no work at all, which is the part worth knowing.** `filters[groupsIds][]` is
+not "attached to this group": core-api expands the id through `groupsIdsAncestralClosure` before
+matching, so a lab inherits whatever its course holds. The assign screen's picker has relied on
+that since G-010. Measured here before trusting it: the child group returns its parent's five
+exercises, an unrelated branch returns none.
+
+**So the screen now shows two different answers at once**, and that is the one thing that needed
+design rather than plumbing. Filter by a lab and rows appear whose Group column names the course
+above it -- correct, and indistinguishable from a bug without a word of explanation. One sentence
+appears above the table whenever a group filter is on, and only then.
+
+**Two smaller decisions.** The option labels are the immediate parent and the name: the chain from
+the instance root is _Univerzita Palackého v Olomouci / Katedra Informatiky / Výuka / KMI/ALGO1 -
+Alg. 1 / ALGO1 - Úterý_, which a `<select>` truncates to nothing useful, and `group-info.tsx` had
+already settled on showing one parent. The full path is on the option's `title` and on the
+column's hint. And a group the reader cannot see prints as nothing rather than as a UUID, matching
+what `GroupListEntry.path` does for an invisible ancestor.
+
+**One thing the change broke and fixed.** Putting Group before Tags moved Author from the fifth
+cell to the sixth, and `exercise-catalog.spec.ts` asserted `td:nth-child(5)` with a comment naming
+the old column order. Corrected, with the reason written beside it -- the suite cannot run on this
+deployment, so a stale index would have survived until somebody re-seeded and blamed the author
+filter.
+
+### 2026-09-25 — the group filter becomes searchable, and starts showing what sits inside what
+
+**The complaint was that the filter is unreadable, and it was right.** X-016 shipped a `<select>`
+whose options were `parent / name` and nothing else: seven strings, several of them beginning with
+the same faculty, with no indication that `KMI/JP - Jazyk Python` contains `2025/26 - Jazyk Python
+(36b)`. That containment is the entire decision — filtering by the course returns what the seminar
+group would return and more (DEC-153) — and the control withheld it.
+
+**Matching against the full path is what makes one query answer the question.** A search for
+`KMI/JP` matches the course by its own name and the seminar group by its path, so both arrive
+together; `groupRows`, the assign offer's tree flattener from T-012, then puts each match under the
+containers it hangs in. The indentation is therefore the real hierarchy rather than an artefact of
+which rows happened to survive the filter — which is the property the new
+`lib/groups/group-search.test.ts` pins, using the operator's own tree from the screenshot.
+
+**One latent bug in `groupRows` fell out of reusing it.** It recorded a group's path as shown but
+not the group's own name, so a group that was both selectable and somebody's container was printed
+twice: once as a row, once as the heading above its children. The assign offer never hit it because
+a container there cannot take an assignment and is absent from the list in the first place. Fixed
+where it lives, with a test naming the case.
+
+**Punctuation is deliberately not folded.** Case and diacritics are (`utery` finds `ALGO1 - Úterý`),
+but course codes are written `KMI/JP`, and stripping the slash would turn that query into a fuzzy
+match on every path whose letters happen to line up.
+
+**The screen still works without JavaScript**, which is not sentiment: every filter here is a URL and
+a round trip, and a shareable narrowed view is the point of the design. The native `<select>` is what
+the server renders and what a reader without scripting keeps; the combobox replaces it on the first
+client render. `useSyncExternalStore` does that rather than a `setState` in an effect — React
+provides it exactly for a value that differs between server and client, and
+`react-hooks/set-state-in-effect` rejects the alternative outright.
+
+**Accessibility is where the indentation had to be paid for.** A listbox may contain nothing but
+options, so the heading rows are `aria-hidden` decoration and each option carries the full chain on
+its own `aria-label`: the eye reads the indentation, a screen reader hears
+`Výuka / KMI/JP - Jazyk Python / 2025/26 - Jazyk Python (36b)`.
+
+**Run:** five checks green (`typecheck`, `lint`, `format:check`, `build`, `test` — 402 unit tests,
+seven of them new). **Not run:** the e2e suite, which still cannot run on this deployment; the
+catalogue spec's group step was rewritten from `selectOption` to the combobox anyway, so it does not
+rot in place.
+
+### 2026-09-25 — the dashboard stops showing other people's courses
+
+**The same complaint as DEC-150, in the two places that round left alone.** The sidebar's "Moje
+výuka" has followed direct membership since X-014; the dashboard's calendar and teaching section
+still read `teaching`, the inherited-plus-direct set, so an administrator of a department opened
+the app onto every colleague's deadlines. `getMyGroups` has returned `teachingDirect` since X-014,
+so there was no API work to do — the ticket is which of two lists each call site reads.
+
+**Three things stay wide, and each for its own reason.** `member`, because a student's deadlines
+belong in their month whatever they teach. The review queues, because core-api decides whose plate
+a review is on (`/v1/users/{id}/pending-reviews`) and deriving them from a group list would hide
+work that was genuinely assigned. And `groupNames`, because it resolves the names those queues
+print — narrowed, a review in a group the reader administers without teaching would render without
+one. Whether the teaching half appears at all is likewise still the wide question.
+
+**It is not reproducible on this deployment, and that is worth saying plainly.** The issue named
+`ALGO1 - Úterý` — a real course under a parent the operator administers, belonging to somebody else
+— as the thing that should disappear. It holds **zero assignments**, so it contributes no deadlines
+and the dashboard renders identically before and after. Measured both ways rather than assumed: the
+change was stashed, the page re-read, and the output compared character for character.
+
+**So the behaviour is pinned by unit tests instead of by the page.** The choice moved into
+`lib/groups/deadline-sources.ts`, a pure module — `lib/api/dashboard.ts` imports `server-only` and
+nothing in it can be reached from a test — with five cases: an inherited course is in neither list,
+a studied group survives, a group both studied in and taught appears once, containers are dropped
+from both, and nobody's dashboard is not an error. The e2e seed has no inherited-but-not-taught
+group to assert against; worth adding the next time the seed changes, and recorded on the ticket.
+
+**Run:** five checks green (`typecheck`, `lint`, `format:check`, `build`, `test` — 407 unit tests,
+five of them new). **Not run:** the e2e suite, which still cannot run on this deployment.
+
+### 2026-09-25 — a re-sync asks which parts, and there is a way back from an override
+
+**Synchronise sent nothing, and nothing is core-api's "everything".** So a teacher picking up a
+changed test file also lost the text they had adjusted for their own group — silently, with no undo,
+and then permanently out of reach: an override makes the assignment's copy the newer one, core-api
+stops calling the locale out of sync, the drift notice goes quiet, and the only sync button lived
+inside that notice. Two halves of one gap, closed together.
+
+**The dialog lists every part, not only the drifted ones.** That reverses what the ticket asked for,
+on the operator's say-so, and he was right: a short list leaves "is that everything, or is the rest
+hidden?" unanswered, while a disabled row marked _Aktuální_ answers it. There is no choice to be
+paralysed by — the rows that match cannot be ticked.
+
+**The texts are the one part that is never disabled, and the reason is worth keeping.** For eleven
+parts `upToDate` is a genuine equality check. `Assignment::areLocalizedTextsInSync` is not: it
+returns true whenever the assignment's copy is not _older_, so an overridden text reports as up to
+date while differing, and nothing core-api publishes distinguishes that from an identical one.
+Disabling it on that evidence would lock away exactly what the second button is for.
+
+**`files` and `fileLinks` are one checkbox.** Both branches of `syncWithExercise` clear the
+assignment's collection and refill it from the exercise, and a link holds a reference to an
+`ExerciseFile` — so the links alone point at files the assignment does not hold, and the files alone
+leave the existing links pointing at what was just cleared. One box, both names, drifted when either
+half is.
+
+**The two entry points default oppositely, deliberately.** From the drift notice everything stale
+except the texts; from the texts form's own button only the texts. Syncing a text destroys work with
+no undo; skipping one is fixed by syncing again. Said in the code, or it reads as an inconsistency
+and gets "fixed".
+
+**Measured on the deployment, both ways in, against a real drifted assignment** — `Cvičení 01 - Úkol`
+had genuinely drifted on `limits`. From the drift notice: _Limity_ ticked, _Texty zadání_ offered and
+unticked, the other nine disabled. From the texts form: _Texty zadání_ ticked, _Limity_ offered and
+unticked, the rest disabled. The exercise is named in the sentence and links to the catalogue in a
+new tab; a reader who may not read it gets the sentence without the name rather than a failure.
+
+**What was not pressed: the confirm button.** It overwrites real content irreversibly, and there was
+no assignment on this deployment whose loss would have been acceptable. The selection logic is pure
+and carries ten tests instead — including that a part the reader could not tick is never sent, which
+guards a stale selection surviving a refresh.
+
+**Run:** five checks green (419 unit tests). **Not run:** the e2e suite, as ever on this deployment.
+
+### 2026-09-25 — the exercise form stops arguing with itself
+
+**The operator could save an exercise once.** The second save was refused with "the exercise was
+edited in the meantime and the version has changed" — by his own first save, seconds earlier.
+
+`version` is core-api's optimistic lock and it lived in the form's own schema, so it held whatever
+the page was rendered with. Save one sent 4 and left the server on 5; save two sent 4 again. The
+form does call `router.refresh()`, and that does bring 5 down as a prop, but React Hook Form reads
+`defaultValues` at mount and the component outlives a refresh.
+
+**It is a parameter now, read from the props on every submit** — which is what
+`assignment-texts-form.tsx` and both pipeline editors have always done, and the reason they were
+never reported. Every other versioned form was checked; none of them holds the lock in form state.
+
+**Pinned by a schema test, because nothing else could catch it.** It is a component-lifecycle fault:
+types, lint and the rest of the suite were all perfectly happy with the broken version. The test
+asserts the schema does not carry `version` at all, which is the thing that must stay true.
+
+**Measured on the running deployment, the operator's own way in:** three consecutive saves of a real
+exercise, no refusal, no error banner, three `200`s with a refresh between each. Saving unchanged
+values is safe to do to somebody else's data, which is why it could be tested at all —
+`Localizations::updateCollection` replaces a localized entity only when it actually differs, so the
+assignments made from that exercise were not marked as drifted by the test.
+
+**Left alone, deliberately:** the refusal arrives in English, because `failure()` passes core-api's
+message through verbatim (DEC-092). After this it is only reachable when a colleague really did save
+first. Translating server-action errors by code is its own round, and its own ticket when asked for.
+
+### 2026-09-25 — the entry point offers what will actually be there
+
+**Two fields sit side by side and only one of them does anything.** `entry-point` writes a name
+into the run command; `extra-files` is the only thing that copies a file into the sandbox. The
+dropdown was populated from the exercise's own attachments, so choosing one looked like a finished
+decision -- and attaching a file to an exercise puts it nowhere near the box.
+
+The operator hit that on the first package exercise: a harness uploaded to the exercise, picked as
+the entry point, Extra files left empty. Every test died with `FileNotFoundError: '/box/main.py'`,
+and the job configuration said why without saying it to anybody -- the name appears once per test
+as the run command's argument and in no `fetch` or `cp` task at all.
+
+**The first fix was a warning, and he improved on it.** A warning still leaves a list full of names
+that cannot work; better to stop offering them. The dropdown now lists **only what this test's
+extra files deliver**, so it is empty until the author adds one and the field's description says
+where options come from. A renamed delivery appears under the name it lands as, because that is
+what the run command will have to say.
+
+**A configured value stays selectable even when it is not in the list.** That is the one thing this
+screen cannot express -- an entry point naming a _student's_ submitted file -- and opening the form
+and saving it must not quietly drop the reference. Such a value is exactly what the warning is
+about, so the two pieces cover each other.
+
+**It warns and does nothing else.** Adding the file to Extra files automatically would be wrong for
+a student's own file, which the exercise must not supply, and would read as magic. `FileSelect`
+grew a `warning` prop beside its `error` one rather than borrowing it: the value is one core-api
+accepts, so it carries no `aria-invalid` and nobody is told the field is broken when it is not.
+
+**What the rule stays quiet about is the part worth testing**, so it is a pure module with fourteen
+cases: a name that is not an exercise attachment at all, a pair delivering under a different name,
+a pair with no file chosen, two pairs delivering the same name, and the empty list.
+
+**Measured in the browser, not reasoned about.** On a real eleven-test exercise: eleven warnings
+with Extra files empty, none with it set. Clearing one single test's pair with the form open leaves
+that test's dropdown offering only its stale value, switches its description to the "add extra
+files" line, and raises exactly one more warning -- no reload. And a test delivering `main.py` as
+`run.py` offers `run.py`, warns while the entry point still says `main.py`, and falls quiet the
+moment `run.py` is chosen. That is the whole point of watching the values rather than reading them
+once, and of scoping the check per test.

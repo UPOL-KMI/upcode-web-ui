@@ -1283,6 +1283,7 @@
       "name": "Exercise",
       "difficulty": "Difficulty",
       "environments": "Languages",
+      "group": "Group",
       "tags": "Tags",
       "author": "Author",
       "updated": "Updated"
@@ -1316,8 +1317,14 @@
       "apply": "Search",
       "author": "Author",
       "anyAuthor": "Anyone",
+      "group": "Group",
+      "anyGroup": "All groups",
+      "groupExplain": "Listed are the exercises that can be assigned in the selected group — including the ones stored in its parent groups. The Group column may therefore name a different group than the one you filtered by.",
       "mine": "Only mine",
-      "everyone": "Everyone's"
+      "everyone": "Everyone's",
+      "groupSearchPlaceholder": "Search for a group…",
+      "groupNoMatch": "No group matches.",
+      "groupMatchCount": "{count, plural, =0 {No groups} one {# group} other {# groups}}"
     },
     "pagination": {
       "label": "Catalog pages",
@@ -1787,6 +1794,8 @@
       },
       "entryPoint": "Entry point",
       "entryPointExplain": "The file to start. Left unset, the submitted file is started.",
+      "entryPointNeedsExtraFiles": "The options come from Extra files below — only what is actually delivered into the sandbox can be chosen.",
+      "entryPointNotDelivered": "The entry point only names the entry; delivering the file into the sandbox is what Extra files below are for.",
       "successExitCodes": "Exit codes that count as success",
       "successExitCodesExplain": "Single values or ranges, separated by commas — for example 0, 2-4.",
       "extraFiles": "Extra files",
@@ -3028,12 +3037,22 @@
         "exerciseEnvironmentConfigs": "Environment configuration",
         "hardwareGroups": "Hardware groups",
         "limits": "Limits",
-        "mergeJudgeLogs": "Judge log merge flag"
+        "mergeJudgeLogs": "Judge log merge flag",
+        "filesAndLinks": "The exercise's files and the links into them",
+        "upToDate": "Up to date"
       },
       "sync": "Bring it up to date",
       "syncing": "Synchronising…",
       "synced": "The assignment now matches the exercise.",
-      "syncFailed": "The assignment could not be re-synchronised."
+      "syncFailed": "The assignment could not be re-synchronised.",
+      "nothingSelected": "Tick at least one part to overwrite.",
+      "confirm": {
+        "title": "Replace parts of this assignment from the exercise?",
+        "description": "The ticked parts will be replaced by what the original exercise <exercise>{name}</exercise> holds now. Your current version of those parts is gone and cannot be brought back.",
+        "action": "Replace the ticked parts",
+        "unknown": "This part is not one this app knows and cannot be ticked: {parts}.",
+        "theExercise": "in the catalogue"
+      }
     },
     "solvers": {
       "heading": "The group's progress",
@@ -3156,7 +3175,9 @@
         "nameRequired": "The assignment needs a name in at least one language.",
         "textOrLink": "Fill in the text, or give an address where it can be read.",
         "invalidLink": "This has to be a full address, starting with http:// or https://."
-      }
+      },
+      "restoreFromExercise": "Take part of the configuration from the exercise",
+      "restoreDiscardsEdits": "You have unsaved changes here. Taking the exercise's text discards them."
     },
     "delete": {
       "title": "Delete the assignment",

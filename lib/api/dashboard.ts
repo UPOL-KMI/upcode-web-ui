@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { localizedName, type LocalizedText } from "@/lib/i18n-text/localized";
+import { deadlineSources } from "@/lib/groups/deadline-sources";
 import { isDataOnly } from "@/lib/status/exercise-validation";
 
 import { requireSession } from "@/lib/auth/require-session";
@@ -337,23 +338,28 @@ async function fetchReviewQueue(
 }
 
 export async function getTeacherDashboard(locale: string): Promise<TeacherDashboard> {
-  const { member, teaching: allTeaching } = await getMyGroups(locale);
-  // **An organizational group provably holds no assignments**: core-api refuses to create one in a
-  // group of that kind, and refuses to turn a group that already has any into one ("The group
-  // already contains assignments"). Asking each of them for its assignment list is a round trip
-  // whose answer is known to be empty, and on a department's tree there are several of them.
+  const mine = await getMyGroups(locale);
+  const { member, teaching: allTeaching } = mine;
   const teaching = allTeaching.filter((group) => !group.organizational);
+  // Which courses the deadlines come from, and why they are the narrow set: `deadlineSources`.
+  const { teaching: own } = deadlineSources(mine);
+  // Whether this reader is a teacher *anywhere* is still the wide question -- somebody who
+  // administers a department without teaching in it can still have a review on their plate.
   if (teaching.length === 0) return { pendingReviews: [], reviewRequests: [], upcoming: [] };
 
   const session = await requireSession();
   const [pending, requested, assignmentsPerGroup] = await Promise.all([
     fetchReviewQueue("/v1/users/{id}/pending-reviews", session.userId),
     fetchReviewQueue("/v1/users/{id}/review-requests", session.userId),
-    Promise.all(teaching.map((group) => fetchGroupAssignments(group.id))),
+    Promise.all(own.map((group) => fetchGroupAssignments(group.id))),
   ]);
 
   // A solution's group comes from its assignment, and the name from the lists already fetched --
   // a teacher can hold a pending review in a group they also study in, so both lists count.
+  //
+  // **Built from the wide set on purpose.** core-api decides what is on this person's plate, and it
+  // may put a review there from a group they administer without teaching; looked up in the narrow
+  // set, that review would print without a group name.
   const groupNames = new Map([...member, ...teaching].map((group) => [group.id, group.name]));
 
   const authorIds = [
@@ -391,7 +397,7 @@ export async function getTeacherDashboard(locale: string): Promise<TeacherDashbo
   };
 
   const now = Date.now() / 1000;
-  const upcoming = teaching
+  const upcoming = own
     .flatMap((group, index) => openAssignmentsOf(assignmentsPerGroup[index]!, group, locale, now))
     .sort(byUrgency(locale));
 
@@ -409,10 +415,14 @@ export async function getTeacherDashboard(locale: string): Promise<TeacherDashbo
  * Every deadline in one month, for the dashboard's calendar (S-003).
  *
  * Covers both halves of the reader's life at once -- the groups they study in and the ones they
- * teach -- because a calendar that showed only one of them would be lying about their month. This
- * is also exactly the set core-api's own iCal export feeds ("deadline events for all assignments
- * in all groups related to you", the legacy calendar-token screen's own words), so the in-app
- * calendar and a subscribed one cannot disagree.
+ * teach -- because a calendar that showed only one of them would be lying about their month.
+ *
+ * **The teaching half is the courses they are named on, not the ones they inherited** (X-017).
+ * core-api's own iCal export is wider than this ("deadline events for all assignments in all groups
+ * related to you", the legacy calendar-token screen's own words), so a subscribed calendar and this
+ * one no longer agree for an administrator of a department -- which is the point: what they inherit
+ * can be several hundred deadlines belonging to colleagues, and a month drawn out of that is not a
+ * calendar.
  *
  * Costs nothing on a page that already rendered the other two sections: `fetchGroupAssignments`
  * is memoized per request, so the groups they were built from are not fetched a second time here.
@@ -455,16 +465,7 @@ export async function getDeadlineCalendar(
   timeZone: string,
   range: { first: string; last: string },
 ): Promise<Map<string, CalendarDeadline[]>> {
-  const { member, teaching } = await getMyGroups(locale);
-  // Same as the teacher dashboard above: a container has no deadlines to contribute, by core-api's
-  // own rule, so it is not asked for any.
-  const groups = [
-    ...new Map(
-      [...member, ...teaching]
-        .filter((group) => !group.organizational)
-        .map((group) => [group.id, group]),
-    ).values(),
-  ];
+  const { calendar: groups } = deadlineSources(await getMyGroups(locale));
   if (groups.length === 0) return new Map();
 
   const assignmentsPerGroup = await Promise.all(

@@ -33,6 +33,11 @@ import { buttonClasses } from "@/components/button";
  * `version` rides along as core-api's optimistic lock. When somebody else saved first, its
  * `400-010` message is shown as it came rather than retried -- the honest answer is to reload and
  * look at what changed (DEC-092's reasoning, second time).
+ *
+ * **It is read from the props on every submit, never held in form state.** A save increments the
+ * version, and `router.refresh()` below brings the new one back down as a prop; a copy captured in
+ * `defaultValues` would still hold the number from mount, so the reader's second save was refused
+ * as though a colleague had edited the exercise underneath them (X-023).
  */
 export function ExerciseForm({
   exercise,
@@ -54,7 +59,6 @@ export function ExerciseForm({
     {
       schema: exerciseSettingsSchema,
       defaultValues: {
-        version: exercise.version,
         texts: editedLocales.map((locale) => {
           const existing = exercise.rawTexts.find((text) => text.locale === locale);
           return {
@@ -73,7 +77,7 @@ export function ExerciseForm({
         solutionFilesLimit: exercise.solutionFilesLimit,
         solutionSizeLimit: exercise.solutionSizeLimit,
       },
-      action: (values) => updateExercise(exercise.id, values),
+      action: (values) => updateExercise(exercise.id, exercise.version, values),
       onSuccess: () => {
         toast.success(t("saved"));
         router.refresh();

@@ -39,6 +39,13 @@ export interface ExerciseListItem {
   isBroken: boolean;
   archived: boolean;
   hasReferenceSolutions: boolean;
+  /**
+   * The groups the exercise is **attached to**, which is not the same as the groups it can be
+   * assigned in: core-api expands a group into its ancestral closure when filtering, so an
+   * exercise attached to a course is assignable in every lab beneath it (X-016). These are the
+   * attachments; the filter answers the wider question.
+   */
+  groupIds: string[];
   can: Record<string, boolean>;
 }
 
@@ -56,6 +63,8 @@ interface ExercisePayload {
   isBroken: boolean;
   archivedAt: number | null;
   hasReferenceSolutions: boolean;
+  /** On the wire since forever (`ExerciseViewFactory.php:60`); this type simply never declared it. */
+  groupsIds?: string[];
   permissionHints?: Record<string, boolean>;
 }
 
@@ -74,6 +83,15 @@ export interface ExerciseQuery {
   tags: string[];
   /** One author, or none. core-api accepts several; the catalog offers one, as the legacy app does. */
   authors: string[];
+  /**
+   * One group, or none (X-016).
+   *
+   * **This is "assignable in", not "attached to".** `filters[groupsIds][]` is expanded through
+   * `groupsIdsAncestralClosure` before matching, so filtering by a lab returns what its course and
+   * its faculty hold as well -- which is the question a teacher is actually asking, and the same
+   * behaviour the assign screen's picker already relies on (`getAssignableExercises`).
+   */
+  group: string | null;
   /** Zero-based. */
   page: number;
 }
@@ -106,6 +124,7 @@ function listItem(exercise: ExercisePayload, locale: string): ExerciseListItem {
     isBroken: exercise.isBroken,
     archived: exercise.archivedAt !== null,
     hasReferenceSolutions: exercise.hasReferenceSolutions,
+    groupIds: exercise.groupsIds ?? [],
     can: exercise.permissionHints ?? {},
   };
 }
@@ -130,6 +149,8 @@ export async function getExerciseCatalog(
       ...(query.environments.length > 0 && { "filters[runtimeEnvironments]": query.environments }),
       ...(query.tags.length > 0 && { "filters[tags]": query.tags }),
       ...(query.authors.length > 0 && { "filters[authorsIds]": query.authors }),
+      // An array, so the client appends the `[]` core-api expects rather than this spelling it.
+      ...(query.group !== null && { "filters[groupsIds]": [query.group] }),
     },
   });
 

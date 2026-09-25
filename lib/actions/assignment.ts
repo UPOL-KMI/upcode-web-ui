@@ -3,6 +3,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { ApiError, apiDelete, apiPost } from "@/lib/api/client";
+import { isSyncPart } from "@/lib/assignments/sync-parts";
 import type { ActionResult } from "@/lib/forms/action-result";
 
 import { assignmentSettingsSchema, type AssignmentSettingsValues } from "./assignment.schema";
@@ -135,20 +136,32 @@ export async function updateAssignmentTexts(
 }
 
 /**
- * Pull the exercise's current state back into this assignment -- the action S-013's notice has
- * only been *reporting* since it shipped.
+ * Pull chosen parts of the exercise back into this assignment (X-020).
  *
- * Everything, not a selection: core-api accepts a list of parts, and offering one would ask a
- * teacher which of "score config" and "exercise config" they meant. The notice already names the
- * parts that have drifted; the answer to all of them is the same button.
+ * **The selection is not optional, and an empty one is refused here rather than sent.** core-api
+ * reads an empty `syncOptions` as *every* part (`Assignment::syncWithExercise` initialises each one
+ * to `!$options`), so posting the reader's empty selection would do the exact opposite of what they
+ * asked -- including overwriting a text they had adjusted for their own group.
+ *
+ * Unknown names are dropped before the call: `staleParts` deliberately surfaces a part core-api
+ * grew later, and sending one back is an `Unknown sync option` refusal for the whole request.
  */
 export async function syncAssignmentWithExercise(
   assignmentId: string,
+  parts: readonly string[],
 ): Promise<ActionResult<{ assignmentId: string }>> {
+  const syncOptions = parts.filter(isSyncPart);
+  if (syncOptions.length === 0) {
+    const t = await getTranslations("Assignment.sync");
+    return { success: false, formError: t("nothingSelected") };
+  }
+
   try {
-    await apiPost("/v1/exercise-assignments/{id}/sync-exercise", undefined, {
-      pathParams: { id: assignmentId },
-    });
+    await apiPost(
+      "/v1/exercise-assignments/{id}/sync-exercise",
+      { syncOptions },
+      { pathParams: { id: assignmentId } },
+    );
     return { success: true, data: { assignmentId } };
   } catch (error) {
     return failure(error, "syncFailed");

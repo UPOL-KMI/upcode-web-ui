@@ -14,6 +14,7 @@ import { useServerActionForm } from "@/lib/forms/use-server-action-form";
 import { Link, useRouter } from "@/i18n/navigation";
 import { MarkdownPreviewTabs } from "@/components/markdown/markdown-preview-tabs";
 import { Field } from "@/components/form/field";
+import { SyncWithExercise } from "./sync-with-exercise";
 import { useToast } from "@/components/toast/toast-provider";
 import { buttonClasses } from "@/components/button";
 
@@ -48,9 +49,12 @@ import { buttonClasses } from "@/components/button";
  */
 export function AssignmentTextsForm({
   assignment,
+  exerciseName,
   hidden,
 }: {
   assignment: AssignmentSettings;
+  /** The exercise this was copied from, named in the re-sync dialog. */
+  exerciseName: string | null;
   /** Hidden rather than unrendered on the other tabs, so an unsaved text survives a look around. */
   hidden?: boolean;
 }) {
@@ -73,7 +77,7 @@ export function AssignmentTextsForm({
 
   const {
     register,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = form;
 
   const input =
@@ -105,17 +109,33 @@ export function AssignmentTextsForm({
         {/* Where the original lives, as a link rather than as an instruction to go and find it.
             An assignment without an exercise behind it (core-api allows the exercise to be
             deleted) simply gets the sentence without the link. */}
-        <p className="rounded-lg border border-warning bg-warning/10 p-4 text-sm">
-          {t("texts.override")}{" "}
+        <div className="rounded-lg border border-warning bg-warning/10 p-4 text-sm">
+          <p>
+            {t("texts.override")}{" "}
+            {assignment.exerciseId !== null && (
+              <Link
+                href={`/exercises/${assignment.exerciseId}`}
+                className="underline underline-offset-4 hover:no-underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {t("texts.openExercise")}
+              </Link>
+            )}
+          </p>
+          {/* The way back. core-api stops calling a locale out of sync once this form has saved --
+              the assignment's copy is then the newer one -- so the drift notice, and with it the
+              only other sync button, goes quiet permanently after an override. */}
           {assignment.exerciseId !== null && (
-            <Link
-              href={`/exercises/${assignment.exerciseId}`}
-              className="underline underline-offset-4 hover:no-underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              {t("texts.openExercise")}
-            </Link>
+            <SyncWithExercise
+              assignmentId={assignment.id}
+              exerciseId={assignment.exerciseId}
+              exerciseName={exerciseName}
+              stale={assignment.staleParts}
+              from="override"
+              label={t("texts.restoreFromExercise")}
+              warning={isDirty ? t("texts.restoreDiscardsEdits") : undefined}
+            />
           )}
-        </p>
+        </div>
 
         {assignment.texts.map((text, index) => (
           <fieldset

@@ -49,6 +49,7 @@ export function FileSelect({
   readOnly,
   description,
   error,
+  warning,
 }: {
   name: Path;
   label: string;
@@ -57,25 +58,37 @@ export function FileSelect({
   description?: string;
   /** Shown under the control and marked on it, for a value core-api will refuse to compile. */
   error?: string;
+  /**
+   * Shown under the control for a value that is **legal and probably a mistake** (X-024).
+   *
+   * Deliberately not `error`: it carries no `aria-invalid`, because the value is one core-api
+   * will accept and a screen reader announcing it as invalid would be lying. The author is being
+   * told something, not stopped.
+   */
+  warning?: string;
 }) {
   const t = useTranslations("ExerciseConfig.config");
   const [value, setValue] = useValue<string>(name);
   const descriptionId = `${name}-description`;
   const errorId = `${name}-error`;
+  const warningId = `${name}-warning`;
 
   return (
     <label className="flex min-w-0 flex-col gap-1 text-sm">
       <span className="font-medium">{label}</span>
       <select
         aria-invalid={error ? true : undefined}
-        className={error ? `${INPUT} border-destructive` : INPUT}
+        className={
+          error ? `${INPUT} border-destructive` : warning ? `${INPUT} border-warning` : INPUT
+        }
         // The visible label wraps this control, and a wrapped `<select>` takes its whole label --
         // including every option's text -- as its accessible name. Naming it explicitly is what
         // makes a screen reader (and a test) hear "Expected output" rather than the option list.
         aria-label={label}
         aria-describedby={
-          [description ? descriptionId : null, error ? errorId : null].filter(Boolean).join(" ") ||
-          undefined
+          [description ? descriptionId : null, error ? errorId : null, warning ? warningId : null]
+            .filter(Boolean)
+            .join(" ") || undefined
         }
         disabled={readOnly}
         value={value ?? ""}
@@ -93,6 +106,11 @@ export function FileSelect({
       {error && (
         <span id={errorId} className="text-xs font-medium text-destructive">
           {error}
+        </span>
+      )}
+      {!error && warning && (
+        <span id={warningId} className="text-xs font-medium text-warning">
+          {warning}
         </span>
       )}
       {description && (

@@ -28,6 +28,10 @@ export interface ConfirmDialogProps {
   trigger?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;
+  /** Anything the reader has to look at or touch before answering -- a list of what will be
+   *  overwritten, a checkbox each. Sits below the description, outside it: `AlertDialog.Description`
+   *  renders a `<p>`, which may not contain a list or a control. */
+  children?: React.ReactNode;
   /** Defaults to the shared "Confirm" string; pass the actual verb ("Delete group") where you can. */
   confirmLabel?: React.ReactNode;
   cancelLabel?: React.ReactNode;
@@ -44,6 +48,7 @@ export function ConfirmDialog({
   trigger,
   title,
   description,
+  children,
   confirmLabel,
   cancelLabel,
   destructive = true,
@@ -74,6 +79,8 @@ export function ConfirmDialog({
               </AlertDialog.Description>
             ) : null}
           </div>
+
+          {children}
 
           <div className="flex flex-wrap justify-end gap-2">
             <AlertDialog.Cancel

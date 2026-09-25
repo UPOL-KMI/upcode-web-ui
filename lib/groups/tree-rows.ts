@@ -19,6 +19,11 @@ type GroupRow =
  * and showing it invalidates everything deeper, so a sibling branch gets its own headings rather
  * than inheriting the previous branch's. Headings are text, not checkboxes: they are the groups
  * that cannot take an assignment, which is why they are not in the offer in the first place.
+ *
+ * A group that is itself somebody's container counts as shown at its own depth, so it is not
+ * printed twice -- once as a row and again as the heading above its children. The assign offer
+ * never hit that because a container there cannot take an assignment and is therefore absent from
+ * the list; X-022's filter offers both.
  */
 export function groupRows(groups: { id: string; name: string; path: string[] }[]): GroupRow[] {
   const rows: GroupRow[] = [];
@@ -35,7 +40,7 @@ export function groupRows(groups: { id: string; name: string; path: string[] }[]
       });
       shown = group.path.slice(0, depth + 1);
     });
-    shown = [...group.path];
+    shown = [...group.path, group.name];
     rows.push({
       kind: "group",
       key: group.id,

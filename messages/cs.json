@@ -1283,6 +1283,7 @@
       "name": "Úloha",
       "difficulty": "Obtížnost",
       "environments": "Jazyky",
+      "group": "Skupina",
       "tags": "Štítky",
       "author": "Autor",
       "updated": "Změněno"
@@ -1316,8 +1317,14 @@
       "apply": "Hledat",
       "author": "Autor",
       "anyAuthor": "Kdokoliv",
+      "group": "Skupina",
+      "anyGroup": "Všechny skupiny",
+      "groupExplain": "Vypsané jsou úlohy, které lze ve vybrané skupině zadat — tedy i ty uložené v nadřazených skupinách. Ve sloupci Skupina proto může být napsaná jiná skupina, než podle které filtrujete.",
       "mine": "Jen moje",
-      "everyone": "Od všech"
+      "everyone": "Od všech",
+      "groupSearchPlaceholder": "Hledat skupinu…",
+      "groupNoMatch": "Žádná skupina neodpovídá.",
+      "groupMatchCount": "{count, plural, =0 {Žádná skupina} one {# skupina} few {# skupiny} other {# skupin}}"
     },
     "pagination": {
       "label": "Stránky katalogu",
@@ -1787,6 +1794,8 @@
       },
       "entryPoint": "Vstupní bod",
       "entryPointExplain": "Soubor, který se spustí. Pokud není nastaven, spustí se odevzdaný soubor.",
+      "entryPointNeedsExtraFiles": "Nabídku sem doplní Doplňkové soubory níže — vybrat jde jen to, co se do sandboxu opravdu dopraví.",
+      "entryPointNotDelivered": "Vstupní bod jen pojmenuje vstup, ale dopravit soubor do sandboxu je potřeba přes doplňkové soubory níže.",
       "successExitCodes": "Návratové kódy znamenající úspěch",
       "successExitCodesExplain": "Jednotlivé hodnoty nebo rozsahy oddělené čárkami — třeba 0, 2-4.",
       "extraFiles": "Doplňkové soubory",
@@ -3028,12 +3037,22 @@
         "exerciseEnvironmentConfigs": "Konfigurace prostředí",
         "hardwareGroups": "Hardwarové skupiny",
         "limits": "Limity",
-        "mergeJudgeLogs": "Slučování logů soudce"
+        "mergeJudgeLogs": "Slučování logů soudce",
+        "filesAndLinks": "Soubory úlohy a odkazy na ně",
+        "upToDate": "Aktuální"
       },
       "sync": "Sesynchronizovat s úlohou",
       "syncing": "Synchronizuji…",
       "synced": "Zadání teď odpovídá úloze.",
-      "syncFailed": "Zadání se nepodařilo sesynchronizovat."
+      "syncFailed": "Zadání se nepodařilo sesynchronizovat.",
+      "nothingSelected": "Vyberte alespoň jednu část, která se má přepsat.",
+      "confirm": {
+        "title": "Nahradit části úlohy z katalogu úloh?",
+        "description": "Zaškrtnuté části úlohy budou nahrazeny obsahem z původní úlohy <exercise>{name}</exercise>. Vaše dosavadní verze přepsaných částí zanikne a nelze ji vrátit.",
+        "action": "Nahradit vybrané",
+        "unknown": "Tuto aplikace neznámou část vybrat nelze: {parts}.",
+        "theExercise": "v katalogu úloh"
+      }
     },
     "solvers": {
       "heading": "Jak si vede skupina",
@@ -3156,7 +3175,9 @@
         "nameRequired": "Zadání potřebuje název alespoň v jednom jazyce.",
         "textOrLink": "Vyplňte zadání, nebo uveďte adresu, kde je k přečtení.",
         "invalidLink": "Musí to být celá adresa začínající http:// nebo https://."
-      }
+      },
+      "restoreFromExercise": "Převzít část konfigurace ze vzoru",
+      "restoreDiscardsEdits": "Máte tady neuložené změny. Převzetím textu z úlohy o ně přijdete."
     },
     "delete": {
       "title": "Smazat zadání",
