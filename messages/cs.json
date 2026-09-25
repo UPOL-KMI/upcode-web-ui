@@ -1794,6 +1794,8 @@
       },
       "entryPoint": "Vstupní bod",
       "entryPointExplain": "Soubor, který se spustí. Pokud není nastaven, spustí se odevzdaný soubor.",
+      "entryPointNeedsExtraFiles": "Nabídku sem doplní Doplňkové soubory níže — vybrat jde jen to, co se do sandboxu opravdu dopraví.",
+      "entryPointNotDelivered": "Vstupní bod jen pojmenuje vstup, ale dopravit soubor do sandboxu je potřeba přes doplňkové soubory níže.",
       "successExitCodes": "Návratové kódy znamenající úspěch",
       "successExitCodesExplain": "Jednotlivé hodnoty nebo rozsahy oddělené čárkami — třeba 0, 2-4.",
       "extraFiles": "Doplňkové soubory",

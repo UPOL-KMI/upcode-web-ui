@@ -1794,6 +1794,8 @@
       },
       "entryPoint": "Entry point",
       "entryPointExplain": "The file to start. Left unset, the submitted file is started.",
+      "entryPointNeedsExtraFiles": "The options come from Extra files below — only what is actually delivered into the sandbox can be chosen.",
+      "entryPointNotDelivered": "The entry point only names the entry; delivering the file into the sandbox is what Extra files below are for.",
       "successExitCodes": "Exit codes that count as success",
       "successExitCodesExplain": "Single values or ranges, separated by commas — for example 0, 2-4.",
       "extraFiles": "Extra files",

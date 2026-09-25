@@ -6918,6 +6918,7 @@ and carries ten tests instead — including that a part the reader could not tic
 guards a stale selection surviving a refresh.
 
 **Run:** five checks green (419 unit tests). **Not run:** the e2e suite, as ever on this deployment.
+
 ### 2026-09-25 — the exercise form stops arguing with itself
 
 **The operator could save an exercise once.** The second save was refused with "the exercise was
@@ -6945,3 +6946,43 @@ assignments made from that exercise were not marked as drifted by the test.
 **Left alone, deliberately:** the refusal arrives in English, because `failure()` passes core-api's
 message through verbatim (DEC-092). After this it is only reachable when a colleague really did save
 first. Translating server-action errors by code is its own round, and its own ticket when asked for.
+
+### 2026-09-25 — the entry point offers what will actually be there
+
+**Two fields sit side by side and only one of them does anything.** `entry-point` writes a name
+into the run command; `extra-files` is the only thing that copies a file into the sandbox. The
+dropdown was populated from the exercise's own attachments, so choosing one looked like a finished
+decision -- and attaching a file to an exercise puts it nowhere near the box.
+
+The operator hit that on the first package exercise: a harness uploaded to the exercise, picked as
+the entry point, Extra files left empty. Every test died with `FileNotFoundError: '/box/main.py'`,
+and the job configuration said why without saying it to anybody -- the name appears once per test
+as the run command's argument and in no `fetch` or `cp` task at all.
+
+**The first fix was a warning, and he improved on it.** A warning still leaves a list full of names
+that cannot work; better to stop offering them. The dropdown now lists **only what this test's
+extra files deliver**, so it is empty until the author adds one and the field's description says
+where options come from. A renamed delivery appears under the name it lands as, because that is
+what the run command will have to say.
+
+**A configured value stays selectable even when it is not in the list.** That is the one thing this
+screen cannot express -- an entry point naming a _student's_ submitted file -- and opening the form
+and saving it must not quietly drop the reference. Such a value is exactly what the warning is
+about, so the two pieces cover each other.
+
+**It warns and does nothing else.** Adding the file to Extra files automatically would be wrong for
+a student's own file, which the exercise must not supply, and would read as magic. `FileSelect`
+grew a `warning` prop beside its `error` one rather than borrowing it: the value is one core-api
+accepts, so it carries no `aria-invalid` and nobody is told the field is broken when it is not.
+
+**What the rule stays quiet about is the part worth testing**, so it is a pure module with fourteen
+cases: a name that is not an exercise attachment at all, a pair delivering under a different name,
+a pair with no file chosen, two pairs delivering the same name, and the empty list.
+
+**Measured in the browser, not reasoned about.** On a real eleven-test exercise: eleven warnings
+with Extra files empty, none with it set. Clearing one single test's pair with the form open leaves
+that test's dropdown offering only its stale value, switches its description to the "add extra
+files" line, and raises exactly one more warning -- no reload. And a test delivering `main.py` as
+`run.py` offers `run.py`, warns while the entry point still says `main.py`, and falls quiet the
+moment `run.py` is chosen. That is the whole point of watching the values rather than reading them
+once, and of scoping the check per test.
