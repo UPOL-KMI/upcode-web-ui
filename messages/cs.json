@@ -1051,7 +1051,6 @@
       "title": "Rozhodnutí vyučujícího",
       "explain": "Nastavte výsledné hodnocení řešení. Zde nastavené hodnoty mohou přepsat hodnocení určené automatickými testy.",
       "accept": "Uznat tento pokus",
-      "unaccept": "Přestat uznávat tento pokus",
       "acceptNote": "Standardně se počítá řešení s nejlepším hodnocením. Pokud si přejete vynutit započítání tohoto pokusu do celkového hodnocení, klikněte na tlačítko.",
       "acceptedNote": "Tento pokus se počítá místo nejlépe hodnoceného.",
       "zero": "Nedat žádné body",
@@ -1093,7 +1092,6 @@
       },
       "toast": {
         "accepted": "Pokus byl uznán.",
-        "unaccepted": "Pokus už není uznaný.",
         "pointsSaved": "Body byly uloženy."
       },
       "errors": {
@@ -1174,7 +1172,9 @@
       "overview": "Přehled",
       "tests": "Automatické testy",
       "discussion": "Diskuze"
-    }
+    },
+    "grade": "Hodnotit",
+    "student": "Student"
   },
   "Sources": {
     "title": "Soubory řešení",
@@ -1219,7 +1219,7 @@
   "Review": {
     "actions": {
       "start": "Zahájit revizi",
-      "markReviewed": "Označit za zrevidované",
+      "markReviewed": "Označit jako zrevidované",
       "close": "Uzavřít revizi",
       "reopen": "Znovu otevřít revizi",
       "erase": "Smazat revizi"
@@ -2980,7 +2980,7 @@
   },
   "Assignment": {
     "title": "Zadání",
-    "backToGroup": "Zadání skupiny",
+    "backToGroup": "Všechna zadání",
     "allSolutions": "Všechna odevzdání",
     "editAssignment": "Upravit zadání",
     "badges": {
@@ -3085,11 +3085,13 @@
         "attempts": "Pokusy",
         "points": "Body",
         "status": "Výsledek",
-        "flags": "Příznaky"
+        "flags": "Příznaky",
+        "actions": "Akce"
       },
       "flags": {
         "accepted": "Uznáno",
-        "reviewRequested": "Žádost o revizi"
+        "reviewRequested": "Žádost o revizi",
+        "notMember": "Není ve skupině"
       },
       "stats": {
         "submitted": "Odevzdalo",
@@ -3104,7 +3106,9 @@
         "title": "Skupina nemá žádné studenty",
         "description": "Jakmile se do skupiny přidají studenti, uvidíte tu jejich postup na tomto zadání."
       },
-      "caption": "Všichni studenti skupiny, jejich pokusy, body a výsledek u tohoto zadání."
+      "caption": "Všichni studenti skupiny, jejich pokusy, body a výsledek u tohoto zadání.",
+      "grade": "Hodnotit",
+      "gradeNamed": "Hodnotit řešení: {name}"
     },
     "userSolutions": {
       "title": "Řešení: {name}",
@@ -3112,7 +3116,8 @@
       "empty": {
         "title": "Zatím nic neodevzdáno",
         "description": "{name} zatím k tomuto zadání neodevzdal(a) žádné řešení."
-      }
+      },
+      "grade": "Hodnotit"
     },
     "tabs": {
       "label": "Části zadání",
@@ -3307,7 +3312,7 @@
     "caption": "Všechna odevzdání tohoto zadání, jejich autoři a výsledky.",
     "captionByAssignment": "Všechna odevzdání tohoto studenta ve skupině, zadání, kterých se týkají, a jejich výsledky.",
     "resubmitAll": {
-      "action": "Spustit všechna znovu",
+      "action": "Znovu vše vyhodnotit",
       "confirm": {
         "title": "Spustit znovu všechna řešení?",
         "description": "Všechna odevzdání tohoto zadání projdou znovu pipeline, a to na pozadí. Již zobrazené výsledky se budou postupně měnit.",
@@ -3320,7 +3325,7 @@
         "failed": "Řešení se nepodařilo spustit znovu."
       }
     },
-    "downloadBest": "Stáhnout nejlepší od všech"
+    "downloadBest": "Stáhnout nejlepší řešení"
   },
   "GroupUserSolutions": {
     "title": "Odevzdání v této skupině",
@@ -3411,7 +3416,7 @@
   "Shadow": {
     "title": "Stínové zadání",
     "untitled": "Nepojmenované stínové zadání",
-    "backToGroup": "Zpět do skupiny",
+    "backToGroup": "Všechna zadání",
     "description": "Popis",
     "noDescription": "Toto stínové zadání nemá popis.",
     "terms": "Podmínky",
@@ -4037,7 +4042,7 @@
     },
     "picker": {
       "title": "Porovnat s jiným pokusem",
-      "explain": "Ostatní pokusy téhož studenta o toto zadání, vedle sebe s tímto.",
+      "explain": "Porovnat otevřené řešení s jiným řešením studenta.",
       "attempt": "Pokus {attempt}"
     },
     "otherAttempt": "Pokus {attempt}"
@@ -4074,5 +4079,41 @@
   },
   "Help": {
     "open": "Nápověda"
+  },
+  "Grading": {
+    "label": "Hodnocení třídy",
+    "previous": "← Předchozí",
+    "next": "Další →",
+    "nextUngraded": "Další nehodnocený →",
+    "allGraded": "Všichni jsou ohodnoceni",
+    "position": "Student {position}/{total}",
+    "attempt": "pokus {attempt} (celkem {count})",
+    "points": {
+      "points": "Body (max {max})",
+      "evaluated": "Auto ({points})",
+      "full": "Plný počet ({points})",
+      "closeReview": "Uzavřít revizi a poslat ji studentovi",
+      "notGraded": "Toto řešení zatím nebylo zrevidováno. Zadejte body, nebo ho označte jako zrevidované, jakmile budete s kontrolou hotovi.",
+      "save": "Uložit"
+    },
+    "attemptsTitle": "Pokusy: {name}",
+    "standing": {
+      "best": "Nejlepší řešení. Udělené body se studentovi započítávají k celkovému hodnocení.",
+      "accepted": "Řešení uznané vyučujícím jako hodnocené. Udělené body se studentovi započítávají k celkovému hodnocení.",
+      "elsewhere": "Aktuálně se započítává řešení <link>pokusu {attempt}</link> ({points}). Pokud chcete vynutit započítání tohoto řešení, nastavte mu více bodů nebo klikněte na <accept>Uznat řešení</accept>.",
+      "elsewhereAccepted": "Aktuálně se započítává uznané řešení <link>pokusu {attempt}</link> ({points}). Pokud chcete vynutit započítání tohoto řešení, klikněte na <accept>Uznat řešení</accept>.",
+      "elsewhereNoAccept": "Aktuálně se započítává řešení <link>pokusu {attempt}</link> ({points}). Pokud chcete vynutit započítání tohoto řešení, nastavte mu více bodů.",
+      "elsewhereAcceptedNoAccept": "Aktuálně se započítává uznané řešení <link>pokusu {attempt}</link> ({points}).",
+      "points": "{points} b.",
+      "pointsWithBonus": "{points} b. {sign} {bonus} bonus",
+      "notLatest": "Otevřené řešení není nejnovější. <link>Přejít na poslední řešení</link>.",
+      "failed": "Vyhodnocení tohoto řešení selhalo, a proto se studentovi nezapočítává a nelze ho hodnotit ani uznat. Aby se mohlo započítat, spusťte ho na <rerun>stránce řešení</rerun> znovu.",
+      "failedCounted": "Aktuálně se započítává řešení <link>pokusu {attempt}</link> ({points})."
+    },
+    "accept": {
+      "title": "Uznat řešení?",
+      "description": "Uznané řešení se studentovi započítá k celkovému hodnocení bez ohledu na body ostatních pokusů, i těch, které odevzdá později. Uznané může být jen jedno řešení – pokud má student uznané jiné, uznání se přesune na toto.",
+      "confirm": "Uznat řešení"
+    }
   }
 }

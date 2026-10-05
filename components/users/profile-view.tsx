@@ -13,6 +13,7 @@ import { Badge } from "@/components/status/badge";
 
 import { TakeoverButton } from "./takeover-button";
 import { buttonClasses } from "@/components/button";
+import { PencilIcon } from "@/components/icons";
 
 /**
  * One person's profile (S-021): who they are, and where in ReCodEx they belong.
@@ -82,7 +83,8 @@ export async function ProfileView({
           )}
           {profile.isAllowed === false && <Badge tone="warning">{t("disabled")}</Badge>}
           {isMe && (
-            <Link href="/profile/edit" className={buttonClasses("outline", "sm")}>
+            <Link href="/profile/edit" className={buttonClasses("warning-outline", "sm")}>
+              <PencilIcon />
               {t("editMine")}
             </Link>
           )}
@@ -92,7 +94,11 @@ export async function ProfileView({
               every turn, which is why that one is narrower still. */}
           {!isMe && viewer.role === "superadmin" && (
             <>
-              <Link href={`/users/${profile.id}/edit`} className={buttonClasses("outline", "sm")}>
+              <Link
+                href={`/users/${profile.id}/edit`}
+                className={buttonClasses("warning-outline", "sm")}
+              >
+                <PencilIcon />
                 {t("editTheirs")}
               </Link>
               {profile.isAllowed !== false && (

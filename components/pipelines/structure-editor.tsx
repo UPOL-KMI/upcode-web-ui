@@ -26,6 +26,7 @@ import { useRouter } from "@/i18n/navigation";
 import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
 import { useToast } from "@/components/toast/toast-provider";
 import { buttonClasses } from "@/components/button";
+import { DownloadIcon } from "@/components/icons";
 
 /**
  * Editing a pipeline's boxes and variables (T-016).
@@ -576,6 +577,7 @@ export function StructureEditor({
           is not -- it rewrites the editor, so it needs somewhere to save to. */}
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <button type="button" onClick={exportStructure} className={buttonClasses("outline", "sm")}>
+          <DownloadIcon />
           {t("export.action")}
         </button>
         {!readOnly && (

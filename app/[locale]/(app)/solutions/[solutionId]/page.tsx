@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 
+import { apiPost } from "@/lib/api/client";
 import { getCommentThread } from "@/lib/api/comments";
 import {
   getSolutionDetail,
@@ -19,7 +20,6 @@ import { DeleteSubmission } from "@/components/solutions/delete-submission";
 import { ScoreConfigExplanation } from "@/components/solutions/score-config";
 import { RerunControls } from "@/components/solutions/rerun-controls";
 import { ReviewRequest } from "@/components/solutions/review-request";
-import { VerdictControls } from "@/components/solutions/verdict-controls";
 import { DateTime } from "@/components/format/date-time";
 import { RelativeTime } from "@/components/format/relative-time";
 import { PageShell } from "@/components/page-shell";
@@ -28,6 +28,7 @@ import { Discussion } from "@/components/comments/discussion";
 import { Badge } from "@/components/status/badge";
 import { EvaluationBadge } from "@/components/status/evaluation-badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, PencilIcon } from "@/components/icons";
 import { BonusPoints } from "@/components/format/bonus-points";
 
 export async function generateMetadata({
@@ -71,7 +72,20 @@ export default async function SolutionPage({
     getTranslations("Status.evaluation"),
     getSolutionDetail(solutionId, locale),
   ]);
-  const breadcrumbs = await resolveBreadcrumbs(`/solutions/${solutionId}`, locale);
+  // Whose attempt this is (X-031): a teacher opening it from a queue could not tell. Through
+  // `/v1/users/list`, which answers with whoever the reader may see rather than refusing the page.
+  const [breadcrumbs, [author]] = await Promise.all([
+    resolveBreadcrumbs(`/solutions/${solutionId}`, locale),
+    apiPost<{ id: string; fullName: string }[]>("/v1/users/list", { ids: [solution.authorId] }),
+  ]);
+  const authorName = author?.fullName ?? "";
+  // Grading needs the class's other solutions (the queue) and the right to decide about this one --
+  // and an attempt that can count: one whose evaluation failed never does (DEC-164), so it offers
+  // its files and the rerun below instead.
+  const canGrade =
+    solution.canViewSolutions &&
+    (solution.can.setBonusPoints === true || solution.can.review === true) &&
+    solution.failure === null;
 
   // The runs behind this solution (G-004). `viewResubmissions` is the *offer* to look through
   // them -- the legacy app's own gate -- while core-api gates the list itself on `viewDetail`, so
@@ -223,16 +237,30 @@ export default async function SolutionPage({
               {t("plagiarisms")}
             </Link>
           )}
-          <Link
-            href={`/solutions/${solutionId}/sources`}
-            className={buttonClasses("outline", "sm")}
-          >
-            {t("solutionFiles")}
-          </Link>
+          {/* This attempt, not the student's best: the teacher is already looking at it. */}
+          {canGrade && (
+            <Link
+              href={`/solutions/${solutionId}/sources?grade=1`}
+              className={buttonClasses("primary", "sm")}
+            >
+              <PencilIcon />
+              {t("grade")}
+            </Link>
+          )}
+          {/* A teacher reaches the files through Grade; this one is the author's. */}
+          {!canGrade && (
+            <Link
+              href={`/solutions/${solutionId}/sources`}
+              className={buttonClasses("outline", "sm")}
+            >
+              {t("solutionFiles")}
+            </Link>
+          )}
           <Link
             href={`/assignments/${solution.assignmentId}`}
             className={buttonClasses("outline", "sm")}
           >
+            <BackIcon />
             {t("backToAssignment")}
           </Link>
         </div>
@@ -253,6 +281,25 @@ export default async function SolutionPage({
               {t("summary")}
             </h2>
             <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+              {authorName !== "" && (
+                <div className="flex justify-between gap-4 border-b border-border py-2 sm:col-span-2">
+                  <dt className="text-sm text-muted-foreground">{t("student")}</dt>
+                  <dd className="text-sm font-medium">
+                    {/* A link only where its target opens: the student's own page of attempts is
+                        the teachers', and its author would be refused. */}
+                    {solution.canViewSolutions ? (
+                      <Link
+                        href={`/assignments/${solution.assignmentId}/users/${solution.authorId}`}
+                        className="hover:underline"
+                      >
+                        {authorName}
+                      </Link>
+                    ) : (
+                      authorName
+                    )}
+                  </dd>
+                </div>
+              )}
               <div className="flex justify-between gap-4 border-b border-border py-2">
                 <dt className="text-sm text-muted-foreground">{t("points")}</dt>
                 <dd className="text-sm font-medium tabular-nums">
@@ -340,19 +387,6 @@ export default async function SolutionPage({
             canRequest={solution.can.setFlagAsStudent === true || solution.can.setFlag === true}
             reviewStarted={solution.reviewStartedAt !== null}
             asTeacher={solution.can.setFlag === true}
-          />
-        )}
-
-        {/* Awarding points lives with the overview: it is what a teacher came here to do. */}
-        {currentTab === "overview" && (
-          <VerdictControls
-            solutionId={solution.id}
-            accepted={solution.accepted}
-            overridden={solution.overridden}
-            bonus={solution.bonus}
-            maxPoints={solution.maxPoints}
-            canAccept={solution.can.setFlag === true}
-            canSetPoints={solution.can.setBonusPoints === true}
           />
         )}
 

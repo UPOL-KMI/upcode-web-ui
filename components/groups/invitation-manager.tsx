@@ -19,6 +19,8 @@ import { useRouter } from "@/i18n/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
 import { useToast } from "@/components/toast/toast-provider";
+import { buttonClasses } from "@/components/button";
+import { PencilIcon } from "@/components/icons";
 
 /**
  * The links that let people join this group (T-018), for whoever may mint them.
@@ -139,10 +141,11 @@ export function InvitationManager({
                     <button
                       type="button"
                       disabled={pending}
-                      className={button}
+                      className={buttonClasses("warning-outline", "sm")}
                       aria-label={t("editNamed", { note: invitation.note || invitation.id })}
                       onClick={() => startEditing(invitation)}
                     >
+                      <PencilIcon className="size-4" />
                       {t("edit")}
                     </button>
                     <button

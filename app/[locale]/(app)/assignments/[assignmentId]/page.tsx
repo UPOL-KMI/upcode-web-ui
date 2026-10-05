@@ -19,6 +19,7 @@ import { TableSkeleton } from "@/components/state/skeleton";
 import { Badge } from "@/components/status/badge";
 import { VisibilityBadge } from "@/components/status/visibility-badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, PencilIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -82,11 +83,22 @@ export default async function AssignmentPage({
             visibleFrom={assignment.visibleFrom}
             hideWhenVisible
           />
+          {/* The way back comes first: it is where this page was reached from. */}
+          {assignment.groupId && (
+            <Link
+              href={`/groups/${assignment.groupId}?tab=assignments`}
+              className={buttonClasses("outline", "sm")}
+            >
+              <BackIcon />
+              {t("backToGroup")}
+            </Link>
+          )}
           {assignment.can.update && (
             <Link
               href={`/assignments/${assignmentId}/edit`}
-              className={buttonClasses("outline", "sm")}
+              className={buttonClasses("warning-outline", "sm")}
             >
+              <PencilIcon />
               {t("editAssignment")}
             </Link>
           )}
@@ -96,14 +108,6 @@ export default async function AssignmentPage({
               className={buttonClasses("outline", "sm")}
             >
               {t("allSolutions")}
-            </Link>
-          )}
-          {assignment.groupId && (
-            <Link
-              href={`/groups/${assignment.groupId}?tab=assignments`}
-              className={buttonClasses("outline", "sm")}
-            >
-              {t("backToGroup")}
             </Link>
           )}
         </div>

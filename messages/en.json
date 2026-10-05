@@ -1051,7 +1051,6 @@
       "title": "The teacher's verdict",
       "explain": "Set the final marks for this solution. What is set here can replace the marks the automatic tests worked out.",
       "accept": "Accept this attempt",
-      "unaccept": "Stop accepting this attempt",
       "acceptNote": "The best-scoring attempt counts by default. Use the button to force this one into the overall result instead.",
       "acceptedNote": "This attempt counts instead of the best-scoring one.",
       "zero": "Award nothing",
@@ -1093,7 +1092,6 @@
       },
       "toast": {
         "accepted": "The attempt was accepted.",
-        "unaccepted": "The attempt is no longer accepted.",
         "pointsSaved": "The points were saved."
       },
       "errors": {
@@ -1174,7 +1172,9 @@
       "overview": "Overview",
       "tests": "Automatic tests",
       "discussion": "Discussion"
-    }
+    },
+    "grade": "Grade",
+    "student": "Student"
   },
   "Sources": {
     "title": "Solution files",
@@ -2980,7 +2980,7 @@
   },
   "Assignment": {
     "title": "Assignments",
-    "backToGroup": "Group assignments",
+    "backToGroup": "All assignments",
     "allSolutions": "All submissions",
     "editAssignment": "Edit assignment",
     "badges": {
@@ -3085,11 +3085,13 @@
         "attempts": "Attempts",
         "points": "Points",
         "status": "Result",
-        "flags": "Flags"
+        "flags": "Flags",
+        "actions": "Actions"
       },
       "flags": {
         "accepted": "Accepted",
-        "reviewRequested": "Review requested"
+        "reviewRequested": "Review requested",
+        "notMember": "Not in the group"
       },
       "stats": {
         "submitted": "Submitted",
@@ -3104,7 +3106,9 @@
         "title": "This group has no students",
         "description": "Once students join the group, their progress on this assignment appears here."
       },
-      "caption": "Every student in the group, their attempts, points and result for this assignment."
+      "caption": "Every student in the group, their attempts, points and result for this assignment.",
+      "grade": "Grade",
+      "gradeNamed": "Grade the solution of {name}"
     },
     "userSolutions": {
       "title": "Solutions by {name}",
@@ -3112,7 +3116,8 @@
       "empty": {
         "title": "Nothing submitted yet",
         "description": "{name} has not submitted a solution to this assignment."
-      }
+      },
+      "grade": "Grade"
     },
     "tabs": {
       "label": "Assignment sections",
@@ -3307,7 +3312,7 @@
     "caption": "Every submission to this assignment, its author and its result.",
     "captionByAssignment": "Every submission this student has made in the group, the assignment it belongs to and its result.",
     "resubmitAll": {
-      "action": "Run all of them again",
+      "action": "Re-evaluate everything",
       "confirm": {
         "title": "Run every solution again?",
         "description": "Every submission to this assignment goes through the pipeline again, in the background. Results already shown will change as it works through them.",
@@ -3320,7 +3325,7 @@
         "failed": "They could not be run again."
       }
     },
-    "downloadBest": "Download everyone’s best"
+    "downloadBest": "Download the best solutions"
   },
   "GroupUserSolutions": {
     "title": "Submissions in this group",
@@ -3411,7 +3416,7 @@
   "Shadow": {
     "title": "Shadow assignment",
     "untitled": "Unnamed shadow assignment",
-    "backToGroup": "Back to the group",
+    "backToGroup": "All assignments",
     "description": "Description",
     "noDescription": "This shadow assignment has no description.",
     "terms": "Terms",
@@ -4037,7 +4042,7 @@
     },
     "picker": {
       "title": "Compare with another attempt",
-      "explain": "The same student's other attempts at this assignment, side by side with this one.",
+      "explain": "Compare the open solution with another of the student's solutions.",
       "attempt": "Attempt {attempt}"
     },
     "otherAttempt": "Attempt {attempt}"
@@ -4074,5 +4079,41 @@
   },
   "Help": {
     "open": "Help"
+  },
+  "Grading": {
+    "label": "Grading the class",
+    "previous": "← Previous",
+    "next": "Next →",
+    "nextUngraded": "Next ungraded →",
+    "allGraded": "Everyone is graded",
+    "position": "Student {position}/{total}",
+    "attempt": "attempt {attempt} (of {count})",
+    "points": {
+      "points": "Points (max {max})",
+      "evaluated": "Auto ({points})",
+      "full": "Full marks ({points})",
+      "closeReview": "Close the review and send it to the student",
+      "notGraded": "This solution has not been reviewed yet. Enter points, or mark it as reviewed once you have finished checking it.",
+      "save": "Save"
+    },
+    "attemptsTitle": "Attempts: {name}",
+    "standing": {
+      "best": "The best solution. The points given count towards the student's overall result.",
+      "accepted": "A solution the teacher accepted as the graded one. The points given count towards the student's overall result.",
+      "elsewhere": "The solution of <link>attempt {attempt}</link> ({points}) counts at the moment. To make this solution count instead, give it more points or click <accept>Accept the solution</accept>.",
+      "elsewhereAccepted": "The accepted solution of <link>attempt {attempt}</link> ({points}) counts at the moment. To make this solution count instead, click <accept>Accept the solution</accept>.",
+      "elsewhereNoAccept": "The solution of <link>attempt {attempt}</link> ({points}) counts at the moment. To make this solution count instead, give it more points.",
+      "elsewhereAcceptedNoAccept": "The accepted solution of <link>attempt {attempt}</link> ({points}) counts at the moment.",
+      "points": "{points} pts",
+      "pointsWithBonus": "{points} pts {sign} {bonus} bonus",
+      "notLatest": "The open solution is not the newest. <link>Go to the latest solution</link>.",
+      "failed": "The evaluation of this solution failed, so it does not count for the student and cannot be graded or accepted. To let it count, run it again from <rerun>the solution page</rerun>.",
+      "failedCounted": "The solution of <link>attempt {attempt}</link> ({points}) counts at the moment."
+    },
+    "accept": {
+      "title": "Accept the solution?",
+      "description": "An accepted solution counts towards the student's overall result whatever their other attempts score, including ones they submit later. Only one solution can be accepted -- if the student has another one accepted, the acceptance moves to this one.",
+      "confirm": "Accept the solution"
+    }
   }
 }

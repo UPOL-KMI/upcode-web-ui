@@ -12,6 +12,7 @@ import { ExercisePicker } from "@/components/assignments/exercise-picker";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -83,6 +84,7 @@ export default async function AssignExercisePage({
             href={`/groups/${groupId}?tab=assignments`}
             className={buttonClasses("outline", "sm")}
           >
+            <BackIcon />
             {t("backToGroup")}
           </Link>
           {/* The way out of "nothing here to assign": this page only picks from what the catalog

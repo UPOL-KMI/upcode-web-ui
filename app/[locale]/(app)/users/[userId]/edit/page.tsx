@@ -16,6 +16,7 @@ import {
   RoleForm,
 } from "@/components/users/user-admin-forms";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -71,6 +72,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/users/${account.id}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToProfile")}
         </Link>
       }

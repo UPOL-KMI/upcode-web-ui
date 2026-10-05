@@ -23,6 +23,7 @@ import { PageShell } from "@/components/page-shell";
 import { Discussion } from "@/components/comments/discussion";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, DownloadIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -129,6 +130,7 @@ export default async function ReferenceSolutionPage({
           href={`/exercises/${exerciseId}/reference-solutions`}
           className={buttonClasses("outline", "sm")}
         >
+          <BackIcon />
           {t("backToList")}
         </Link>
       }
@@ -167,6 +169,7 @@ export default async function ReferenceSolutionPage({
                   href={`/api/reference-solutions/${solutionId}/download`}
                   className={buttonClasses("outline", "sm")}
                 >
+                  <DownloadIcon />
                   {t("downloadArchive")}
                 </a>
               </div>

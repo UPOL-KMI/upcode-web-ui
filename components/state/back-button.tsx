@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/navigation";
+import { BackIcon } from "@/components/icons";
 
 /**
  * One step back, on the pages that say a reader cannot be where they are.
@@ -31,6 +32,7 @@ export function BackButton({ className }: { className?: string }) {
       }}
       className={className}
     >
+      <BackIcon />
       {t("back")}
     </button>
   );

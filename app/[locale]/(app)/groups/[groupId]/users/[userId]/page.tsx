@@ -12,6 +12,7 @@ import { ClosePendingReviews } from "@/components/groups/close-pending-reviews";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -84,6 +85,7 @@ export default async function GroupUserSolutionsPage({
             {t("viewProfile")}
           </Link>
           <Link href={`/groups/${groupId}?tab=students`} className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToGroup")}
           </Link>
         </div>

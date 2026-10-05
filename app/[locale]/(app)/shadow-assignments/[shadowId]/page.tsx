@@ -13,6 +13,7 @@ import { Markdown } from "@/components/markdown/markdown";
 import { PageShell } from "@/components/page-shell";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, PencilIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -68,20 +69,22 @@ export default async function ShadowAssignmentPage({
         <div className="flex flex-wrap items-center gap-2">
           {assignment.isBonus && <Badge tone="info">{t("flags.bonus")}</Badge>}
           {!assignment.isPublic && <Badge tone="warning">{t("flags.hidden")}</Badge>}
-          {assignment.can.update === true && (
-            <Link
-              href={`/shadow-assignments/${shadowId}/edit`}
-              className={buttonClasses("outline", "sm")}
-            >
-              {t("editLink")}
-            </Link>
-          )}
           {assignment.groupId && (
             <Link
               href={`/groups/${assignment.groupId}?tab=assignments`}
               className={buttonClasses("outline", "sm")}
             >
+              <BackIcon />
               {t("backToGroup")}
+            </Link>
+          )}
+          {assignment.can.update === true && (
+            <Link
+              href={`/shadow-assignments/${shadowId}/edit`}
+              className={buttonClasses("warning-outline", "sm")}
+            >
+              <PencilIcon />
+              {t("editLink")}
             </Link>
           )}
         </div>

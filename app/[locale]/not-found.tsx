@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { BackButton } from "@/components/state/back-button";
+import { buttonClasses } from "@/components/button";
 import { StatusState } from "@/components/state/status-state";
 
 // Renders for notFound() calls within the [locale] segment, and for any locale-prefixed URL
@@ -16,9 +17,7 @@ export default async function NotFound() {
       <StatusState
         title={t("title")}
         description={t("description")}
-        action={
-          <BackButton className="rounded-md border border-input px-3 py-1.5 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
-        }
+        action={<BackButton className={buttonClasses("outline", "sm")} />}
       />
     </main>
   );

@@ -12,6 +12,7 @@ import { PageShell } from "@/components/page-shell";
 import { Discussion } from "@/components/comments/discussion";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, DownloadIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -60,6 +61,7 @@ export default async function AssignmentSolutionsPage({
       actions={
         <div className="flex items-center gap-2">
           <Link href={`/assignments/${assignmentId}`} className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToAssignment")}
           </Link>
           {solutions.length > 0 && (
@@ -67,6 +69,7 @@ export default async function AssignmentSolutionsPage({
               href={`/api/assignments/${assignmentId}/best-solutions`}
               className={buttonClasses("outline", "sm")}
             >
+              <DownloadIcon />
               {t("downloadBest")}
             </a>
           )}

@@ -90,7 +90,7 @@ test("offers a teacher the class's work as one archive", async ({ page }) => {
   // the endpoint on the assignment's own `canViewDetail`, which a student holds, and then filters
   // the archive's contents per student. A student would get an archive of their own work, which is
   // not what this button offers (G-006).
-  const download = main.getByRole("link", { name: "Download everyone’s best" });
+  const download = main.getByRole("link", { name: "Download the best solutions" });
   await expect(download).toHaveAttribute(
     "href",
     /^\/api\/assignments\/[0-9a-f-]+\/best-solutions$/,

@@ -13,6 +13,7 @@ import { PageShell } from "@/components/page-shell";
 import { PipelineGraph } from "@/components/pipelines/pipeline-graph";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, PencilIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -70,11 +71,16 @@ export default async function PipelinePage({
       actions={
         <div className="flex flex-wrap gap-2">
           {pipeline.can.update === true && (
-            <Link href={`/pipelines/${pipelineId}/edit`} className={buttonClasses("outline", "sm")}>
+            <Link
+              href={`/pipelines/${pipelineId}/edit`}
+              className={buttonClasses("warning-outline", "sm")}
+            >
+              <PencilIcon />
               {t("edit")}
             </Link>
           )}
           <Link href="/pipelines" className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToList")}
           </Link>
         </div>

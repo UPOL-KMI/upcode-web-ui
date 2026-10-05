@@ -28,12 +28,15 @@ export function ReviewControls({
   closedAt,
   canReview,
   canDeleteReview,
+  hideMarkReviewed = false,
 }: {
   solutionId: string;
   startedAt: number | null;
   closedAt: number | null;
   canReview: boolean;
   canDeleteReview: boolean;
+  /** "Mark as reviewed" lives beside the points instead (X-031): it is a way of grading. */
+  hideMarkReviewed?: boolean;
 }) {
   const t = useTranslations("Review");
   const router = useRouter();
@@ -90,14 +93,16 @@ export function ReviewControls({
           >
             {t("actions.start")}
           </button>
-          <button
-            type="button"
-            disabled={pending}
-            className={secondary}
-            onClick={() => setConfirmingClose(true)}
-          >
-            {t("actions.markReviewed")}
-          </button>
+          {!hideMarkReviewed && (
+            <button
+              type="button"
+              disabled={pending}
+              className={secondary}
+              onClick={() => setConfirmingClose(true)}
+            >
+              {t("actions.markReviewed")}
+            </button>
+          )}
         </>
       )}
       {startedAt !== null && closedAt === null && (

@@ -7,6 +7,7 @@ import { shortSessionSeconds } from "@/lib/auth/short-session";
 
 import { Link } from "@/i18n/navigation";
 import { LoginForm } from "@/components/auth/login-form";
+import { BackIcon } from "@/components/icons";
 import { RouteMessages } from "@/components/route-messages";
 import { buttonClasses } from "@/components/button";
 
@@ -55,18 +56,7 @@ export default async function LoginPage({
           href="/"
           className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-4"
-          >
-            <path d="M12 4 6 10l6 6" />
-          </svg>
+          <BackIcon />
           {t("backToHome")}
         </Link>
         <div className="flex flex-col gap-1">

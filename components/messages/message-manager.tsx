@@ -29,6 +29,7 @@ import { FormError } from "@/components/form/form-error";
 import { Badge } from "@/components/status/badge";
 import { useToast } from "@/components/toast/toast-provider";
 import { buttonClasses } from "@/components/button";
+import { PencilIcon } from "@/components/icons";
 
 /**
  * Every broadcast there is, and the editor that writes one (AD-007).
@@ -159,9 +160,10 @@ export function MessageManager({
                       <span className="inline-flex flex-wrap justify-end gap-1">
                         <button
                           type="button"
-                          className={button}
+                          className={buttonClasses("warning-outline", "xs")}
                           onClick={() => setEditing(message)}
                         >
+                          <PencilIcon className="size-3.5" />
                           {t("edit")}
                         </button>
                         <button

@@ -15,6 +15,7 @@ import { HelpDialog } from "@/components/help/help-dialog";
 import { Markdown } from "@/components/markdown/markdown";
 import { PageShell } from "@/components/page-shell";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -82,6 +83,7 @@ export default async function ReferenceSolutionsPage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/exercises/${exerciseId}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToExercise")}
         </Link>
       }

@@ -2,6 +2,7 @@ import "server-only";
 import { getTranslations } from "next-intl/server";
 
 import { getGroupInvitation } from "@/lib/api/group-invitation";
+import { apiPost } from "@/lib/api/client";
 import { apiRead } from "@/lib/api/read";
 import { isGuideSlug } from "@/lib/docs/guides";
 import { localizedName, type LocalizedText } from "@/lib/i18n-text/localized";
@@ -204,20 +205,44 @@ const MANIFEST: ManifestEntry[] = [
     // The course and the assignment, not the "Solutions" section: a solution's address names
     // neither, and a reader arriving from a review queue had no way up to the assignment it
     // answers. Both reads are the ones the page itself makes.
+    //
+    // **And whose attempt it is** (X-031): "Pokus 2" alone left a teacher grading a class not knowing
+    // who they were looking at. The crumb links to that student's attempts only for a reader who
+    // may open that page -- `viewAssignmentSolutions`, on the assignment this read already makes;
+    // to the author it is their own name, as text.
     ancestors: async (params, locale) => {
-      const solution = await apiRead<{ assignmentId: string }>("/v1/assignment-solutions/{id}", {
-        pathParams: { id: params.solutionId! },
-      });
-      const assignment = await apiRead<{ groupId: string; localizedTexts?: LocalizedText[] }>(
-        "/v1/exercise-assignments/{id}",
-        { pathParams: { id: solution.assignmentId } },
+      const solution = await apiRead<{ assignmentId: string; authorId: string }>(
+        "/v1/assignment-solutions/{id}",
+        { pathParams: { id: params.solutionId! } },
       );
+      const [assignment, people] = await Promise.all([
+        apiRead<{
+          groupId: string;
+          localizedTexts?: LocalizedText[];
+          permissionHints?: Record<string, boolean>;
+        }>("/v1/exercise-assignments/{id}", { pathParams: { id: solution.assignmentId } }),
+        apiPost<{ id: string; fullName: string }[]>("/v1/users/list", {
+          ids: [solution.authorId],
+        }),
+      ]);
+      const authorName = people[0]?.fullName ?? "";
       return [
         ...(await groupCrumb(assignment.groupId, locale)),
         {
           label: localizedName(assignment.localizedTexts, locale),
           href: `/assignments/${solution.assignmentId}`,
         },
+        ...(authorName === ""
+          ? []
+          : [
+              {
+                label: authorName,
+                href:
+                  assignment.permissionHints?.viewAssignmentSolutions === true
+                    ? `/assignments/${solution.assignmentId}/users/${solution.authorId}`
+                    : undefined,
+              },
+            ]),
       ];
     },
     resolve: async (params, locale) => {

@@ -14,6 +14,7 @@ import { DeleteAssignment } from "@/components/assignments/delete-assignment";
 import { PageShell } from "@/components/page-shell";
 import { PageTabs, type PageTab } from "@/components/page-tabs";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -82,6 +83,7 @@ export default async function EditAssignmentPage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/assignments/${assignmentId}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToAssignment")}
         </Link>
       }

@@ -21,6 +21,7 @@ import {
   validationErrorHref,
 } from "@/lib/status/exercise-validation";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -129,6 +130,7 @@ export default async function EditExercisePage({
             </Link>
           )}
           <Link href={`/exercises/${exerciseId}`} className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToExercise")}
           </Link>
         </div>

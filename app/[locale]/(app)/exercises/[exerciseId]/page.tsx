@@ -17,6 +17,7 @@ import { Markdown } from "@/components/markdown/markdown";
 import { PageShell } from "@/components/page-shell";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, PencilIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -71,7 +72,11 @@ export default async function ExercisePage({
           {exercise.isLocked && <Badge tone="warning">{t("flags.locked")}</Badge>}
           {exercise.isBroken && <Badge tone="danger">{t("flags.broken")}</Badge>}
           {exercise.can.update === true && (
-            <Link href={`/exercises/${exerciseId}/edit`} className={buttonClasses("outline", "sm")}>
+            <Link
+              href={`/exercises/${exerciseId}/edit`}
+              className={buttonClasses("warning-outline", "sm")}
+            >
+              <PencilIcon />
               {t("edit")}
             </Link>
           )}
@@ -95,6 +100,7 @@ export default async function ExercisePage({
             {t("referenceSolutionsLink")}
           </Link>
           <Link href="/exercises" className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToCatalog")}
           </Link>
         </div>

@@ -19,6 +19,7 @@ import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
 import { useToast } from "@/components/toast/toast-provider";
 import { FileUpload } from "@/components/upload/file-upload";
 import { buttonClasses } from "@/components/button";
+import { DownloadIcon } from "@/components/icons";
 
 /**
  * The exercise's own files, and the named links into them (T-023).
@@ -116,8 +117,9 @@ export function ExerciseFiles({
         {files.length > 0 && (
           <a
             href={archiveUrl}
-            className="self-start text-sm text-primary underline underline-offset-2"
+            className="inline-flex items-center gap-1.5 self-start text-sm text-primary underline underline-offset-2"
           >
+            <DownloadIcon />
             {t("downloadAll")}
           </a>
         )}

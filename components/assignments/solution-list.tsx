@@ -23,7 +23,14 @@ import { BonusPoints } from "@/components/format/bonus-points";
  * not by this component's doing: core-api discloses a solution's detection batch only to a reader
  * holding `viewDetectedPlagiarisms`, so the badge simply is not there for the solution's author.
  */
-export async function SolutionList({ solutions }: { solutions: AssignmentSolutionRow[] }) {
+export async function SolutionList({
+  solutions,
+  grading = false,
+}: {
+  solutions: AssignmentSolutionRow[];
+  /** Each attempt opens in grading mode (X-031), from the grading bar's attempts dialog. */
+  grading?: boolean;
+}) {
   const [t, tStatus] = await Promise.all([
     getTranslations("Assignment"),
     getTranslations("Status.evaluation"),
@@ -49,7 +56,11 @@ export async function SolutionList({ solutions }: { solutions: AssignmentSolutio
             >
               <td className="px-3 py-2">
                 <Link
-                  href={`/solutions/${solution.id}`}
+                  href={
+                    grading
+                      ? `/solutions/${solution.id}/sources?grade=1`
+                      : `/solutions/${solution.id}`
+                  }
                   className="font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   {t("attemptNumber", { index: solution.attemptIndex })}

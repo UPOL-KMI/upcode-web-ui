@@ -10,6 +10,7 @@ import { SubmitForm } from "@/components/assignments/submit-form";
 import { PageShell } from "@/components/page-shell";
 import { StatusState } from "@/components/state/status-state";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -60,6 +61,7 @@ export default async function SubmitPage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/assignments/${assignmentId}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("back")}
         </Link>
       }
@@ -85,6 +87,7 @@ export default async function SubmitPage({
           }
           action={
             <Link href={`/assignments/${assignmentId}`} className={buttonClasses("outline", "sm")}>
+              <BackIcon />
               {t("back")}
             </Link>
           }

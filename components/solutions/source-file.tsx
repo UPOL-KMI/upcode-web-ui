@@ -14,6 +14,7 @@ import { FilePreview } from "@/components/solutions/file-preview";
 import { ReviewableCode } from "@/components/solutions/reviewable-code";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { DownloadIcon } from "@/components/icons";
 
 /**
  * One submitted file, rendered (S-017), with its review comments where there are any (S-018).
@@ -156,6 +157,7 @@ export async function SourceFile({
             )}
             {downloadHref && (
               <a href={downloadHref} className={buttonClasses("outline", "sm")}>
+                <DownloadIcon />
                 {t("downloadFile")}
               </a>
             )}

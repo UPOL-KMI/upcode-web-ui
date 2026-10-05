@@ -33,12 +33,15 @@ export function PageTabs({
   tabs,
   current,
   label,
+  keepQuery,
 }: {
   /** The page's own path, without the query -- e.g. `/exercises/<id>/edit`. */
   basePath: string;
   tabs: PageTab[];
   current: string;
   label: string;
+  /** Query that has to survive switching tabs -- e.g. `grade=1`, so the grading bar stays (X-031). */
+  keepQuery?: string;
 }) {
   return (
     <nav aria-label={label} className="-mb-px flex flex-wrap gap-1">
@@ -47,7 +50,7 @@ export function PageTabs({
         return (
           <Link
             key={tab.id}
-            href={`${basePath}?tab=${tab.id}`}
+            href={`${basePath}?tab=${tab.id}${keepQuery ? `&${keepQuery}` : ""}`}
             aria-current={active ? "page" : undefined}
             className={`border-b-2 px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
               active
