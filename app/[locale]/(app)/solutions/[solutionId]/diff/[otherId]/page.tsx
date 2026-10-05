@@ -19,6 +19,7 @@ import { DiffView } from "@/components/solutions/diff-view";
 import { PairFilesByHand } from "@/components/solutions/pair-files-by-hand";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -124,6 +125,7 @@ export default async function SolutionDiffPage({
             href={`/solutions/${solutionId}/sources`}
             className={buttonClasses("outline", "sm")}
           >
+            <BackIcon />
             {t("backToSources")}
           </Link>
         </div>

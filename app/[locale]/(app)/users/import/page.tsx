@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { PageShell } from "@/components/page-shell";
 import { ImportRosterForm } from "@/components/users/import-roster-form";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("UserImport");
@@ -70,6 +71,7 @@ export default async function ImportUsersPage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href="/users" className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToUsers")}
         </Link>
       }

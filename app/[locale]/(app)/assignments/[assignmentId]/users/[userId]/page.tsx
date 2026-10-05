@@ -11,6 +11,7 @@ import { SolutionList } from "@/components/assignments/solution-list";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
+import { PencilIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -51,15 +52,34 @@ export default async function AssignmentUserSolutionsPage({
     resolveBreadcrumbs(`/assignments/${assignmentId}/users/${userId}`, locale),
   ]);
 
+  const best = solutions.find((solution) => solution.isBest) ?? null;
+
   return (
     <PageShell
       title={t("userSolutions.title", { name: user.fullName ?? "" })}
       subtitle={assignment.name}
       breadcrumbs={breadcrumbs}
       actions={
-        <Link href={`/assignments/${assignmentId}`} className={buttonClasses("outline", "sm")}>
-          {t("userSolutions.backToAssignment")}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* X-031: this student's best solution, with the class queue around it, so grading can
+              start here as well as from the table. */}
+          {best && (
+            <Link
+              href={`/solutions/${best.id}/sources?grade=1`}
+              className={buttonClasses("primary", "sm")}
+            >
+              <PencilIcon />
+              {t("userSolutions.grade")}
+            </Link>
+          )}
+          {/* Back to the submissions tab, which is where this page is reached from. */}
+          <Link
+            href={`/assignments/${assignmentId}?tab=solutions`}
+            className={buttonClasses("outline", "sm")}
+          >
+            {t("userSolutions.backToAssignment")}
+          </Link>
+        </div>
       }
     >
       {solutions.length === 0 ? (

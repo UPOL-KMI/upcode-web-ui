@@ -32,6 +32,7 @@ import { Markdown } from "@/components/markdown/markdown";
 import { PageShell } from "@/components/page-shell";
 import { PageTabs, type PageTab } from "@/components/page-tabs";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -175,6 +176,7 @@ export default async function EditExerciseConfigPage({
             {t("limits")}
           </Link>
           <Link href={`/exercises/${exerciseId}`} className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToExercise")}
           </Link>
         </div>

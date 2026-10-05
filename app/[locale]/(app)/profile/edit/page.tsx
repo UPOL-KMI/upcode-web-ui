@@ -28,6 +28,7 @@ import {
 } from "@/components/users/account-forms";
 import { PageShell } from "@/components/page-shell";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -86,6 +87,7 @@ export default async function AccountSettingsPage() {
       breadcrumbs={breadcrumbs}
       actions={
         <Link href="/profile" className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToProfile")}
         </Link>
       }

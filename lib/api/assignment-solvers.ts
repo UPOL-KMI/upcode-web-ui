@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { assignmentProgress, type AssignmentProgress } from "@/lib/status/assignment-progress";
-import type { TestTally } from "@/lib/status/evaluation";
+import { evaluationStatus, type TestTally } from "@/lib/status/evaluation";
 
 import { getAssignmentSolutions } from "./assignment-solutions";
 
@@ -53,6 +53,12 @@ export interface AssignmentSolver {
    * reason: `/v1/groups/{id}/students/stats` carries the points but not where they came from.
    */
   pointsOverridden: boolean;
+  /**
+   * Still a student of the group. Someone who has left, or been moved to another group, keeps
+   * their solutions here but has no stats row -- see `getAssignmentSolvers` for where their row
+   * comes from instead.
+   */
+  member: boolean;
 }
 
 export interface AssignmentSolverSummary {
@@ -110,6 +116,33 @@ export async function getAssignmentSolvers(
         .find((entry) => entry.userId === userId)
         ?.assignments.find((entry) => entry.id === assignmentId);
       const attemptCount = attempts.get(userId) ?? 0;
+      // No stats row: not (or no longer) a student of the group, which core-api's stats only
+      // cover. Their row used to be guessed from the attempt count alone, and read "evaluation
+      // failed" with no points beside a best solution with ten -- so it is read from that solution,
+      // core-api's own `isBestSolution`, the very one the stats would have used.
+      if (!row) {
+        const best = solutions.find((solution) => solution.authorId === userId && solution.isBest);
+        if (best) {
+          return {
+            userId,
+            fullName: names.get(userId) ?? "",
+            attempts: attemptCount,
+            gained: best.gained,
+            bonus: best.bonus,
+            maxPoints: best.maxPoints,
+            bestSolutionId: best.id,
+            tests: best.tests,
+            pointsOverridden: best.overridden !== null,
+            accepted: best.accepted,
+            // core-api's flag is the student's, on any attempt (`findReviewRequestSolutionsIndexed`).
+            reviewRequested: solutions.some(
+              (solution) => solution.authorId === userId && solution.reviewRequested,
+            ),
+            progress: evaluationStatus(best.status),
+            member: false,
+          };
+        }
+      }
       return {
         userId,
         fullName: names.get(userId) ?? "",
@@ -122,6 +155,7 @@ export async function getAssignmentSolvers(
         pointsOverridden: row?.bestSolutionId ? overriddenSolutions.has(row.bestSolutionId) : false,
         accepted: row?.accepted === true,
         reviewRequested: row?.reviewRequest === true,
+        member: row !== undefined,
         // A null status means "no valid best solution", which covers both a student who never
         // started and one whose every attempt died in the pipeline. The attempt count is what
         // tells those apart, and this is the only view that has it -- Q-012 records the dashboard

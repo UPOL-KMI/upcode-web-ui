@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { BackIcon } from "@/components/icons";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { RouteMessages } from "@/components/route-messages";
 
@@ -39,8 +40,9 @@ export default async function ForgotPasswordPage() {
         <p className="text-sm">
           <Link
             href="/login"
-            className="text-muted-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="inline-flex items-center gap-1.5 text-muted-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
+            <BackIcon />
             {t("backToLogin")}
           </Link>
         </p>

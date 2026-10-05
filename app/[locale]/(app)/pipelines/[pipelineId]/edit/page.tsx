@@ -15,6 +15,7 @@ import { PipelineFiles } from "@/components/pipelines/pipeline-files";
 import { PipelineSettings } from "@/components/pipelines/pipeline-settings";
 import { StructureEditor } from "@/components/pipelines/structure-editor";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -77,6 +78,7 @@ export default async function EditPipelinePage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/pipelines/${pipelineId}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToPipeline")}
         </Link>
       }

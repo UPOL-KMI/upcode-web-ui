@@ -45,7 +45,7 @@ export function ResubmitAll({ assignmentId }: { assignmentId: string }) {
       <button
         type="button"
         aria-disabled={pending}
-        className={buttonClasses("outline", "sm")}
+        className={buttonClasses("warning-outline", "sm")}
         onClick={() => setConfirming(true)}
       >
         {t("action")}

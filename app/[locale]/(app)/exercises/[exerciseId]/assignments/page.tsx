@@ -14,6 +14,7 @@ import { DateTime } from "@/components/format/date-time";
 import { PageShell } from "@/components/page-shell";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -99,6 +100,7 @@ export default async function ExerciseAssignmentsPage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/exercises/${exerciseId}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToExercise")}
         </Link>
       }

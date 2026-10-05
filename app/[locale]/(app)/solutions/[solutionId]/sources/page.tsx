@@ -14,6 +14,10 @@ import {
   type SolutionFileEntry,
 } from "@/lib/api/solution-files";
 import { getSolutionDetail } from "@/lib/api/solution";
+import { getAssignmentSolutionsOf } from "@/lib/api/assignment";
+import { getAssignmentSolutions } from "@/lib/api/assignment-solutions";
+import { gradingEntries, gradingQueue, isGradedByPerson } from "@/lib/grading/queue";
+import { attemptStanding } from "@/lib/grading/standing";
 import {
   getSolutionReview,
   groupCommentsByFile,
@@ -36,8 +40,14 @@ import { ComparePicker } from "@/components/solutions/compare-picker";
 import { ReviewControls } from "@/components/solutions/review-controls";
 import { ReviewSummary } from "@/components/solutions/review-summary";
 import { ToggleAllFiles } from "@/components/solutions/toggle-all-files";
+import { GradingNav } from "@/components/solutions/grading-nav";
+import { GradingStatus } from "@/components/solutions/grading-status";
+import { AttemptsDialog } from "@/components/solutions/attempts-dialog";
+import { SolutionList } from "@/components/assignments/solution-list";
+import { GradingPoints } from "@/components/solutions/grading-points";
 import { fileAnchorId, SourceFile } from "@/components/solutions/source-file";
 import { buttonClasses } from "@/components/button";
+import { BackIcon, DownloadIcon } from "@/components/icons";
 
 const EMPTY_REVIEW: SolutionReview = { comments: [], startedAt: null, closedAt: null };
 
@@ -71,11 +81,12 @@ export default async function SolutionSourcesPage({
   searchParams,
 }: {
   params: Promise<{ solutionId: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; grade?: string }>;
 }) {
   const [{ solutionId }, query, locale] = await Promise.all([params, searchParams, getLocale()]);
-  const [t, status, solution, files, currentUser] = await Promise.all([
+  const [t, tGrading, status, solution, files, currentUser] = await Promise.all([
     getTranslations("Sources"),
+    getTranslations("Grading"),
     getTranslations("Status"),
     getSolutionDetail(solutionId, locale),
     getSolutionFiles(solutionId),
@@ -98,6 +109,30 @@ export default async function SolutionSourcesPage({
     files.map((file) => file.name),
   );
   const canModerate = solution.groupPrimaryAdminIds.includes(currentUser.id);
+
+  // Grading mode (X-031): `?grade=1`, for whoever may read the class's other solutions -- the
+  // queue is made of them, and the attempts dialog of this student's.
+  const grading = query.grade === "1" && solution.canViewSolutions;
+  const showPoints = solution.can.setBonusPoints === true || canReview;
+  // The student's attempts also say, outside grading mode, whether the open one counts.
+  const [classSolutions, attempts] = await Promise.all([
+    grading ? getAssignmentSolutions(solution.assignmentId) : [],
+    showPoints && solution.canViewSolutions
+      ? getAssignmentSolutionsOf(solution.assignmentId, solution.authorId)
+      : [],
+  ]);
+  const { standing, latest } = attemptStanding(
+    solutionId,
+    attempts.map((attempt) => ({
+      ...attempt,
+      failed:
+        !attempt.evaluation.lastSubmission || attempt.evaluation.lastSubmission.failure === true,
+    })),
+  );
+  const queue = grading ? gradingQueue(gradingEntries(classSolutions), solution.authorId) : null;
+  const studentName =
+    classSolutions.find((row) => row.authorId === solution.authorId)?.authorName ?? "";
+  const tableHref = `/assignments/${solution.assignmentId}?tab=solutions`;
 
   // A review comment is authored markdown and is rendered as such (G-027). It has to happen here,
   // on the server: `Markdown` is an async Server Component and every component between this page
@@ -138,27 +173,93 @@ export default async function SolutionSourcesPage({
             closedAt={review.closedAt}
             canReview={canReview}
             canDeleteReview={solution.can.deleteReview === true}
+            hideMarkReviewed={showPoints}
           />
           <a
             href={`/api/solutions/${solutionId}/download`}
             className={buttonClasses("outline", "sm")}
           >
+            <DownloadIcon />
             {t("download")}
           </a>
           <Link href={`/solutions/${solutionId}`} className={buttonClasses("outline", "sm")}>
+            <BackIcon />
             {t("backToSolution")}
           </Link>
         </div>
       }
       tabs={
-        <PageTabs
-          basePath={`/solutions/${solutionId}/sources`}
-          tabs={tabs}
-          current={currentTab}
-          label={t("tabs.label")}
-        />
+        <>
+          {/* Above the tabs, because both tabs are about whoever is chosen here. */}
+          {queue && (
+            <div className="mb-4">
+              <GradingNav
+                queue={queue}
+                studentName={studentName}
+                tableHref={tableHref}
+                attempts={
+                  <AttemptsDialog
+                    label={tGrading("attempt", {
+                      attempt: solution.attemptIndex,
+                      count: attempts.length,
+                    })}
+                    title={tGrading("attemptsTitle", { name: studentName })}
+                  >
+                    <SolutionList solutions={attempts} grading />
+                  </AttemptsDialog>
+                }
+              />
+            </div>
+          )}
+          <PageTabs
+            basePath={`/solutions/${solutionId}/sources`}
+            tabs={tabs}
+            current={currentTab}
+            label={t("tabs.label")}
+            keepQuery={grading ? "grade=1" : undefined}
+          />
+        </>
       }
     >
+      {showPoints && (
+        // Sticky while grading, so the points stay in reach down a long file; matte, so it reads as
+        // a layer over the code rather than as part of it.
+        <div
+          className={
+            grading
+              ? "sticky top-0 z-20 mb-6 flex flex-col gap-2 rounded-lg border border-border bg-muted/85 p-3 shadow-sm backdrop-blur"
+              : "mb-6 flex flex-col gap-2 rounded-lg border border-border p-4"
+          }
+        >
+          <GradingStatus
+            solutionId={solutionId}
+            graded={isGradedByPerson({
+              overridden: solution.overridden,
+              bonus: solution.bonus,
+              reviewClosedAt: review.closedAt,
+            })}
+            standing={standing}
+            latest={latest}
+            canAccept={solution.can.setFlag === true}
+            grading={grading}
+          />
+          {/* Not on an attempt that never counts: points and acceptance there would change nothing. */}
+          {standing?.kind !== "failed" && (
+            <GradingPoints
+              key={solutionId}
+              solutionId={solutionId}
+              maxPoints={solution.maxPoints}
+              evaluatedPoints={solution.evaluation?.points ?? null}
+              overridden={solution.overridden}
+              bonus={solution.bonus}
+              reviewStartedAt={review.startedAt}
+              reviewClosedAt={review.closedAt}
+              canSetPoints={solution.can.setBonusPoints === true}
+              canReview={canReview}
+            />
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-8">
         {currentTab === "review" && (
           <>

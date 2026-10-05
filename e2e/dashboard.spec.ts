@@ -169,13 +169,18 @@ test.describe("as a teacher", () => {
       .click();
 
     await expect(page).toHaveURL(/\/en\/solutions\/[0-9a-f-]+$/);
-    // Course, assignment, then the attempt -- the same words the page's own title uses.
+    // Course, assignment, the student, then the attempt -- the same words the page's own title
+    // uses. The student is X-031's: a teacher arriving from a queue could not tell whose it was.
     const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
     await expect(breadcrumb.getByText("Solutions")).toHaveCount(0);
-    await expect(breadcrumb.getByRole("link")).toHaveCount(2);
+    await expect(breadcrumb.getByRole("link")).toHaveCount(3);
     await expect(breadcrumb.getByRole("link").nth(1)).toHaveAttribute(
       "href",
       /\/en\/assignments\/[0-9a-f-]+$/,
+    );
+    await expect(breadcrumb.getByRole("link", { name: "Alice Student" })).toHaveAttribute(
+      "href",
+      /\/en\/assignments\/[0-9a-f-]+\/users\/[0-9a-f-]+$/,
     );
     await expect(breadcrumb.getByText(/^Attempt \d+$/)).toBeVisible();
   });

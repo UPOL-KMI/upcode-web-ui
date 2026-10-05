@@ -17,7 +17,7 @@ export default async function Unauthorized() {
         description={t("description")}
         action={
           <div className="flex flex-wrap justify-center gap-2">
-            <BackButton className="rounded-md border border-input px-3 py-1.5 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
+            <BackButton className={buttonClasses("outline", "sm")} />
             {/* The way out of a refusal, and it has to be here: this page renders outside the app
                 shell, so there is no navigation and no sign-out on it, and `proxy.ts` sends a
                 signed-in visitor from `/login` to `/dashboard` -- which is itself refused when the

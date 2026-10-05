@@ -11,6 +11,8 @@ import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/status/badge";
 import { BonusPoints } from "@/components/format/bonus-points";
 import { Hint } from "@/components/status/hint";
+import { buttonClasses } from "@/components/button";
+import { PencilIcon } from "@/components/icons";
 
 /**
  * Everyone the assignment was set for, and where each of them stands (S-013).
@@ -32,7 +34,9 @@ export function SolverTable({
 
   // Nobody accepted and nobody waiting on a review is the ordinary state of a fresh assignment,
   // and an always-present empty column reads as data that failed to load.
-  const showFlags = solvers.some((solver) => solver.accepted || solver.reviewRequested);
+  const showFlags = solvers.some(
+    (solver) => solver.accepted || solver.reviewRequested || !solver.member,
+  );
 
   const columns: DataTableColumn<AssignmentSolver>[] = [
     {
@@ -117,11 +121,31 @@ export function SolverTable({
                 {solver.reviewRequested && (
                   <Badge tone="warning">{t("flags.reviewRequested")}</Badge>
                 )}
+                {!solver.member && <Badge>{t("flags.notMember")}</Badge>}
               </div>
             ),
           },
         ]
       : []),
+    // X-031: straight to the files of the solution that counts, with the class queue around it.
+    // Rows without a best solution have nothing to open -- a student who never submitted, or one
+    // whose every attempt failed -- and the queue skips them for the same reason.
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("columns.actions")}</span>,
+      align: "right" as const,
+      cell: (solver: AssignmentSolver) =>
+        solver.bestSolutionId === null ? null : (
+          <Link
+            href={`/solutions/${solver.bestSolutionId}/sources?grade=1`}
+            aria-label={t("gradeNamed", { name: solver.fullName || solver.userId })}
+            className={buttonClasses("primary", "xs", "whitespace-nowrap")}
+          >
+            <PencilIcon className="size-3.5" />
+            {t("grade")}
+          </Link>
+        ),
+    },
   ];
 
   return (

@@ -45,6 +45,7 @@ import { ErrorBoundary } from "@/components/state/error-boundary";
 import { TableSkeleton } from "@/components/state/skeleton";
 import { Badge } from "@/components/status/badge";
 import { buttonClasses } from "@/components/button";
+import { DownloadIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -555,6 +556,7 @@ async function StudentsTab({ groupId }: { groupId: string }) {
                 href={`/api/groups/${groupId}/points?locale=${locale}`}
                 className={buttonClasses("outline", "sm")}
               >
+                <DownloadIcon />
                 {tPoints("download")}
               </a>
             </div>

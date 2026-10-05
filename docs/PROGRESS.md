@@ -7150,3 +7150,81 @@ the figure rather than folded into a phrase. The sign is interpolated separately
 so a negative bonus -- which the form invites in as many words -- reads `- 3 (bonus)` rather than
 `+ -3 (bonus)`. The heading over the whole form went with it: _Nastavte výsledné hodnocení řešení.
 Zde nastavené hodnoty mohou přepsat hodnocení určené automatickými testy._
+
+### 2026-10-05 — grading a class without going back to the table
+
+**Grading one student cost about nine clicks over five screens**, and the operator grades dozens:
+the class table, the student's name, their attempt (the best one had no link of its own), the
+files, back to the solution, the points, save, confirm, back to the assignment, and the
+submissions tab again. Two of those screens existed only to get to the next one. The table already
+knew every student's best solution and did not use it; the files page already loaded everything
+the points form needs and did not show it.
+
+**`?grade=1` on the files page is grading mode** (DEC-162). A bar that stays at the top while the
+code scrolls: previous, the student's name, _Student 7/32_, which attempt this is, next, and _next
+ungraded_, which skips anyone a person has already decided about and wraps round. Under it the
+points -- points, bonus, full marks, _save and next_ -- and _mark as reviewed and next_. Saving is
+still confirmed, in the solution screen's own words; with a review open, the same dialog offers to
+close it and send it to the student, ticked. The queue is the table's order, one entry per student
+on their best solution, built from the assignment's solutions list in one request.
+
+**What "ungraded" means took a decision** (DEC-163). Programming solutions all have points from the
+tests, so "no points" means nothing there. A person has decided when the points were overridden,
+a bonus given, or a review closed -- and closing an empty review is how a teacher says "I read it,
+the tests are right", which is why that button moved out of the page header and into the bar.
+
+**And an attempt says whose it is.** _Pokus 2_ was the whole trail; a teacher arriving from a queue
+could not tell who they were grading. The trail is now course / assignment / **student** / attempt,
+the student linked to their attempts for whoever may open that page, and the overview has a row
+with the name.
+
+Entered from a new _Grade_ column in the class table, from the student's attempts page and from
+the attempt overview -- the last one opens _this_ attempt, the other two the best. The student's
+attempts page now goes back to the submissions tab rather than the assignment text.
+
+The five checks are green, 460 unit tests among them, ten of them the queue's. `e2e/grading.spec.ts`
+is written and **was not run**: the dev instance is the clean install the operator tests on, with
+no seed accounts, and seeding it would put a demo course into his data.
+
+**The operator's first pass through it moved the verdict into the mode entirely.** The solution
+screen's verdict card is gone: points are awarded where the work is read, so a teacher reaches them
+through _Grade_, and the screen keeps _Solution files_ only for whoever cannot grade -- the author.
+Nothing it offered is lost. Zero points is a typed 0, clearing the award is an empty field, the
+over-the-maximum hint moved into the bar with its "move the excess to the bonus" link, and
+accepting an attempt sits beside the student's name, with the same confirmation.
+
+**Nothing moves on by itself any more.** _Save_ saves, _full marks_ is one click and the save's own
+read-back, _mark as reviewed_ marks, and a rule between them says they are three separate things;
+the queue's _next_ and _next ungraded_ are the only way to the next student. The queue sits above
+the _Review / Discussion_ tabs, because both are about whoever it has chosen, and the points are the
+sticky part, on a matte layer so they read as lying over the code. The attempt in the bar opens the
+student's attempts in a dialog -- the same table as their attempts page, rendered on the server and
+handed in -- and picking one loads it in grading mode.
+
+`e2e/solution-verdict.spec.ts` was rewritten against the bar and, like the rest of this ticket's
+specs, has not been run: the dev instance has no seed accounts.
+
+**Points given to an attempt that does not count change nothing, and the bar now says so.** core-api
+counts one solution per student: the accepted one, else the most points in total, else the newest.
+A teacher who opened an older attempt from the dialog could grade it 5/10 while a later one with 8
+from the tests went on counting. Above the fields, `GradingStatus`: until someone has decided about
+the attempt, the "not reviewed yet" warning; after that, green for _the best solution_ or _accepted
+by the teacher_. That another attempt counts -- linked, with its points and bonus -- is said in
+orange whether graded or not, because it matters before the grading rather than after, with
+_Accept the solution_ as a link to a dialog explaining what accepting does. An older attempt also
+links to the newest. Accepting has no undo here on purpose: to count another attempt, open it and
+accept that one (DEC-164). The queue's row lost its tint and the accept button; the attempt in it
+is underlined with an icon, since as grey text nobody read it as something to click.
+
+**An attempt whose evaluation failed never counts, and now cannot be graded.** The operator found
+one accepted with 8 points while a later 10 counted: core-api drops failed attempts before it
+chooses the best one, accepted or not, but still takes the flag and the points. The bar on such an
+attempt says that, links to running it again, and offers no points, full marks, review mark or
+acceptance; its overview offers the files instead of _Grade_.
+
+**A student who left the group read as "evaluation failed".** The class table takes points, result
+and flags from core-api's group stats, which only cover current students; for anyone else it
+guessed from the attempt count, so a student moved to another group showed no points, a failed
+evaluation and no _Grade_ beside a best solution worth ten. Such a row now comes from that best
+solution in the assignment's solutions list (core-api's own `isBestSolution`) and carries a _Not in
+the group_ flag.

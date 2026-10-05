@@ -19,6 +19,7 @@ import { fragmentRanges, MarkedSource } from "@/components/solutions/marked-sour
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/state/empty-state";
 import { buttonClasses } from "@/components/button";
+import { BackIcon } from "@/components/icons";
 
 export async function generateMetadata({
   params,
@@ -69,6 +70,7 @@ export default async function SolutionPlagiarismsPage({
       breadcrumbs={breadcrumbs}
       actions={
         <Link href={`/solutions/${solutionId}`} className={buttonClasses("outline", "sm")}>
+          <BackIcon />
           {t("backToSolution")}
         </Link>
       }

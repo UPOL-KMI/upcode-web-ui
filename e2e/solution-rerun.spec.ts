@@ -173,7 +173,7 @@ test("offers re-running every solution from the assignment's own list", async ({
 
   // Only offered, not pressed: it starts a background job over every submission of the assignment,
   // and this suite has no way to wait for one without asserting on the worker's own timing.
-  await expect(page.getByRole("button", { name: "Run all of them again" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Re-evaluate everything" })).toBeVisible();
 });
 
 test("is offered to no student", async ({ page }) => {

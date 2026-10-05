@@ -17,6 +17,7 @@ import { useRouter } from "@/i18n/navigation";
 import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
 import { useToast } from "@/components/toast/toast-provider";
 import { buttonClasses } from "@/components/button";
+import { PencilIcon } from "@/components/icons";
 
 /**
  * Who has been awarded what, and the awarding itself (S-020).
@@ -212,9 +213,10 @@ export function ShadowPointsTable({
                           <button
                             type="button"
                             disabled={pending}
-                            className={button}
+                            className={buttonClasses("warning-outline", "xs")}
                             onClick={() => startEditing(record)}
                           >
+                            <PencilIcon className="size-3.5" />
                             {t("edit")}
                           </button>
                           <button
