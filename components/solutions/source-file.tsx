@@ -112,6 +112,12 @@ export async function SourceFile({
     // takes comments: those are bound to the file's name, not to a picture of it.
     const kind = downloadHref ? previewKindOf(file.name) : null;
     const previewable = kind !== null && isPreviewable(file.name, file.size);
+    // The same test `FileComments` makes before it renders anything: no column for nothing.
+    const besideComments =
+      previewable &&
+      kind === "image" &&
+      review !== undefined &&
+      (review.canComment || review.comments.length > 0);
 
     return (
       <details
@@ -141,45 +147,54 @@ export async function SourceFile({
           {sizeSide}
         </summary>
 
-        <div className="flex flex-col gap-3 px-4 py-3">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* A shown file needs no sentence: the preview is the answer. The other three cases
+        {/* An image is read beside its comments on a wide screen -- a scanned page and the note
+            about it, both in view at once. Everything else keeps its comments underneath. */}
+        <div
+          className={
+            besideComments ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,26rem)]" : undefined
+          }
+        >
+          <div className="flex min-w-0 flex-col gap-3 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* A shown file needs no sentence: the preview is the answer. The other three cases
                 each need a different one, and "this type is not shown" is the wrong thing to say
                 about a PNG that was merely too big to be worth fetching. */}
-            {!previewable && (
-              <span className="text-sm text-muted-foreground">
-                {downloadHref === null
-                  ? t("inArchive")
-                  : kind !== null
-                    ? t("preview.tooLarge")
-                    : t("notShown")}
-              </span>
-            )}
-            {downloadHref && (
-              <a href={downloadHref} className={buttonClasses("outline", "sm")}>
-                <DownloadIcon />
-                {t("downloadFile")}
-              </a>
+              {!previewable && (
+                <span className="text-sm text-muted-foreground">
+                  {downloadHref === null
+                    ? t("inArchive")
+                    : kind !== null
+                      ? t("preview.tooLarge")
+                      : t("notShown")}
+                </span>
+              )}
+              {downloadHref && (
+                <a href={downloadHref} className={buttonClasses("outline", "sm")}>
+                  <DownloadIcon />
+                  {t("downloadFile")}
+                </a>
+              )}
+            </div>
+
+            {previewable && downloadHref && (
+              <FilePreview kind={kind} href={`${downloadHref}?inline`} name={file.name} />
             )}
           </div>
 
-          {previewable && downloadHref && (
-            <FilePreview kind={kind} href={`${downloadHref}?inline`} name={file.name} />
+          {review && (
+            <FileComments
+              solutionId={solutionId}
+              fileName={file.name}
+              comments={review.comments}
+              bodies={review.bodies}
+              canComment={review.canComment}
+              canModerate={review.canModerate}
+              currentUserId={review.currentUserId}
+              reviewClosed={review.reviewClosed}
+              beside={besideComments}
+            />
           )}
         </div>
-
-        {review && (
-          <FileComments
-            solutionId={solutionId}
-            fileName={file.name}
-            comments={review.comments}
-            bodies={review.bodies}
-            canComment={review.canComment}
-            canModerate={review.canModerate}
-            currentUserId={review.currentUserId}
-            reviewClosed={review.reviewClosed}
-          />
-        )}
       </details>
     );
   }

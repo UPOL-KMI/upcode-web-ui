@@ -36,6 +36,7 @@ export function FileComments({
   canModerate,
   currentUserId,
   reviewClosed,
+  beside = false,
 }: {
   solutionId: string;
   fileName: string;
@@ -45,6 +46,8 @@ export function FileComments({
   canModerate: boolean;
   currentUserId: string;
   reviewClosed: boolean;
+  /** A column beside the file on a wide screen (an image), rather than a band under it. */
+  beside?: boolean;
 }) {
   const t = useTranslations("Review");
   const [adding, setAdding] = useState(false);
@@ -53,7 +56,11 @@ export function FileComments({
   if (ordered.length === 0 && !canComment) return null;
 
   return (
-    <section className="flex flex-col gap-2 border-t border-border px-4 py-3">
+    <section
+      className={`flex flex-col gap-2 border-t border-border px-4 py-3 ${
+        beside ? "lg:border-t-0 lg:border-l" : ""
+      }`}
+    >
       <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {t("comment.onFile")}
       </h4>

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import type { PreviewKind } from "@/lib/code/preview";
 import { readSpreadsheet, SpreadsheetError, type Grid } from "@/lib/users/spreadsheet";
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/dialog/dialog";
+import { ImageViewer } from "@/components/solutions/image-viewer";
 
 /**
  * A submitted file shown rather than only offered (X-025).
@@ -29,35 +29,9 @@ export function FilePreview({
   href: string;
   name: string;
 }) {
-  if (kind === "image") return <ImagePreview href={href} name={name} />;
+  if (kind === "image") return <ImageViewer href={href} name={name} />;
   if (kind === "pdf") return <PdfPreview href={href} name={name} />;
   return <SheetPreview href={href} name={name} />;
-}
-
-function ImagePreview({ href, name }: { href: string; name: string }) {
-  const t = useTranslations("Sources");
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="block cursor-zoom-in rounded-md border border-border bg-muted/30 p-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          aria-label={t("preview.enlarge", { name })}
-        >
-          {/* Not `next/image`: the bytes come from a route that authorises per solution, the
-              dimensions are unknown until it loads, and optimising a submitted file would mean
-              running it through the image pipeline -- which is work, and a surface, for nothing. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={href} alt={name} className="max-h-96 w-auto object-contain" />
-        </button>
-      </DialogTrigger>
-      <DialogContent title={name} className="max-w-[90vw]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={href} alt={name} className="max-h-[75vh] w-auto object-contain" />
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 /**

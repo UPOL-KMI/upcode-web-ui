@@ -7228,3 +7228,18 @@ guessed from the attempt count, so a student moved to another group showed no po
 evaluation and no _Grade_ beside a best solution worth ten. Such a row now comes from that best
 solution in the assignment's solutions list (core-api's own `isBestSolution`) and carries a _Not in
 the group_ flag.
+
+### 2026-10-05 — a scanned page read in place
+
+**The enlarged image was still too small to read a scan.** The dialog capped it at three quarters
+of the screen with nothing to zoom, and it covered the comments a teacher would be writing about
+it. A submitted image is now shown in place, in a viewer (`components/solutions/image-viewer.tsx`):
+zoom buttons with the percentage, fit to width (how it opens, never above real size), whole image,
+1:1, rotate by a quarter turn, and full screen. A mouse drags the image around; Ctrl or ⌘ with the
+wheel zooms about the pointer, which is also what a trackpad pinch sends; a plain wheel still
+scrolls. On a wide screen the file's comments sit in a column beside the image, so the page and the
+note about it are in view together. PDFs and spreadsheets are unchanged.
+
+Tried on the design-system page with a generated page-sized image, since no solution on the dev
+instance has one: fitting, zooming by button and by wheel, dragging, rotating. The temporary
+fixture was removed again.

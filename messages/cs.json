@@ -1205,10 +1205,21 @@
     "reviewedNoIssues": "Vaše řešení bylo zrevidováno a nebyly nalezeny žádné připomínky.",
     "preview": {
       "tooLarge": "Tento soubor je na náhled příliš velký — stáhněte si ho.",
-      "enlarge": "Zvětšit {name}",
       "document": "Dokument {name}",
       "loading": "Načítám tabulku…",
-      "sheetFailed": "Tabulku se nepodařilo přečíst — stáhněte si soubor."
+      "sheetFailed": "Tabulku se nepodařilo přečíst — stáhněte si soubor.",
+      "viewer": {
+        "toolbar": "Ovládání náhledu {name}",
+        "zoomIn": "Přiblížit",
+        "zoomOut": "Oddálit",
+        "fitWidth": "Na šířku",
+        "fitPage": "Celý obrázek",
+        "actualTitle": "Skutečná velikost",
+        "rotate": "Otočit",
+        "fullscreen": "Celá obrazovka",
+        "exitFullscreen": "Zavřít celou obrazovku",
+        "hint": "Posun tažením myší, přiblížení Ctrl + kolečkem"
+      }
     },
     "tabs": {
       "label": "Sekce souborů",

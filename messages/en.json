@@ -1205,10 +1205,21 @@
     "reviewedNoIssues": "Your solution was reviewed and no issues were reported.",
     "preview": {
       "tooLarge": "This file is too large to preview — download it instead.",
-      "enlarge": "Enlarge {name}",
       "document": "Document {name}",
       "loading": "Reading the spreadsheet…",
-      "sheetFailed": "The spreadsheet could not be read — download the file instead."
+      "sheetFailed": "The spreadsheet could not be read — download the file instead.",
+      "viewer": {
+        "toolbar": "Controls for the preview of {name}",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "fitWidth": "Fit width",
+        "fitPage": "Whole image",
+        "actualTitle": "Actual size",
+        "rotate": "Rotate",
+        "fullscreen": "Full screen",
+        "exitFullscreen": "Exit full screen",
+        "hint": "Drag to move, Ctrl + wheel to zoom"
+      }
     },
     "tabs": {
       "label": "File sections",
