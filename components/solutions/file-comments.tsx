@@ -36,7 +36,7 @@ export function FileComments({
   canModerate,
   currentUserId,
   reviewClosed,
-  beside = false,
+  floating = false,
 }: {
   solutionId: string;
   fileName: string;
@@ -46,61 +46,101 @@ export function FileComments({
   canModerate: boolean;
   currentUserId: string;
   reviewClosed: boolean;
-  /** A column beside the file on a wide screen (an image), rather than a band under it. */
-  beside?: boolean;
+  /**
+   * On a wide screen, a window at the bottom right of the screen for as long as its file is on it,
+   * rather than a band under the file: an image or a PDF is read at the card's full width, and its
+   * comments stay at hand however far down it is scrolled. **`position: sticky`, not a script**:
+   * held to the bottom of the screen but never outside its own file, it comes into view with the
+   * file, comes to rest under it once the file's end is in view, and the next file brings its own.
+   * Its title names the file, so it is clear which one is being commented on. Folds to that title,
+   * for the part of the file under it. Below `xl` it is the band as usual.
+   */
+  floating?: boolean;
 }) {
   const t = useTranslations("Review");
   const [adding, setAdding] = useState(false);
 
+  const [folded, setFolded] = useState(false);
+
   const ordered = sortFileComments(comments);
   if (ordered.length === 0 && !canComment) return null;
 
+  const title = (
+    <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      {t("comment.onFile")}
+      {floating && ordered.length > 0 && <span className="xl:hidden"> ({ordered.length})</span>}
+    </h4>
+  );
+
   return (
     <section
+      aria-label={floating ? t("comment.onFileNamed", { name: fileName }) : undefined}
       className={`flex flex-col gap-2 border-t border-border px-4 py-3 ${
-        beside ? "lg:border-t-0 lg:border-l" : ""
+        floating
+          ? "xl:sticky xl:bottom-4 xl:z-20 xl:mx-4 xl:mb-4 xl:ml-auto xl:max-h-[60vh] xl:w-[26rem] xl:overflow-y-auto xl:rounded-lg xl:border xl:bg-card xl:shadow-lg"
+          : ""
       }`}
     >
-      <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        {t("comment.onFile")}
-      </h4>
-
-      {ordered.map((comment) => (
-        <ReviewCommentItem
-          key={comment.id}
-          solutionId={solutionId}
-          comment={comment}
-          body={bodies[comment.id]}
-          canModify={canComment && (canModerate || comment.authorId === currentUserId)}
-          reviewClosed={reviewClosed}
-        />
-      ))}
-
-      {adding ? (
-        <div className="border-l-2 border-primary bg-card">
-          <ReviewCommentForm
-            submitLabel={t("comment.add")}
-            reviewClosed={reviewClosed}
-            onCancel={() => setAdding(false)}
-            onSubmitValues={(values) =>
-              addReviewComment(solutionId, fileName, nextFileCommentLine(comments), values)
-            }
-            onDone={() => setAdding(false)}
-          />
+      {floating ? (
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            {title}
+            <p className="hidden truncate text-xs text-muted-foreground xl:block">
+              {fileName}
+              {ordered.length > 0 && ` · ${ordered.length}`}
+            </p>
+          </div>
+          <button
+            type="button"
+            className={buttonClasses("ghost", "xs", "hidden xl:inline-flex")}
+            aria-expanded={!folded}
+            onClick={() => setFolded((value) => !value)}
+          >
+            {folded ? t("comment.unfold") : t("comment.fold")}
+          </button>
         </div>
       ) : (
-        canComment && (
-          <div>
-            <button
-              type="button"
-              className={buttonClasses("outline", "sm")}
-              onClick={() => setAdding(true)}
-            >
-              {t("comment.addOnFile")}
-            </button>
-          </div>
-        )
+        title
       )}
+
+      <div className={`flex flex-col gap-2 ${floating && folded ? "xl:hidden" : ""}`}>
+        {ordered.map((comment) => (
+          <ReviewCommentItem
+            key={comment.id}
+            solutionId={solutionId}
+            comment={comment}
+            body={bodies[comment.id]}
+            canModify={canComment && (canModerate || comment.authorId === currentUserId)}
+            reviewClosed={reviewClosed}
+          />
+        ))}
+
+        {adding ? (
+          <div className="border-l-2 border-primary bg-card">
+            <ReviewCommentForm
+              submitLabel={t("comment.add")}
+              reviewClosed={reviewClosed}
+              onCancel={() => setAdding(false)}
+              onSubmitValues={(values) =>
+                addReviewComment(solutionId, fileName, nextFileCommentLine(comments), values)
+              }
+              onDone={() => setAdding(false)}
+            />
+          </div>
+        ) : (
+          canComment && (
+            <div>
+              <button
+                type="button"
+                className={buttonClasses("outline", "sm")}
+                onClick={() => setAdding(true)}
+              >
+                {t("comment.addOnFile")}
+              </button>
+            </div>
+          )
+        )}
+      </div>
     </section>
   );
 }

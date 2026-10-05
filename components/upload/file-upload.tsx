@@ -148,7 +148,9 @@ export function FileUpload({ onUploadedFilesChange, accept, disabled, maxBytes }
                 {item.status === "failed" && (
                   <div className="flex items-center justify-between gap-3">
                     <span role="alert" className="text-sm text-destructive">
-                      {item.errorMessage ?? t("failed")}
+                      {item.errorCode === "duplicate-name"
+                        ? t("duplicateName")
+                        : (item.errorMessage ?? t("failed"))}
                     </span>
                     <button
                       type="button"

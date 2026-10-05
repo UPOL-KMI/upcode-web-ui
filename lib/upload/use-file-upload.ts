@@ -24,7 +24,10 @@ export interface UploadItem {
   size: number;
   status: UploadStatus;
   uploadedBytes: number;
-  /** core-api's stable error code, or a local one (`network`, `digest-mismatch`, `canceled`). */
+  /**
+   * core-api's stable error code, or a local one (`network`, `digest-mismatch`, `canceled`, and
+   * `duplicate-name` for a file refused before upload because one of that name is already here).
+   */
   errorCode?: string;
   errorMessage?: string;
   /** The finished `UploadedFile` entity, the thing a consuming form actually submits. */
@@ -61,6 +64,11 @@ export function useFileUpload({ onUploadedFilesChange }: UseFileUploadOptions = 
   // derived from it: it has to be readable and updatable from event handlers, where reading
   // `items` would see a stale closure.
   const uploaded = useRef(new Map<string, UploadedFile>());
+  // The names of the files that are uploading or uploaded, for refusing a second one of the same
+  // name: every upload surface ends up as a set of files keyed by name -- a solution is stored as
+  // an archive -- and core-api answered two `report.jpg`s with a bare 500 ("Target entry already
+  // exists"), after which the uploads it had already taken were gone too.
+  const names = useRef(new Map<string, string>());
   const announce = useCallback(() => {
     onUploadedFilesChange?.([...uploaded.current.values()]);
   }, [onUploadedFilesChange]);
@@ -76,6 +84,21 @@ export function useFileUpload({ onUploadedFilesChange }: UseFileUploadOptions = 
       for (const file of files) {
         const key =
           globalThis.crypto?.randomUUID?.() ?? `${file.name}-${Date.now()}-${Math.random()}`;
+        if ([...names.current.values()].includes(file.name)) {
+          setItems((current) => [
+            ...current,
+            {
+              key,
+              name: file.name,
+              size: file.size,
+              status: "failed",
+              uploadedBytes: 0,
+              errorCode: "duplicate-name",
+            },
+          ]);
+          continue;
+        }
+        names.current.set(key, file.name);
         const controller = new AbortController();
         controllers.current.set(key, controller);
 
@@ -96,6 +119,7 @@ export function useFileUpload({ onUploadedFilesChange }: UseFileUploadOptions = 
           .catch((error: unknown) => {
             // An abort is a user action, not a failure to explain -- the row is removed rather
             // than left showing an error the user just caused on purpose.
+            names.current.delete(key);
             if (error instanceof DOMException && error.name === "AbortError") {
               setItems((current) => current.filter((item) => item.key !== key));
               return;
@@ -119,6 +143,7 @@ export function useFileUpload({ onUploadedFilesChange }: UseFileUploadOptions = 
   const remove = useCallback(
     (key: string) => {
       controllers.current.get(key)?.abort();
+      names.current.delete(key);
       setItems((current) => current.filter((item) => item.key !== key));
       if (uploaded.current.delete(key)) announce();
     },
@@ -128,6 +153,7 @@ export function useFileUpload({ onUploadedFilesChange }: UseFileUploadOptions = 
   const reset = useCallback(() => {
     for (const controller of controllers.current.values()) controller.abort();
     controllers.current.clear();
+    names.current.clear();
     setItems([]);
     if (uploaded.current.size > 0) {
       uploaded.current.clear();

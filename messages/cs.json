@@ -1268,7 +1268,10 @@
       "delete": "Smazat",
       "deleteTitle": "Smazat tento komentář?",
       "deleteDescription": "Komentář bude z revize nenávratně odstraněn.",
-      "unknownAuthor": "Neznámý autor"
+      "unknownAuthor": "Neznámý autor",
+      "onFileNamed": "Komentáře k souboru {name}",
+      "fold": "Sbalit",
+      "unfold": "Rozbalit"
     },
     "summary": {
       "heading": "Souhrn revize",
@@ -2735,7 +2738,8 @@
     "cancel": "Zrušit",
     "done": "Nahráno",
     "remove": "Odebrat",
-    "failed": "Nahrávání se nezdařilo."
+    "failed": "Nahrávání se nezdařilo.",
+    "duplicateName": "Soubor s tímto názvem už je vybraný. Dva soubory se stejným názvem odevzdat nejde – jeden z nich přejmenujte."
   },
   "Dialog": {
     "close": "Zavřít",
@@ -3396,7 +3400,8 @@
       "tooLarge": "Soubory jsou větší, než toto zadání povoluje.",
       "preSubmitFailed": "Nahrané soubory se nepodařilo zkontrolovat. Zkuste to znovu.",
       "submitFailed": "Řešení se nepodařilo odevzdat.",
-      "invalid": "Zkontrolujte formulář a zkuste to znovu."
+      "invalid": "Zkontrolujte formulář a zkuste to znovu.",
+      "serverFailed": "Řešení se kvůli chybě na serveru nepodařilo odevzdat. Odeberte soubory, nahrajte je znovu a zkuste to ještě jednou."
     }
   },
   "Plagiarism": {

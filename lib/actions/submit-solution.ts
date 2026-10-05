@@ -141,7 +141,12 @@ export async function submitSolution(
   } catch (error) {
     // core-api's own message is the useful one here -- it is what says *why* a submission was
     // refused (past the deadline, out of attempts, group licence expired), and this app cannot
-    // reconstruct that from a status code.
+    // reconstruct that from a status code. Not for its own failures, though: a 500 reads
+    // "Unexpected Error App\Helpers\FileStorage\FileStorageException", and by then core-api may
+    // have taken the uploads already, so trying again with the same files only fails differently.
+    if (error instanceof ApiError && error.httpStatus >= 500) {
+      return { success: false, formError: t("serverFailed") };
+    }
     return {
       success: false,
       formError: error instanceof ApiError ? error.message : t("submitFailed"),

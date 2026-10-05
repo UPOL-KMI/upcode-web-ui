@@ -61,7 +61,7 @@ export async function SolutionList({
                       ? `/solutions/${solution.id}/sources?grade=1`
                       : `/solutions/${solution.id}`
                   }
-                  className="font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="font-medium whitespace-nowrap hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   {t("attemptNumber", { index: solution.attemptIndex })}
                 </Link>

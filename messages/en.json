@@ -1268,7 +1268,10 @@
       "delete": "Delete",
       "deleteTitle": "Delete this comment?",
       "deleteDescription": "The comment is removed from the review for good.",
-      "unknownAuthor": "Unknown author"
+      "unknownAuthor": "Unknown author",
+      "onFileNamed": "Comments on the file {name}",
+      "fold": "Fold",
+      "unfold": "Unfold"
     },
     "summary": {
       "heading": "Review summary",
@@ -2735,7 +2738,8 @@
     "cancel": "Cancel",
     "done": "Uploaded",
     "remove": "Remove",
-    "failed": "The upload failed."
+    "failed": "The upload failed.",
+    "duplicateName": "A file of this name is already chosen. Two files with the same name cannot be submitted -- rename one of them."
   },
   "Dialog": {
     "close": "Close",
@@ -3396,7 +3400,8 @@
       "tooLarge": "Those files are larger than this assignment allows.",
       "preSubmitFailed": "The uploaded files could not be checked. Try again.",
       "submitFailed": "The solution could not be submitted.",
-      "invalid": "Check the form and try again."
+      "invalid": "Check the form and try again.",
+      "serverFailed": "The solution could not be submitted because of a server error. Remove the files, upload them again and try once more."
     }
   },
   "Plagiarism": {

@@ -33,7 +33,7 @@ export function AttemptsDialog({
       </DialogTrigger>
       <DialogContent
         title={title}
-        className="sm:max-w-3xl"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-5xl"
         onClick={(event) => {
           if ((event.target as Element).closest("a")) setOpen(false);
         }}

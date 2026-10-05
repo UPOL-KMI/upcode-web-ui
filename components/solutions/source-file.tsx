@@ -112,10 +112,10 @@ export async function SourceFile({
     // takes comments: those are bound to the file's name, not to a picture of it.
     const kind = downloadHref ? previewKindOf(file.name) : null;
     const previewable = kind !== null && isPreviewable(file.name, file.size);
-    // The same test `FileComments` makes before it renders anything: no column for nothing.
-    const besideComments =
+    // The same test `FileComments` makes before it renders anything: no window for nothing.
+    const floatingComments =
       previewable &&
-      kind === "image" &&
+      (kind === "image" || kind === "pdf") &&
       review !== undefined &&
       (review.canComment || review.comments.length > 0);
 
@@ -124,7 +124,7 @@ export async function SourceFile({
         id={anchor}
         data-source-file
         open
-        className="group overflow-hidden rounded-lg border border-border"
+        className="group overflow-clip rounded-lg border border-border"
       >
         <summary
           className={`${captionClass} cursor-pointer list-none marker:content-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none`}
@@ -147,13 +147,11 @@ export async function SourceFile({
           {sizeSide}
         </summary>
 
-        {/* An image is read beside its comments on a wide screen -- a scanned page and the note
-            about it, both in view at once. Everything else keeps its comments underneath. */}
-        <div
-          className={
-            besideComments ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,26rem)]" : undefined
-          }
-        >
+        {/* An image or a PDF keeps the card's whole width; on a wide screen its comments float at
+            the bottom of the screen while the file is in view (`FileComments`' `floating`). The
+            card clips rather than hides its overflow: `overflow: hidden` would make it a scroll
+            container, and a sticky child sticks to that instead of to the page. */}
+        <div>
           <div className="flex min-w-0 flex-col gap-3 px-4 py-3">
             <div className="flex flex-wrap items-center gap-3">
               {/* A shown file needs no sentence: the preview is the answer. The other three cases
@@ -191,7 +189,7 @@ export async function SourceFile({
               canModerate={review.canModerate}
               currentUserId={review.currentUserId}
               reviewClosed={review.reviewClosed}
-              beside={besideComments}
+              floating={floatingComments}
             />
           )}
         </div>

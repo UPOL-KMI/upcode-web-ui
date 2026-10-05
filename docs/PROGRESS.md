@@ -7243,3 +7243,24 @@ note about it are in view together. PDFs and spreadsheets are unchanged.
 Tried on the design-system page with a generated page-sized image, since no solution on the dev
 instance has one: fitting, zooming by button and by wheel, dragging, rotating. The temporary
 fixture was removed again.
+
+**The comments column took a third of the scan.** On a wide screen (`xl`) the comments of an image
+or a PDF are now a window at the bottom right of the screen, and the file has the card's whole
+width. It is `position: sticky` within its own file: it appears with the file, comes to rest under
+it once the file's end is in view, and the next file brings its own window, titled with its own
+name. A first version floated with `position: fixed` and a visibility observer; the operator wanted
+it tied to the file rather than to the screen. Foldable to its title; below `xl` it is the band
+under the file, as for every other file.
+
+**Two files of one name in one solution were a bare 500.** core-api stores a solution's files by
+name and answered a second `scan.jpg` with "Unexpected Error App\Helpers\FileStorage\
+FileStorageException" ("Target entry already exists"), shown to the student verbatim -- and a retry
+then failed again, because the uploads it had taken were gone. The upload control now refuses a
+file whose name is already chosen, before uploading it, saying to rename one; removing the first
+lets it in. Any other server failure of a submission reads, in the reader's language, that the files
+should be uploaded again. Every upload surface shares the control, so reference solutions and
+exercise files refuse the duplicate too.
+
+**The attempts dialog broke its rows for want of width.** "Pokus 7" and the submission time each
+wrapped onto two lines in a dialog capped at 48rem; it is now up to 64rem wide, scrolls itself when
+a student has many attempts, and the attempt label never wraps.
