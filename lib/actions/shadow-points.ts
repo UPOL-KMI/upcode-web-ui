@@ -52,6 +52,38 @@ export async function awardShadowPoints(
   }
 }
 
+/**
+ * The same points to several students at once (X-032), as the legacy screen's collective award did.
+ * core-api has no batch call, so one `create-points` each, **in turn**: the local PHP-FPM pool is
+ * small, and a burst of parallel writes is how it was overrun before. A refusal for one student
+ * does not stop the rest -- the caller names whoever was left out.
+ */
+export async function awardShadowPointsMany(
+  shadowId: string,
+  userIds: string[],
+  values: ShadowPointsValues,
+): Promise<ActionResult<{ awarded: string[]; failed: string[] }>> {
+  const t = await getTranslations("Shadow.errors");
+  const parsed = shadowPointsSchema.safeParse(values);
+  if (!parsed.success) return { success: false, formError: t("invalid") };
+
+  const awarded: string[] = [];
+  const failed: string[] = [];
+  for (const userId of userIds) {
+    try {
+      await apiPost(
+        "/v1/shadow-assignments/{id}/create-points",
+        { userId, ...body(parsed.data) },
+        { pathParams: { id: shadowId } },
+      );
+      awarded.push(userId);
+    } catch {
+      failed.push(userId);
+    }
+  }
+  return { success: true, data: { awarded, failed } };
+}
+
 export async function updateShadowPoints(
   pointsId: string,
   values: ShadowPointsValues,

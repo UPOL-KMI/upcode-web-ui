@@ -3,7 +3,11 @@ import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { ApiError } from "@/lib/api/client";
-import { getGroupPointsExport, type PointsExportRow } from "@/lib/api/group-detail";
+import {
+  getGroupPointsExport,
+  type PointsExportColumn,
+  type PointsExportRow,
+} from "@/lib/api/group-detail";
 import { csvDocument, csvFileName, type CsvValue } from "@/lib/format/csv";
 
 import { routing } from "@/i18n/routing";
@@ -45,14 +49,17 @@ export async function GET(
   }
 
   const t = await getTranslations({ locale, namespace: "Group.points.export" });
+  // The totals leave hidden work out (DEC-165), so the header says which columns those are.
+  const columnName = (column: PointsExportColumn) =>
+    column.hidden ? t("hiddenColumn", { name: column.name }) : column.name;
 
   const header: CsvValue[] = [
     t("student"),
     t("email"),
     t("gained"),
     t("maximum"),
-    ...data.columns.map((column) => column.name),
-    ...data.shadowColumns.map((column) => column.name),
+    ...data.columns.map((column) => columnName(column)),
+    ...data.shadowColumns.map((column) => columnName(column)),
   ];
 
   const rows: CsvValue[][] = [

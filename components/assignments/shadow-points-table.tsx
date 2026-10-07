@@ -5,254 +5,227 @@ import { useFormatter, useTranslations } from "next-intl";
 
 import {
   awardShadowPoints,
+  awardShadowPointsMany,
   removeShadowPoints,
   updateShadowPoints,
 } from "@/lib/actions/shadow-points";
 import type { ShadowPointsRecord } from "@/lib/api/shadow-assignment";
 import { fromDateTimeLocal, toDateTimeLocal } from "@/lib/format/datetime-local";
 import { DATE_TIME_FORMAT } from "@/lib/format/date-time";
-import type { ActionResult } from "@/lib/forms/action-result";
+import { isOverMax } from "@/lib/status/points-overflow";
 
 import { useRouter } from "@/i18n/navigation";
 import { ConfirmDialog } from "@/components/dialog/confirm-dialog";
 import { useToast } from "@/components/toast/toast-provider";
-import { buttonClasses } from "@/components/button";
-import { PencilIcon } from "@/components/icons";
+import { Button } from "@/components/button";
+import { CheckIcon, CloseIcon, PencilIcon, TrashIcon } from "@/components/icons";
 
 /**
- * Who has been awarded what, and the awarding itself (S-020).
+ * Every student of the group against this shadow assignment (S-020, reworked in X-032 / DEC-166).
  *
- * These are the only points in ReCodEx a person types in, so every row says **who** typed them and
- * when they say the work was done -- `awardedAt` is the teacher's own claim about when the points
- * were earned, which need not be when the record was created, and the legacy screen keeps the two
- * apart the same way.
+ * **One row per student, graded or not.** The first version listed only the records and awarded
+ * through a separate form with a "who" picker, so "who still has nothing" was a question the
+ * screen made the teacher answer by comparing two lists. Now an ungraded row says so and is edited
+ * in place like any other; saving it creates the record, saving a graded one updates it -- core-api
+ * keeps exactly one record per student and assignment, so the row and the record are one thing.
  *
- * **The award form picks from the group's roster, and used to search every user on the instance.**
- * That was a deliberate choice -- core-api takes a user id and decides for itself, so the screen
- * did not have to answer "who belongs here" a second time -- and testing killed it: the search
- * offered people who are not in the group, awarding them failed with core-api's own
- * `User is not member of the group`, and that sentence reaches a Czech teacher in English. An
- * offer that cannot succeed is worse than a shorter list (brief §3.4).
+ * The quick buttons (full marks, zero) only **prefill** the row: points typed by a person are the
+ * only points in ReCodEx nobody computes, so nothing is written until the teacher saves it. The
+ * collective award is the legacy screen's: tick the ungraded, give them all the same.
+ *
+ * These are the only points a person types in, so every row says **who** typed them and when they
+ * say the work was done -- `awardedAt` is the teacher's own claim about when the points were
+ * earned, which need not be when the record was created. A new record starts at "now", as legacy.
  */
+interface Row {
+  studentId: string;
+  name: string;
+  record: ShadowPointsRecord | null;
+}
+
+interface Draft {
+  points: string;
+  note: string;
+  awardedAt: string;
+}
+
+const nowLocal = () => toDateTimeLocal(Math.floor(Date.now() / 1000));
+
+function parsePoints(value: string): number | null {
+  const parsed = Number(value.trim());
+  return value.trim() !== "" && Number.isInteger(parsed) ? parsed : null;
+}
+
 export function ShadowPointsTable({
   shadowId,
   points,
-  canAward,
   students,
   maxPoints,
+  can,
 }: {
   shadowId: string;
   points: ShadowPointsRecord[];
-  canAward: boolean;
-  /** What the assignment is worth. core-api accepts more, so this only warns. */
-  maxPoints: number;
   /** The group's own students -- the only people core-api will accept here. */
   students: { id: string; name: string }[];
+  /** What the assignment is worth. core-api accepts more, so this only warns. */
+  maxPoints: number;
+  can: { create: boolean; update: boolean; remove: boolean };
 }) {
   const t = useTranslations("Shadow.points");
   const format = useFormatter();
   const router = useRouter();
   const toast = useToast();
-  const [pending, setPending] = useState(false);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ points: "0", note: "", awardedAt: "" });
-  const [awardee, setAwardee] = useState("");
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [pending, setPending] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<ShadowPointsRecord | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulk, setBulk] = useState<Draft>({ points: "", note: "", awardedAt: "" });
 
-  // **A warning, not a rule.** core-api stores whatever it is given -- 999 against a maximum of 10
-  // is accepted and kept -- and a teacher may well mean it, as a bonus. What it must not do is
-  // take a typo silently, which is what it did before.
-  const entered = Number.parseInt(draft.points, 10);
-  const overMax = Number.isFinite(entered) && entered > maxPoints;
+  // A student who has left the group keeps their record, so they keep their row.
+  const byStudent = new Map(points.map((record) => [record.awardeeId ?? record.id, record]));
+  const rows: Row[] = [
+    ...students.map((student) => ({
+      studentId: student.id,
+      name: student.name,
+      record: byStudent.get(student.id) ?? null,
+    })),
+    ...points
+      .filter((record) => !students.some((student) => student.id === record.awardeeId))
+      .map((record) => ({
+        studentId: record.awardeeId ?? record.id,
+        name: record.awardeeName,
+        record,
+      })),
+  ].sort((a, b) => a.name.localeCompare(b.name));
+  const ungraded = rows.filter((row) => row.record === null).map((row) => row.studentId);
+  const showActions = can.create || can.update || can.remove;
 
-  // Whoever is in the group and has no points on this assignment yet -- core-api refuses a second
-  // award to the same person, which is what the old picker's `excludeIds` was for.
-  const awarded = new Set(points.map((record) => record.awardeeId));
-  const candidates = students.filter((student) => !awarded.has(student.id));
+  function open(row: Row, prefill?: number) {
+    setDrafts((current) => ({
+      ...current,
+      [row.studentId]: {
+        points: String(prefill ?? row.record?.points ?? ""),
+        note: row.record?.note ?? "",
+        awardedAt: row.record
+          ? row.record.awardedAt !== null
+            ? toDateTimeLocal(row.record.awardedAt)
+            : ""
+          : nowLocal(),
+      },
+    }));
+  }
 
-  async function run(call: () => Promise<ActionResult<unknown>>, successKey: string) {
-    setPending(true);
-    const result = await call();
-    setPending(false);
+  function close(studentId: string) {
+    setDrafts((current) => {
+      const next = { ...current };
+      delete next[studentId];
+      return next;
+    });
+  }
+
+  function change(studentId: string, field: keyof Draft, value: string) {
+    setDrafts((current) => ({
+      ...current,
+      [studentId]: { ...current[studentId]!, [field]: value },
+    }));
+  }
+
+  const valuesOf = (draft: Draft, points: number) => ({
+    points,
+    note: draft.note,
+    awardedAt: fromDateTimeLocal(draft.awardedAt),
+  });
+
+  async function save(row: Row) {
+    const draft = drafts[row.studentId];
+    const entered = draft ? parsePoints(draft.points) : null;
+    if (!draft || entered === null) return;
+    setPending(row.studentId);
+    const result = row.record
+      ? await updateShadowPoints(row.record.id, valuesOf(draft, entered))
+      : await awardShadowPoints(shadowId, row.studentId, valuesOf(draft, entered));
+    setPending(null);
     if (result.success) {
-      setEditing(null);
-      setRemoving(null);
-      toast.success(t(successKey));
+      close(row.studentId);
+      toast.success(t(row.record ? "toast.saved" : "toast.awarded"));
       router.refresh();
     } else {
       toast.error(t("failed"), result.formError);
     }
   }
 
-  function startEditing(record: ShadowPointsRecord) {
-    setEditing(record.id);
-    setDraft({
-      points: String(record.points),
-      note: record.note,
-      awardedAt: record.awardedAt ? toDateTimeLocal(record.awardedAt) : "",
+  async function remove(record: ShadowPointsRecord) {
+    setPending(record.id);
+    const result = await removeShadowPoints(record.id);
+    setPending(null);
+    if (result.success) {
+      setRemoving(null);
+      toast.success(t("toast.removed"));
+      router.refresh();
+    } else {
+      toast.error(t("failed"), result.formError);
+    }
+  }
+
+  function toggle(studentIds: string[], on: boolean) {
+    if (on && selected.size === 0 && bulk.awardedAt === "") {
+      setBulk((current) => ({ ...current, awardedAt: nowLocal() }));
+    }
+    setSelected((current) => {
+      const next = new Set(current);
+      for (const id of studentIds) {
+        if (on) next.add(id);
+        else next.delete(id);
+      }
+      return next;
     });
   }
 
-  const values = () => ({
-    points: Number.parseInt(draft.points, 10) || 0,
-    note: draft.note,
-    awardedAt: fromDateTimeLocal(draft.awardedAt),
-  });
+  async function awardSelected() {
+    const entered = parsePoints(bulk.points);
+    if (entered === null || selected.size === 0) return;
+    setPending("bulk");
+    const result = await awardShadowPointsMany(shadowId, [...selected], valuesOf(bulk, entered));
+    setPending(null);
+    if (!result.success) {
+      toast.error(t("failed"), result.formError);
+      return;
+    }
+    const { awarded, failed } = result.data;
+    if (awarded.length > 0) toast.success(t("toast.bulk", { count: awarded.length }));
+    if (failed.length > 0) {
+      const names = failed.map((id) => rows.find((row) => row.studentId === id)?.name ?? id);
+      toast.error(t("failed"), t("bulkFailed", { names: names.join(", ") }));
+    }
+    setSelected(new Set(failed));
+    if (failed.length === 0) setBulk({ points: "", note: "", awardedAt: "" });
+    router.refresh();
+  }
 
   const input =
     "rounded-md border border-input bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring";
-  const button =
-    "rounded-md border border-input px-2 py-1 text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60";
+  const bulkPoints = parsePoints(bulk.points);
+  const allSelected = ungraded.length > 0 && ungraded.every((id) => selected.has(id));
+
+  if (rows.length === 0) return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
 
   return (
-    <div className="flex flex-col gap-4">
-      {points.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left">
-              <tr>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  {t("columns.student")}
-                </th>
-                <th scope="col" className="px-3 py-2 text-right font-medium">
-                  {t("columns.points")}
-                </th>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  {t("columns.note")}
-                </th>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  {t("columns.awardedAt")}
-                </th>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  {t("columns.awardedBy")}
-                </th>
-                {canAward && <th scope="col" className="px-3 py-2" />}
-              </tr>
-            </thead>
-            <tbody>
-              {points.map((record) => (
-                <tr key={record.id} className="border-t border-border align-top">
-                  <td className="px-3 py-2 font-medium">
-                    {record.awardeeName || record.awardeeId}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {editing === record.id ? (
-                      <input
-                        type="number"
-                        aria-label={t("columns.points")}
-                        value={draft.points}
-                        onChange={(event) =>
-                          setDraft((current) => ({ ...current, points: event.target.value }))
-                        }
-                        className={`${input} w-20 text-right`}
-                      />
-                    ) : (
-                      record.points
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    {editing === record.id ? (
-                      <input
-                        type="text"
-                        aria-label={t("columns.note")}
-                        value={draft.note}
-                        onChange={(event) =>
-                          setDraft((current) => ({ ...current, note: event.target.value }))
-                        }
-                        className={`${input} w-full`}
-                      />
-                    ) : (
-                      record.note
-                    )}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {editing === record.id ? (
-                      <input
-                        type="datetime-local"
-                        aria-label={t("columns.awardedAt")}
-                        value={draft.awardedAt}
-                        onChange={(event) =>
-                          setDraft((current) => ({ ...current, awardedAt: event.target.value }))
-                        }
-                        className={input}
-                      />
-                    ) : record.awardedAt ? (
-                      format.dateTime(new Date(record.awardedAt * 1000), DATE_TIME_FORMAT)
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">{record.authorName}</td>
-                  {canAward && (
-                    <td className="px-3 py-2 text-right whitespace-nowrap">
-                      {editing === record.id ? (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={pending}
-                            className={button}
-                            onClick={() =>
-                              void run(() => updateShadowPoints(record.id, values()), "toast.saved")
-                            }
-                          >
-                            {t("save")}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={pending}
-                            className={button}
-                            onClick={() => setEditing(null)}
-                          >
-                            {t("cancel")}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={pending}
-                            className={buttonClasses("warning-outline", "xs")}
-                            onClick={() => startEditing(record)}
-                          >
-                            <PencilIcon className="size-3.5" />
-                            {t("edit")}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={pending}
-                            className={button}
-                            onClick={() => setRemoving(record.id)}
-                          >
-                            {t("remove")}
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {canAward && (
-        <section className="flex flex-col gap-2 rounded-lg border border-border p-3">
-          <h3 className="text-sm font-medium">{t("award.title")}</h3>
-          {/* Aligned at the top, not the bottom: one field carries a hint under it, and with
-              `items-end` its height pushed that column up so the three labels no longer lined up
-              with each other. */}
-          <div className="flex flex-wrap items-start gap-2">
+    <div className="flex flex-col gap-3">
+      {can.create && selected.size > 0 && (
+        <section
+          aria-label={t("bulk.button")}
+          className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 p-3"
+        >
+          <div className="flex flex-wrap items-end gap-2">
+            <p className="mr-2 self-center text-sm font-medium">
+              {t("bulk.selected", { count: selected.size })}
+            </p>
             <label className="flex flex-col gap-1 text-sm">
               {t("columns.points")}
               <input
                 type="number"
-                value={draft.points}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, points: event.target.value }))
-                }
+                value={bulk.points}
+                onChange={(event) => setBulk({ ...bulk, points: event.target.value })}
                 className={`${input} w-24`}
               />
             </label>
@@ -260,77 +233,232 @@ export function ShadowPointsTable({
               {t("columns.note")}
               <input
                 type="text"
-                value={draft.note}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, note: event.target.value }))
-                }
+                value={bulk.note}
+                onChange={(event) => setBulk({ ...bulk, note: event.target.value })}
                 className={input}
               />
             </label>
-            {/* Left blank, core-api stores no date at all -- it defaults to nothing, and its own
-                parameter is documented as "whatever that means". So the field says what it is for
-                rather than leaving a teacher to guess from a label. */}
             <label className="flex flex-col gap-1 text-sm">
               {t("columns.awardedAt")}
               <input
                 type="datetime-local"
-                value={draft.awardedAt}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, awardedAt: event.target.value }))
-                }
+                value={bulk.awardedAt}
+                onChange={(event) => setBulk({ ...bulk, awardedAt: event.target.value })}
                 className={input}
               />
-              <span className="text-xs text-muted-foreground">{t("award.awardedAtHint")}</span>
             </label>
+            <Button
+              variant="primary"
+              disabled={pending !== null || bulkPoints === null}
+              onClick={() => void awardSelected()}
+            >
+              <CheckIcon />
+              {t("bulk.button")}
+            </Button>
+            <Button disabled={pending !== null} onClick={() => setSelected(new Set())}>
+              <CloseIcon />
+              {t("bulk.clear")}
+            </Button>
           </div>
-          {overMax && (
+          {isOverMax(bulkPoints, maxPoints) && (
             <p role="status" className="text-sm text-warning">
-              {t("award.overMax")}
+              {t("overMax")}
             </p>
           )}
-          <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor={`${shadowId}-awardee`}>{t("award.who")}</label>
-            {candidates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("award.noCandidates")}</p>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  id={`${shadowId}-awardee`}
-                  className={`${input} w-72`}
-                  value={awardee}
-                  onChange={(event) => setAwardee(event.target.value)}
-                >
-                  <option value="">{t("award.choose")}</option>
-                  {candidates.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.name || student.id}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={pending || awardee === ""}
-                  onClick={() =>
-                    void run(() => awardShadowPoints(shadowId, awardee, values()), "toast.awarded")
-                  }
-                  className={buttonClasses("outline", "xs")}
-                >
-                  {t("award.button")}
-                </button>
-              </div>
-            )}
-          </div>
         </section>
       )}
+
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left">
+            <tr>
+              {can.create && (
+                <th scope="col" className="w-8 px-3 py-2">
+                  <input
+                    type="checkbox"
+                    aria-label={t("bulk.selectAll")}
+                    disabled={ungraded.length === 0}
+                    checked={allSelected}
+                    onChange={(event) => toggle(ungraded, event.target.checked)}
+                  />
+                </th>
+              )}
+              <th scope="col" className="px-3 py-2 font-medium">
+                {t("columns.student")}
+              </th>
+              <th scope="col" className="px-3 py-2 text-right font-medium">
+                {t("columns.points")}
+              </th>
+              <th scope="col" className="px-3 py-2 font-medium">
+                {t("columns.note")}
+              </th>
+              <th scope="col" className="px-3 py-2 font-medium">
+                {t("columns.awardedAt")}
+              </th>
+              <th scope="col" className="px-3 py-2 font-medium">
+                {t("columns.awardedBy")}
+              </th>
+              {showActions && (
+                <th scope="col" className="px-3 py-2 font-medium">
+                  {t("columns.actions")}
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const draft = drafts[row.studentId];
+              const entered = draft ? parsePoints(draft.points) : null;
+              const busy = pending === row.studentId || pending === row.record?.id;
+              return (
+                <tr key={row.studentId} className="border-t border-border align-top">
+                  {can.create && (
+                    <td className="px-3 py-2">
+                      {row.record === null && (
+                        <input
+                          type="checkbox"
+                          aria-label={t("bulk.select", { name: row.name })}
+                          checked={selected.has(row.studentId)}
+                          onChange={(event) => toggle([row.studentId], event.target.checked)}
+                        />
+                      )}
+                    </td>
+                  )}
+                  <td className="px-3 py-2 font-medium">{row.name || row.studentId}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {draft ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <input
+                          type="number"
+                          aria-label={t("columns.points")}
+                          value={draft.points}
+                          onChange={(event) => change(row.studentId, "points", event.target.value)}
+                          className={`${input} w-20 text-right`}
+                        />
+                        {isOverMax(entered, maxPoints) && (
+                          <span role="status" className="max-w-48 text-xs text-warning">
+                            {t("overMax")}
+                          </span>
+                        )}
+                      </div>
+                    ) : row.record ? (
+                      row.record.points
+                    ) : (
+                      <span className="text-muted-foreground">{t("notGraded")}</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {draft ? (
+                      <input
+                        type="text"
+                        aria-label={t("columns.note")}
+                        value={draft.note}
+                        onChange={(event) => change(row.studentId, "note", event.target.value)}
+                        className={`${input} w-full`}
+                      />
+                    ) : (
+                      row.record?.note
+                    )}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    {draft ? (
+                      <input
+                        type="datetime-local"
+                        aria-label={t("columns.awardedAt")}
+                        value={draft.awardedAt}
+                        onChange={(event) => change(row.studentId, "awardedAt", event.target.value)}
+                        className={input}
+                      />
+                    ) : row.record?.awardedAt ? (
+                      format.dateTime(new Date(row.record.awardedAt * 1000), DATE_TIME_FORMAT)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">{row.record?.authorName}</td>
+                  {showActions && (
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        {draft ? (
+                          <>
+                            <Button
+                              variant="primary"
+                              size="xs"
+                              disabled={busy || entered === null}
+                              onClick={() => void save(row)}
+                            >
+                              <CheckIcon className="size-3.5" />
+                              {t("save")}
+                            </Button>
+                            <Button size="xs" disabled={busy} onClick={() => close(row.studentId)}>
+                              <CloseIcon className="size-3.5" />
+                              {t("cancel")}
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            {(row.record ? can.update : can.create) && (
+                              <Button
+                                variant="warning-outline"
+                                size="xs"
+                                disabled={busy}
+                                onClick={() => open(row)}
+                              >
+                                <PencilIcon className="size-3.5" />
+                                {t("edit")}
+                              </Button>
+                            )}
+                            {row.record === null && can.create && (
+                              <>
+                                <Button
+                                  variant="success-subtle"
+                                  size="xs"
+                                  aria-label={t("quick.label", { points: maxPoints })}
+                                  onClick={() => open(row, maxPoints)}
+                                >
+                                  {maxPoints}
+                                </Button>
+                                <Button
+                                  variant="destructive-subtle"
+                                  size="xs"
+                                  aria-label={t("quick.label", { points: 0 })}
+                                  onClick={() => open(row, 0)}
+                                >
+                                  0
+                                </Button>
+                              </>
+                            )}
+                            {row.record && can.remove && (
+                              <Button
+                                variant="destructive-outline"
+                                size="xs"
+                                disabled={busy}
+                                onClick={() => setRemoving(row.record)}
+                              >
+                                <TrashIcon className="size-3.5" />
+                                {t("remove")}
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       <ConfirmDialog
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
         title={t("confirmRemove.title")}
         description={t("confirmRemove.description")}
-        pending={pending}
+        pending={pending !== null}
         onConfirm={() => {
-          if (removing) void run(() => removeShadowPoints(removing), "toast.removed");
+          if (removing) void remove(removing);
         }}
       />
     </div>

@@ -3,10 +3,18 @@ import "server-only";
 import { cache } from "react";
 
 import { localizedDescription, localizedName, type LocalizedText } from "@/lib/i18n-text/localized";
+import { isGradedByPerson } from "@/lib/grading/queue";
 import { parseExamLockType, type ExamLockType } from "@/lib/status/exam";
 import { isDataOnly } from "@/lib/status/exercise-validation";
+import {
+  isStudentVisible,
+  studentStanding,
+  type Standing,
+  type StandingItem,
+} from "@/lib/status/student-standing";
 
 import { ApiError, apiGet, apiPost } from "./client";
+import type { SolutionListPayload } from "./assignment-solutions";
 import { apiRead, pageRead } from "./read";
 import { getMyGroupStats, type GroupStudentStats } from "./groups";
 
@@ -434,28 +442,21 @@ export async function getGroupAssignments(
 }
 
 /**
- * The group's roster with each student's points (S-007).
+ * The group's roster (S-007): who studies here, by name.
  *
  * `GET /v1/groups/{id}/students/stats` answers with every student's row for a reader who may see
  * group stats, and with only their own row for one who may not -- core-api decides that itself
  * (`GroupsPresenter::actionStats`), so this does not gate on a role. Names come from the same
  * batched `/v1/users/list` the member list uses.
  *
- * Per-assignment points are deliberately **not** a column each: that matrix is T-006's screen,
- * where it can be sorted, exported and read at full width. Here each student is one row -- points,
- * whether they pass, how many assignments they have solved.
+ * Where each student stands is `getGroupStanding` below; this is the plain list the mail control
+ * and the shadow assignment's points table pick people from.
  */
 export interface GroupStudent {
   id: string;
   fullName: string;
   /** Present only where core-api disclosed the person's private data to this reader (G-011). */
   email: string | null;
-  gained: number;
-  total: number;
-  hasLimit: boolean;
-  passesLimit: boolean;
-  solvedCount: number;
-  assignmentCount: number;
 }
 
 /**
@@ -512,12 +513,180 @@ export async function getGroupStudents(groupId: string): Promise<GroupStudent[]>
       id: row.userId,
       fullName: people.get(row.userId)?.fullName ?? "",
       email: people.get(row.userId)?.email ?? null,
-      gained: row.points.gained,
-      total: row.points.total,
-      hasLimit: row.hasLimit,
-      passesLimit: row.passesLimit,
-      solvedCount: row.assignments.filter((assignment) => assignment.status === "done").length,
-      assignmentCount: row.assignments.length,
+    }))
+    .sort((a, b) => a.fullName.localeCompare(b.fullName));
+}
+
+interface ShadowListPayload {
+  id: string;
+  localizedTexts?: LocalizedText[];
+  maxPoints: number;
+  isBonus: boolean;
+  isPublic: boolean;
+}
+
+/** What `studentStanding` needs to know about the group's work, from the two list payloads. */
+function standingItems(
+  assignments: AssignmentPayload[],
+  shadows: ShadowListPayload[],
+  nowSeconds: number,
+): { assignments: Map<string, StandingItem>; shadows: Map<string, StandingItem> } {
+  return {
+    assignments: new Map(
+      assignments.map((assignment) => [
+        assignment.id,
+        {
+          maxPoints: assignment.maxPointsBeforeFirstDeadline,
+          isBonus: assignment.isBonus,
+          visible: isStudentVisible(
+            { isPublic: assignment.isPublic, visibleFrom: assignment.visibleFrom ?? null },
+            nowSeconds,
+          ),
+        },
+      ]),
+    ),
+    shadows: new Map(
+      shadows.map((shadow) => [
+        shadow.id,
+        { maxPoints: shadow.maxPoints, isBonus: shadow.isBonus, visible: shadow.isPublic },
+      ]),
+    ),
+  };
+}
+
+const fetchGroupAssignmentList = cache(async function fetchGroupAssignmentList(
+  groupId: string,
+): Promise<AssignmentPayload[]> {
+  return apiRead<AssignmentPayload[]>("/v1/groups/{id}/assignments", {
+    pathParams: { id: groupId },
+  });
+});
+
+const fetchGroupShadowList = cache(async function fetchGroupShadowList(
+  groupId: string,
+): Promise<ShadowListPayload[]> {
+  return apiRead<ShadowListPayload[]>("/v1/groups/{id}/shadow-assignments", {
+    pathParams: { id: groupId },
+  });
+});
+
+interface SolverPayload {
+  assignmentId: string;
+  solverId: string;
+  lastAttemptIndex: number;
+}
+
+/** Answers 403 to a reader without `viewStats`, so only asked on that hint. */
+const fetchGroupSolvers = cache(async function fetchGroupSolvers(
+  groupId: string,
+): Promise<SolverPayload[]> {
+  return apiRead<SolverPayload[]>("/v1/assignment-solvers", { query: { groupId } });
+});
+
+/**
+ * Which assignments each student's **best** solution has been graded on by a person -- the grading
+ * queue's own definition (DEC-163), so "Hodnoceno" here and "next ungraded" there cannot disagree.
+ *
+ * No endpoint answers this for a group, so it is one `/solutions` read per visible assignment. A
+ * refusal means the reader may not read others' solutions, and is an answer: the column is left
+ * out rather than the tab refused.
+ */
+const fetchGradedBest = cache(async function fetchGradedBest(
+  assignmentKey: string,
+): Promise<Map<string, Set<string>> | null> {
+  const ids = assignmentKey === "" ? [] : assignmentKey.split(",");
+  let lists: { assignmentId: string; solutions: SolutionListPayload[] }[];
+  try {
+    lists = await Promise.all(
+      ids.map(async (assignmentId) => ({
+        assignmentId,
+        solutions: await apiGet<SolutionListPayload[]>("/v1/exercise-assignments/{id}/solutions", {
+          pathParams: { id: assignmentId },
+        }),
+      })),
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.httpStatus === 403) return null;
+    throw error;
+  }
+
+  const graded = new Map<string, Set<string>>();
+  for (const { assignmentId, solutions } of lists) {
+    for (const solution of solutions) {
+      const decided = isGradedByPerson({
+        overridden: solution.overriddenPoints,
+        bonus: solution.bonusPoints,
+        reviewClosedAt: solution.review?.closedAt ?? null,
+      });
+      if (!solution.isBestSolution || !decided) continue;
+      const mine = graded.get(solution.authorId) ?? new Set<string>();
+      mine.add(assignmentId);
+      graded.set(solution.authorId, mine);
+    }
+  }
+  return graded;
+});
+
+function attemptsByStudent(solvers: SolverPayload[]): Map<string, Set<string>> {
+  const attempted = new Map<string, Set<string>>();
+  for (const solver of solvers) {
+    if (solver.lastAttemptIndex <= 0) continue;
+    const mine = attempted.get(solver.solverId) ?? new Set<string>();
+    mine.add(solver.assignmentId);
+    attempted.set(solver.solverId, mine);
+  }
+  return attempted;
+}
+
+/**
+ * The roster with where each student stands (S-007, X-032), computed by `studentStanding` from
+ * the student's side rather than taken from core-api's totals -- see that module for why.
+ *
+ * `Odevzdáno` needs `/assignment-solvers` and `Hodnoceno` the assignments' solutions, and both are
+ * staff reads: a student reading the roster gets submissions approximated from their best solution
+ * and no graded count.
+ */
+export interface GroupStanding extends GroupStudent, Standing {}
+
+export async function getGroupStanding(
+  groupId: string,
+  locale: string,
+  { viewStats }: { viewStats: boolean },
+): Promise<GroupStanding[]> {
+  const [stats, group, assignments, shadows, solvers] = await Promise.all([
+    fetchStudentStats(groupId),
+    getGroupDetail(groupId, locale),
+    fetchGroupAssignmentList(groupId),
+    fetchGroupShadowList(groupId),
+    viewStats ? fetchGroupSolvers(groupId) : Promise.resolve(null),
+  ]);
+  if (stats.length === 0) return [];
+
+  const items = standingItems(assignments, shadows, Date.now() / 1000);
+  const visibleAssignments = assignments
+    .filter((assignment) => items.assignments.get(assignment.id)?.visible)
+    .map((assignment) => assignment.id)
+    .sort()
+    .join(",");
+  const [people, graded] = await Promise.all([
+    fetchStudentPeople(studentIdKey(stats)),
+    viewStats ? fetchGradedBest(visibleAssignments) : Promise.resolve(null),
+  ]);
+  const attempted = solvers ? attemptsByStudent(solvers) : null;
+
+  return stats
+    .map((row) => ({
+      id: row.userId,
+      fullName: people.get(row.userId)?.fullName ?? "",
+      email: people.get(row.userId)?.email ?? null,
+      ...studentStanding({
+        stats: row,
+        ...items,
+        threshold: group.threshold,
+        pointsLimit: group.pointsLimit,
+        attempted: attempted ? (attempted.get(row.userId) ?? new Set()) : null,
+        graded: graded ? (graded.get(row.userId) ?? new Set()) : null,
+      }),
     }))
     .sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
@@ -529,14 +698,13 @@ export async function getGroupStudents(groupId: string): Promise<GroupStudent[]>
  * answers "who has not done which piece of work", which a teacher reads down the columns rather
  * than across the rows. **The cells come out of the same response** --
  * `/v1/groups/{id}/students/stats` already carries a row per student with a nested entry per
- * assignment -- and that read and the batched name lookup are memoized with the roster's, so a
- * Students tab showing both pays for neither twice. What the matrix adds on top is the assignment
- * *names* and the attempt counts below.
+ * assignment -- and that read, the lists and the batched name lookup are memoized with the
+ * roster's, so a Students tab showing both pays for none of them twice.
  *
- * Shadow assignments are **not** columns here. Their points are inside `points.gained` (core-api
- * folds them in, as S-025 found from the other side), so the row totals already count them, but
- * they have no per-assignment cell to show and inventing one would mean four blank columns --
- * DEC-079's reasoning, once more.
+ * **Shadow assignments are columns too** (X-032, superseding DEC-079 here): a course built on
+ * them had no way to see who was graded on which, and the filter lets a reader look at one kind
+ * alone. **Hidden work is shown and not counted** -- a teacher grades it ahead of time, so the
+ * column is useful, but the row total is the student's own standing (DEC-165), once per filter.
  *
  * **A cell distinguishes "never submitted" from "everything failed", which the stats alone cannot.**
  * A student whose every attempt died in the pipeline has `status: null` and no `bestSolutionId`,
@@ -545,8 +713,14 @@ export async function getGroupStudents(groupId: string): Promise<GroupStudent[]>
  * whole group in **one** call (`assignmentId` takes precedence when both are given, so the group
  * form is the batched one), which is the only reason this distinction is affordable here.
  */
+export type PointsFilter = "all" | "standard" | "shadow";
+
+export const POINTS_FILTERS: PointsFilter[] = ["all", "standard", "shadow"];
+
 export interface PointsMatrixCell {
   gained: number | null;
+  /** Given or taken on top of `gained`; it is in the row total, so the cell shows it too. */
+  bonus: number;
   total: number;
   /** core-api's four-value job state, or null when there is no valid best solution. */
   status: string | null;
@@ -558,59 +732,105 @@ export interface PointsMatrixCell {
 export interface PointsMatrixRow {
   userId: string;
   fullName: string;
-  gained: number;
-  total: number;
+  totals: Record<PointsFilter, { gained: number; total: number }>;
   cells: Record<string, PointsMatrixCell>;
+  /** Shadow points by shadow assignment id; null where none were awarded. */
+  shadowCells: Record<string, number | null>;
+}
+
+export interface PointsMatrixColumn {
+  id: string;
+  kind: "assignment" | "shadow";
+  name: string;
+  maxPoints: number;
+  isBonus: boolean;
+  /** Not visible to students, so left out of every total. */
+  hidden: boolean;
 }
 
 export interface PointsMatrix {
-  columns: { id: string; name: string; maxPoints: number; isBonus: boolean }[];
+  columns: PointsMatrixColumn[];
   rows: PointsMatrixRow[];
 }
 
 export async function getGroupPointsMatrix(groupId: string, locale: string): Promise<PointsMatrix> {
-  const [stats, assignments, solvers] = await Promise.all([
+  const [stats, assignments, shadows, solvers] = await Promise.all([
     fetchStudentStats(groupId),
-    apiRead<AssignmentPayload[]>("/v1/groups/{id}/assignments", { pathParams: { id: groupId } }),
-    apiRead<{ assignmentId: string; solverId: string; lastAttemptIndex: number }[]>(
-      "/v1/assignment-solvers",
-      { query: { groupId } },
-    ),
+    fetchGroupAssignmentList(groupId),
+    fetchGroupShadowList(groupId),
+    fetchGroupSolvers(groupId),
   ]);
   if (stats.length === 0) return { columns: [], rows: [] };
 
   const attempts = new Map(
     solvers.map((solver) => [`${solver.solverId}:${solver.assignmentId}`, solver.lastAttemptIndex]),
   );
+  const items = standingItems(assignments, shadows, Date.now() / 1000);
+  const byName = (a: PointsMatrixColumn, b: PointsMatrixColumn) =>
+    a.name.localeCompare(b.name, locale);
 
   const people = await fetchStudentPeople(studentIdKey(stats));
 
-  const columns = assignments
-    .map((assignment) => ({
-      id: assignment.id,
-      name: localizedName(assignment.localizedTexts, locale),
-      maxPoints: assignment.maxPointsBeforeFirstDeadline,
-      isBonus: assignment.isBonus,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name, locale));
+  const columns: PointsMatrixColumn[] = [
+    ...assignments
+      .map((assignment) => ({
+        id: assignment.id,
+        kind: "assignment" as const,
+        name: localizedName(assignment.localizedTexts, locale),
+        maxPoints: assignment.maxPointsBeforeFirstDeadline,
+        isBonus: assignment.isBonus,
+        hidden: !items.assignments.get(assignment.id)?.visible,
+      }))
+      .sort(byName),
+    ...shadows
+      .map((shadow) => ({
+        id: shadow.id,
+        kind: "shadow" as const,
+        name: localizedName(shadow.localizedTexts, locale),
+        maxPoints: shadow.maxPoints,
+        isBonus: shadow.isBonus,
+        hidden: !shadow.isPublic,
+      }))
+      .sort(byName),
+  ];
+
+  const none = new Map<string, StandingItem>();
+  const totalOf = (row: GroupStudentStats, kinds: typeof items) => {
+    const standing = studentStanding({
+      stats: row,
+      ...kinds,
+      threshold: null,
+      pointsLimit: null,
+      attempted: null,
+      graded: null,
+    });
+    return { gained: standing.gained, total: standing.total };
+  };
 
   const rows = stats
     .map((row) => ({
       userId: row.userId,
       fullName: people.get(row.userId)?.fullName ?? "",
-      gained: row.points.gained,
-      total: row.points.total,
+      totals: {
+        all: totalOf(row, items),
+        standard: totalOf(row, { assignments: items.assignments, shadows: none }),
+        shadow: totalOf(row, { assignments: none, shadows: items.shadows }),
+      },
       cells: Object.fromEntries(
         row.assignments.map((entry) => [
           entry.id,
           {
             gained: entry.points.gained,
+            bonus: entry.points.bonus ?? 0,
             total: entry.points.total,
             status: entry.status,
             bestSolutionId: entry.bestSolutionId,
             attempts: attempts.get(`${row.userId}:${entry.id}`) ?? 0,
           },
         ]),
+      ),
+      shadowCells: Object.fromEntries(
+        row.shadowAssignments.map((entry) => [entry.id, entry.points.gained]),
       ),
     }))
     .sort((a, b) => a.fullName.localeCompare(b.fullName, locale));
@@ -623,14 +843,12 @@ export async function getGroupPointsMatrix(groupId: string, locale: string): Pro
  * somewhere else.
  *
  * Three differences from what the screen shows, and each is because a spreadsheet is not a table
- * on a page. **Shadow assignments are columns here**: they carry points a teacher awarded by hand,
- * those points are inside every row total (core-api folds them in), and a file whose columns do
- * not add up to its own total column is a file someone will spend an afternoon disbelieving --
- * the screen can leave them out because it says so in words next to the table, a CSV cannot.
- * **Emails ride along** where core-api discloses them, because matching a row to a person in
- * another system is the reason to export at all; they cost no extra request, being in the same
- * `/v1/users/list` response the names come from. And **bonus points stay visible** as `8+2` rather
- * than being summed away, which is the legacy export's own notation.
+ * on a page. **Every column is in it, the hidden ones marked**: there is no filter to apply to a
+ * file, and its total is the student's own standing (DEC-165), so a header has to say which
+ * columns that total leaves out. **Emails ride along** where core-api discloses them, because
+ * matching a row to a person in another system is the reason to export at all; they cost no extra
+ * request, being in the same `/v1/users/list` response the names come from. And **bonus points
+ * stay visible** as `8+2` rather than being summed away, which is the legacy export's own notation.
  *
  * Raw `apiGet`/`apiPost` rather than `apiRead`: this is read by a Route Handler, where `forbidden()`
  * and friends are not answers a caller can read (`read.ts`'s own rule). The handler maps
@@ -640,6 +858,7 @@ export interface PointsExportColumn {
   id: string;
   name: string;
   maxPoints: number;
+  hidden: boolean;
 }
 
 export interface PointsExportRow {
@@ -659,21 +878,18 @@ export interface PointsExport {
   rows: PointsExportRow[];
 }
 
-interface ShadowPayload {
-  id: string;
-  localizedTexts?: LocalizedText[];
-  maxPoints: number;
-}
-
 export async function getGroupPointsExport(groupId: string, locale: string): Promise<PointsExport> {
   const [group, stats, assignments, shadows] = await Promise.all([
     apiGet<GroupPayload>("/v1/groups/{id}", { pathParams: { id: groupId } }),
     apiGet<GroupStudentStats[]>("/v1/groups/{id}/students/stats", { pathParams: { id: groupId } }),
     apiGet<AssignmentPayload[]>("/v1/groups/{id}/assignments", { pathParams: { id: groupId } }),
-    apiGet<ShadowPayload[]>("/v1/groups/{id}/shadow-assignments", { pathParams: { id: groupId } }),
+    apiGet<ShadowListPayload[]>("/v1/groups/{id}/shadow-assignments", {
+      pathParams: { id: groupId },
+    }),
   ]);
 
   const groupName = localizedName(group.localizedTexts, locale);
+  const items = standingItems(assignments, shadows, Date.now() / 1000);
   const byName = (a: PointsExportColumn, b: PointsExportColumn) =>
     a.name.localeCompare(b.name, locale);
 
@@ -682,6 +898,7 @@ export async function getGroupPointsExport(groupId: string, locale: string): Pro
       id: assignment.id,
       name: localizedName(assignment.localizedTexts, locale),
       maxPoints: assignment.maxPointsBeforeFirstDeadline,
+      hidden: !items.assignments.get(assignment.id)?.visible,
     }))
     .sort(byName);
   const shadowColumns = shadows
@@ -689,6 +906,7 @@ export async function getGroupPointsExport(groupId: string, locale: string): Pro
       id: shadow.id,
       name: localizedName(shadow.localizedTexts, locale),
       maxPoints: shadow.maxPoints,
+      hidden: !shadow.isPublic,
     }))
     .sort(byName);
 
@@ -700,21 +918,31 @@ export async function getGroupPointsExport(groupId: string, locale: string): Pro
   const byId = new Map(people.map((person) => [person.id, person]));
 
   const rows = stats
-    .map((row) => ({
-      fullName: byId.get(row.userId)?.fullName ?? "",
-      email: byId.get(row.userId)?.privateData?.email ?? null,
-      gained: row.points.gained,
-      total: row.points.total,
-      cells: Object.fromEntries(
-        row.assignments.map((entry) => [
-          entry.id,
-          { gained: entry.points.gained, bonus: entry.points.bonus },
-        ]),
-      ),
-      shadowCells: Object.fromEntries(
-        row.shadowAssignments.map((entry) => [entry.id, entry.points.gained]),
-      ),
-    }))
+    .map((row) => {
+      const standing = studentStanding({
+        stats: row,
+        ...items,
+        threshold: null,
+        pointsLimit: null,
+        attempted: null,
+        graded: null,
+      });
+      return {
+        fullName: byId.get(row.userId)?.fullName ?? "",
+        email: byId.get(row.userId)?.privateData?.email ?? null,
+        gained: standing.gained,
+        total: standing.total,
+        cells: Object.fromEntries(
+          row.assignments.map((entry) => [
+            entry.id,
+            { gained: entry.points.gained, bonus: entry.points.bonus },
+          ]),
+        ),
+        shadowCells: Object.fromEntries(
+          row.shadowAssignments.map((entry) => [entry.id, entry.points.gained]),
+        ),
+      };
+    })
     .sort((a, b) => a.fullName.localeCompare(b.fullName, locale));
 
   return { groupName, columns, shadowColumns, rows };

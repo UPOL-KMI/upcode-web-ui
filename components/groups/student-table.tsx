@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import type { GroupStudent } from "@/lib/api/group-detail";
+import type { GroupStanding } from "@/lib/api/group-detail";
 import { formatPoints } from "@/lib/format/points";
 
 import { Link } from "@/i18n/navigation";
@@ -11,7 +11,8 @@ import { Badge } from "@/components/status/badge";
 import { Hint } from "@/components/status/hint";
 
 /**
- * The group's roster (S-007): one row per student, with where they stand.
+ * The group's roster (S-007): one row per student, with where they stand -- as the student sees
+ * it, hidden work left out (X-032, DEC-165).
  *
  * Sorted by points descending by default is *not* what this does -- it sorts by name, and the
  * points column is sortable if that is what the reader wants. A roster that opens ranked is a
@@ -25,7 +26,7 @@ export function StudentTable({
   viewerId,
   staffView,
 }: {
-  students: GroupStudent[];
+  students: GroupStanding[];
   groupId: string;
   viewerId: string;
   /** The reader administers, supervises or observes this group. */
@@ -34,8 +35,9 @@ export function StudentTable({
   const t = useTranslations("Group.students");
 
   const showThreshold = students.some((student) => student.hasLimit);
+  const showGraded = students.some((student) => student.graded !== null);
 
-  const columns: DataTableColumn<GroupStudent>[] = [
+  const columns: DataTableColumn<GroupStanding>[] = [
     {
       id: "name",
       header: t("columns.name"),
@@ -61,14 +63,32 @@ export function StudentTable({
       cell: (student) => formatPoints(student.gained, student.total),
     },
     {
-      id: "solved",
-      header: t("columns.solved"),
+      id: "submitted",
+      header: t("columns.submitted"),
       align: "right" as const,
       className: "tabular-nums",
       sortable: true,
-      sortValue: (student) => student.solvedCount,
-      cell: (student) => `${student.solvedCount}/${student.assignmentCount}`,
+      sortValue: (student) => student.submitted,
+      cell: (student) => `${student.submitted}/${student.submittable}`,
     },
+    ...(showGraded
+      ? [
+          {
+            id: "graded",
+            header: t("columns.graded"),
+            align: "right" as const,
+            className: "tabular-nums",
+            sortable: true,
+            sortValue: (student: GroupStanding) => student.graded ?? -1,
+            cell: (student: GroupStanding) =>
+              student.graded === null ? (
+                <span className="text-muted-foreground">—</span>
+              ) : (
+                `${student.graded}/${student.gradable}`
+              ),
+          },
+        ]
+      : []),
     {
       id: "solutions",
       // Named, like every other action column in the app (`Users`, `SystemMessages`, the licence
@@ -98,8 +118,8 @@ export function StudentTable({
             id: "threshold",
             header: t("columns.threshold"),
             sortable: true,
-            sortValue: (student: GroupStudent) => (student.passesLimit ? 1 : 0),
-            cell: (student: GroupStudent) =>
+            sortValue: (student: GroupStanding) => (student.passesLimit ? 1 : 0),
+            cell: (student: GroupStanding) =>
               student.hasLimit ? (
                 // The badge says where somebody stands *today*, and nothing on the screen said
                 // so -- a teacher reading "Pod hranicí" mid-term could take it for a verdict.

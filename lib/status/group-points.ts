@@ -11,10 +11,9 @@
  * assignments have no bonus at all -- `ShadowAssignmentPoints` is a single figure -- so summing the
  * assignment rows is summing every bonus there is.
  *
- * **Where an assignment is hidden from the reader this under-counts the bonus**, because core-api
- * leaves such a row out of `assignments` while still counting it in the total. The visible result
- * is that part of a bonus stays folded into the main figure, which is exactly what happens today
- * for all of it. It cannot report a bonus that is not there.
+ * core-api filters the rows and the totals by the same rule -- what the *reader* may see -- so the
+ * subtraction is exact for the reader's own row, which is the only one this is used on. A teacher's
+ * view of somebody else's row counts hidden work too; that one is `student-standing.ts`'s job.
  */
 export interface GroupPointsInput {
   points: { gained: number; total: number };

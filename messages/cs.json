@@ -469,7 +469,8 @@
       "columns": {
         "name": "Student",
         "points": "Body",
-        "solved": "Vyřešeno",
+        "submitted": "Odevzdáno",
+        "graded": "Hodnoceno",
         "threshold": "Hranice",
         "actions": "Akce"
       },
@@ -478,7 +479,7 @@
         "description": "Do této skupiny se zatím nepřihlásil žádný student."
       },
       "viewSolutions": "Odevzdaná řešení",
-      "caption": "Všichni studenti této skupiny, jejich body a počet vyřešených zadání.",
+      "caption": "Všichni studenti této skupiny, jejich body, kolik zadání odevzdali a kolik z nich už bylo ohodnoceno.",
       "mail": {
         "title": "Hromadný e-mail skupině",
         "action": "{count, plural, one {Napsat # studentovi} few {Napsat všem # studentům} other {Napsat všem # studentům}}",
@@ -493,11 +494,12 @@
       },
       "thresholdExplain": "Průběžné hodnocení bodování. Nemusí nutně znamenat splnění předmětu, ale pouze udává dosavadní zaznamenanou úspěšnost.",
       "partialList": "Kvůli nastavení práv mohou být některé záznamy skryté.",
-      "import": "Naimportovat lidi do této skupiny"
+      "import": "Naimportovat lidi do této skupiny",
+      "submittedExplain": "Body, Odevzdáno, Hodnoceno i Hranice počítají jen zadání, která studenti už vidí. Skrytá zadání se započítají, až je zveřejníte."
     },
     "points": {
       "title": "Body po jednotlivých zadáních",
-      "explain": "Jedna buňka na studenta a zadání. Pomlčka znamená, že nic nebylo odevzdáno — což není totéž jako nula bodů — a vykřičník znamená, že každý pokus selhal dřív, než mohl být obodován. Stínová zadání se do součtů počítají, ale vlastní sloupec nemají; nic se k nim neodevzdává.",
+      "explain": "Jedna buňka na studenta a zadání. Pomlčka znamená, že nic nebylo odevzdáno (u stínového zadání, že ještě nebylo hodnoceno) — což není totéž jako nula bodů — a vykřičník znamená, že každý pokus selhal dřív, než mohl být obodován. Skrytá zadání jsou ztlumená a do součtu se nepočítají, protože je studenti zatím nevidí.",
       "caption": "Body, které každý student získal v jednotlivých zadáních této skupiny.",
       "untitled": "Nepojmenované zadání",
       "notSubmitted": "Nic neodevzdáno",
@@ -512,7 +514,17 @@
         "student": "Student",
         "email": "E-mail",
         "gained": "Body",
-        "maximum": "Z možných"
+        "maximum": "Z možných",
+        "hiddenColumn": "{name} (skryté)"
+      },
+      "notGraded": "Nehodnoceno",
+      "shadow": "stínové",
+      "hidden": "skryté",
+      "filter": {
+        "label": "Která zadání zobrazit",
+        "all": "Vše",
+        "standard": "Pouze standardní",
+        "shadow": "Pouze stínová"
       }
     },
     "exams": {
@@ -3453,38 +3465,44 @@
       "hidden": "Skryté"
     },
     "points": {
-      "title": "Udělené body",
-      "empty": "Zatím nebyly uděleny žádné body.",
+      "title": "Body studentů",
+      "empty": "Ve skupině zatím nejsou žádní studenti.",
       "columns": {
         "student": "Student",
         "points": "Body",
         "note": "Poznámka",
         "awardedAt": "Uděleno dne",
-        "awardedBy": "Zapsal"
+        "awardedBy": "Zapsal",
+        "actions": "Akce"
       },
       "edit": "Upravit",
       "save": "Uložit",
       "cancel": "Zrušit",
       "remove": "Odebrat",
       "failed": "Body se nezměnily.",
-      "award": {
-        "title": "Udělit body",
-        "who": "Komu",
-        "button": "Udělit",
-        "choose": "Vyberte studenta…",
-        "noCandidates": "Ve skupině není nikdo, komu by šlo body udělit.",
-        "overMax": "Pozor! Zadáváte více bodů, než je nastavený horní limit.",
-        "awardedAtHint": "Nepovinné. Datum a čas, kdy byly body uděleny."
-      },
       "toast": {
         "awarded": "Body byly uděleny.",
         "saved": "Body byly změněny.",
-        "removed": "Body byly odebrány."
+        "removed": "Body byly odebrány.",
+        "bulk": "{count, plural, one {Body byly uděleny # studentovi.} other {Body byly uděleny # studentům.}}"
       },
       "confirmRemove": {
         "title": "Odebrat tyto body?",
         "description": "Záznam se smaže a studentovi o ně klesne celkový součet."
-      }
+      },
+      "notGraded": "Nehodnoceno",
+      "overMax": "Pozor! Zadáváte více bodů, než je nastavený horní limit.",
+      "quick": {
+        "label": "Předvyplnit {points} b."
+      },
+      "bulk": {
+        "select": "Vybrat: {name}",
+        "selectAll": "Vybrat všechny nehodnocené",
+        "selected": "{count, plural, one {Vybrán # student} few {Vybráni # studenti} other {Vybráno # studentů}}",
+        "button": "Udělit vybraným",
+        "clear": "Zrušit výběr"
+      },
+      "bulkFailed": "Některým studentům se body nepodařilo udělit: {names}"
     },
     "errors": {
       "invalid": "Tyto body nejsou platné.",

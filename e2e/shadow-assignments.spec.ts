@@ -36,7 +36,7 @@ test("tells a student what they were awarded, and nothing about anyone else", as
   // `exact`, because the assignment's own name differs from the note only in case.
   await expect(main.getByText("[seed] oral exam", { exact: true })).toBeVisible();
   // core-api sends a student only their own record, so there is no table of everyone to hide.
-  await expect(main.getByRole("heading", { name: "Awarded points" })).toHaveCount(0);
+  await expect(main.getByRole("heading", { name: "Students’ points" })).toHaveCount(0);
   // Nothing is submitted for a shadow assignment, so nothing offers to.
   await expect(main.getByRole("link", { name: /submit/i })).toHaveCount(0);
   await expect(main.getByText("The deadline is informative")).toBeVisible();
@@ -59,4 +59,28 @@ test("lets a teacher change what was awarded", async ({ page }) => {
     await expect(page.getByText("The points were changed.", { exact: true })).toBeVisible();
     await expect(row.getByRole("cell", { name: points, exact: true })).toBeVisible();
   }
+});
+
+/**
+ * X-032: every student has a row, graded or not, and the quick buttons only prefill it. Nothing is
+ * saved here, so the fixture stays as the seed made it.
+ */
+test("lists an ungraded student, and the quick buttons only prefill the row", async ({ page }) => {
+  const cookie = await loginAndGetCookie(SUPERADMIN);
+  await page.context().addCookies([{ ...cookie, url: baseURL }]);
+  await openSeededShadowAssignment(page);
+
+  const main = page.getByRole("main");
+  const row = main.getByRole("row").filter({ hasText: "Bob Classmate" });
+  await expect(row.getByText("Not graded", { exact: true })).toBeVisible();
+
+  await row.getByRole("button", { name: "Prefill 0 points" }).click();
+  await expect(row.getByLabel("Points")).toHaveValue("0");
+  await row.getByRole("button", { name: "Cancel" }).click();
+  await expect(row.getByText("Not graded", { exact: true })).toBeVisible();
+
+  await row.getByRole("checkbox", { name: /Select/ }).check();
+  await expect(main.getByText("1 student selected")).toBeVisible();
+  await main.getByRole("button", { name: "Clear selection" }).click();
+  await expect(main.getByText("1 student selected")).toHaveCount(0);
 });

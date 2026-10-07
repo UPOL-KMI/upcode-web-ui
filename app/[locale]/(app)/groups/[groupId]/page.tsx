@@ -7,10 +7,13 @@ import {
   getGroupAssignments,
   getGroupDetail,
   getGroupPointsMatrix,
+  getGroupStanding,
   getGroupStudents,
   getRelocationTargets,
+  POINTS_FILTERS,
   type AssignmentFilter,
   type GroupDetail,
+  type PointsFilter,
 } from "@/lib/api/group-detail";
 import { getExamLocks, getExamRoster } from "@/lib/api/group-exams";
 import { getGroupInvitations } from "@/lib/api/group-invitation";
@@ -76,7 +79,7 @@ export default async function GroupPage({
   searchParams,
 }: {
   params: Promise<{ groupId: string }>;
-  searchParams: Promise<{ tab?: string; filter?: string; exam?: string }>;
+  searchParams: Promise<{ tab?: string; filter?: string; exam?: string; points?: string }>;
 }) {
   const [{ groupId }, query, locale] = await Promise.all([params, searchParams, getLocale()]);
   const [t, status, group, viewer] = await Promise.all([
@@ -133,7 +136,10 @@ export default async function GroupPage({
       )}
       {current === "students" && (
         <TabBody label={status("loading")}>
-          <StudentsTab groupId={groupId} />
+          <StudentsTab
+            groupId={groupId}
+            pointsFilter={POINTS_FILTERS.find((option) => option === query.points) ?? "all"}
+          />
         </TabBody>
       )}
       {current === "exams" && (
@@ -465,15 +471,23 @@ async function AssignmentsTab({ groupId, filter }: { groupId: string; filter?: s
   );
 }
 
-async function StudentsTab({ groupId }: { groupId: string }) {
+async function StudentsTab({
+  groupId,
+  pointsFilter,
+}: {
+  groupId: string;
+  pointsFilter: PointsFilter;
+}) {
   const locale = await getLocale();
-  const [t, tPoints, group, viewer, students] = await Promise.all([
+  const [t, tPoints, group, viewer] = await Promise.all([
     getTranslations("Group.students"),
     getTranslations("Group.points"),
     getGroupDetail(groupId, locale),
     getCurrentUser(),
-    getGroupStudents(groupId),
   ]);
+  const students = await getGroupStanding(groupId, locale, {
+    viewStats: group.can.viewStats === true,
+  });
 
   // **The roster and the points matrix are two permissions, not one.** core-api grants a plain
   // student `viewStudents` -- they may see who else is in the course -- while `viewStats` stays
@@ -536,16 +550,17 @@ async function StudentsTab({ groupId }: { groupId: string }) {
           the difference between "one student in the course" and "one row you are allowed to see",
           so it says so rather than letting the reader draw the wrong conclusion. */}
       {!staffView && <p className="text-sm text-muted-foreground">{t("partialList")}</p>}
+      {staffView && <p className="text-xs text-muted-foreground">{t("submittedExplain")}</p>}
 
-      {/* T-006. Both tables come out of the same `/students/stats` response, so the matrix costs
-          one call for the assignment names and nothing for the data. */}
+      {/* T-006. Both tables come out of the same `/students/stats` response and the same lists,
+          so the matrix costs only the attempt counts on top. */}
       {matrix.columns.length > 0 && (
         <section aria-labelledby="group-points" className="flex flex-col gap-2">
           <h2 id="group-points" className="text-sm font-medium">
             {tPoints("title")}
           </h2>
           <p className="text-xs text-muted-foreground">{tPoints("explain")}</p>
-          <PointsMatrixTable matrix={matrix} />
+          <PointsMatrixTable matrix={matrix} filter={pointsFilter} groupId={groupId} />
           {staffView && (
             <div>
               {/* T-007. A plain link to this app's own Route Handler, not a client-side blob:

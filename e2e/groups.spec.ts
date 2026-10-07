@@ -241,8 +241,13 @@ test("shows points per student and per assignment, and says which cells were nev
   const section = page.getByRole("region", { name: "Points, assignment by assignment" });
   await expect(section).toBeVisible();
 
-  // A column per assignment plus the student and total columns, and a row per student.
+  // A column per assignment and per shadow assignment (X-032), plus the student and total
+  // columns, and a row per student. The filter narrows it to one kind.
   const matrix = section.getByRole("table");
+  await expect(matrix.locator("thead th")).toHaveCount(7);
+  await section.getByRole("link", { name: "Shadow only" }).click();
+  await expect(matrix.locator("thead th")).toHaveCount(4);
+  await section.getByRole("link", { name: "Standard only" }).click();
   await expect(matrix.locator("thead th")).toHaveCount(5);
   const alice = matrix.getByRole("row").filter({ hasText: "Alice Student" });
   await expect(alice).toHaveCount(1);

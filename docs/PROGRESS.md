@@ -7264,3 +7264,34 @@ exercise files refuse the duplicate too.
 **The attempts dialog broke its rows for want of width.** "Pokus 7" and the submission time each
 wrapped onto two lines in a dialog capped at 48rem; it is now up to 64rem wide, scrolls itself when
 a student has many attempts, and the attempt label never wraps.
+
+### 2026-10-07 — a student's standing as the student sees it (X-032)
+
+**A teacher read 12/100 where the student reads 12/10.** core-api builds the group's student stats
+from the _reader's_ permissions, so for a teacher every hidden shadow assignment (nine of ten on the
+operator's course) went into the maximum, and the 50 % threshold was judged against 100 instead of 10. The roster, the matrix totals and the CSV export now take the per-item rows from the same
+response and add up only what the student can see (`lib/status/student-standing.ts`, DEC-165):
+hidden work counts in neither the points nor the maximum.
+
+**"Vyřešeno 1/4" counted the wrong thing twice.** Its numerator was "the last evaluation scored
+above zero", and its denominator every assignment the teacher could see. It is now two columns:
+**Odevzdáno**, visible assignments with at least one attempt, and **Hodnoceno**, visible
+assignments whose best solution a person has graded (the grading queue's own rule, DEC-163) plus
+visible shadow assignments with points. Hodnoceno costs one solutions read per visible assignment
+and is shown only to a reader who may make it.
+
+**Shadow assignments are columns in the points matrix**, with a filter -- Vše / Pouze standardní /
+Pouze stínová -- kept in the URL. Hidden columns are dimmed and labelled, and each filter has its
+own total. A cell shows its bonus the way the export does (`5+1`, the bonus in green, a penalty in
+red): the row total always counted it, and the cell did not say so.
+
+**Points for a shadow assignment are typed into the row.** Every student of the group has one;
+an ungraded row says "Nehodnoceno" and offers Upravit, the full marks in green and zero in red,
+which only prefill it. Save and Cancel carry icons. The separate "Udělit body" form is gone; in
+its place, ticking ungraded students brings up a bar to give them all the same points (DEC-166).
+
+**Demo data:** `pnpm seed:grading-demo` builds one `[demo]` course with the states above and the
+figures each student should show (`docs/SEED_ACCOUNTS.md`), without touching anything else on the
+instance (DEC-167).
+
+Typecheck, lint, format, build and 474 unit tests green.

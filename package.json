@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "seed:grading-demo": "tsx --env-file=.env.local scripts/seed-grading-demo.ts",
     "generate:api-types": "openapi-typescript openapi/core-api.yaml -o lib/api/core-api.generated.ts",
     "test": "vitest run",
     "test:e2e": "playwright test",

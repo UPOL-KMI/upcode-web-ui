@@ -469,7 +469,8 @@
       "columns": {
         "name": "Student",
         "points": "Points",
-        "solved": "Solved",
+        "submitted": "Submitted",
+        "graded": "Graded",
         "threshold": "Threshold",
         "actions": "Actions"
       },
@@ -478,7 +479,7 @@
         "description": "Nobody has joined this group as a student yet."
       },
       "viewSolutions": "Submitted solutions",
-      "caption": "Every student in this group, their points, and how much they have solved.",
+      "caption": "Every student in this group, their points, how many assignments they have submitted and how many of those have been graded.",
       "mail": {
         "title": "Mailing this group",
         "action": "{count, plural, one {Mail # student} other {Mail all # students}}",
@@ -493,11 +494,12 @@
       },
       "thresholdExplain": "An interim tally. It does not necessarily mean the course has been passed — it only states the success recorded so far.",
       "partialList": "Some records may be hidden by the group's permissions.",
-      "import": "Import people into this group"
+      "import": "Import people into this group",
+      "submittedExplain": "Points, Submitted, Graded and Threshold count only the work students can already see. Hidden assignments count once you publish them."
     },
     "points": {
       "title": "Points, assignment by assignment",
-      "explain": "One cell per student and assignment. A dash means nothing has been submitted — which is not the same as scoring zero — and an exclamation mark means every attempt failed before it could be scored. Shadow assignments are counted in the totals but have no column of their own; nothing is submitted for them.",
+      "explain": "One cell per student and assignment. A dash means nothing has been submitted (for a shadow assignment, that it has not been graded yet) — which is not the same as scoring zero — and an exclamation mark means every attempt failed before it could be scored. Hidden assignments are dimmed and left out of the totals, because students cannot see them yet.",
       "caption": "Points scored by each student in each assignment of this group.",
       "untitled": "Unnamed assignment",
       "notSubmitted": "Nothing submitted",
@@ -512,7 +514,17 @@
         "student": "Student",
         "email": "Email",
         "gained": "Points",
-        "maximum": "Out of"
+        "maximum": "Out of",
+        "hiddenColumn": "{name} (hidden)"
+      },
+      "notGraded": "Not graded",
+      "shadow": "shadow",
+      "hidden": "hidden",
+      "filter": {
+        "label": "Which assignments to show",
+        "all": "All",
+        "standard": "Standard only",
+        "shadow": "Shadow only"
       }
     },
     "exams": {
@@ -3453,38 +3465,44 @@
       "hidden": "Hidden"
     },
     "points": {
-      "title": "Awarded points",
-      "empty": "Nothing has been awarded yet.",
+      "title": "Students’ points",
+      "empty": "There are no students in this group yet.",
       "columns": {
         "student": "Student",
         "points": "Points",
         "note": "Note",
         "awardedAt": "Awarded on",
-        "awardedBy": "Recorded by"
+        "awardedBy": "Recorded by",
+        "actions": "Actions"
       },
       "edit": "Edit",
       "save": "Save",
       "cancel": "Cancel",
       "remove": "Remove",
       "failed": "The points were not changed.",
-      "award": {
-        "title": "Award points",
-        "who": "To whom",
-        "button": "Award",
-        "choose": "Choose a student…",
-        "noCandidates": "There is nobody in the group left to award.",
-        "overMax": "Careful — that is more points than the upper limit set for this.",
-        "awardedAtHint": "Optional. The date and time the points were awarded."
-      },
       "toast": {
         "awarded": "The points were awarded.",
         "saved": "The points were changed.",
-        "removed": "The points were withdrawn."
+        "removed": "The points were withdrawn.",
+        "bulk": "{count, plural, one {Points were awarded to # student.} other {Points were awarded to # students.}}"
       },
       "confirmRemove": {
         "title": "Withdraw these points?",
         "description": "The record is deleted and the student's total drops accordingly."
-      }
+      },
+      "notGraded": "Not graded",
+      "overMax": "Careful — that is more points than the upper limit set for this.",
+      "quick": {
+        "label": "Prefill {points} points"
+      },
+      "bulk": {
+        "select": "Select {name}",
+        "selectAll": "Select every ungraded student",
+        "selected": "{count, plural, one {# student selected} other {# students selected}}",
+        "button": "Award to selected",
+        "clear": "Clear selection"
+      },
+      "bulkFailed": "Points could not be awarded to some students: {names}"
     },
     "errors": {
       "invalid": "Those points are not valid.",

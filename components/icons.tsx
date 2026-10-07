@@ -96,3 +96,23 @@ export function InfoIcon({ className }: { className?: string }) {
     </Icon>
   );
 }
+
+/** Abandoning an edit. */
+export function CloseIcon({ className }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M5 5l10 10" />
+      <path d="M15 5 5 15" />
+    </Icon>
+  );
+}
+
+export function TrashIcon({ className }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M3.5 5.5h13" />
+      <path d="M8 5.5V3.5h4v2" />
+      <path d="M5 5.5l1 11h8l1-11" />
+    </Icon>
+  );
+}

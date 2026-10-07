@@ -141,6 +141,35 @@ script's.
 
 ---
 
+## Grading demo (`pnpm seed:grading-demo`, X-032)
+
+A separate, idempotent script for an instance that holds real courses (DEC-167): one group,
+**`[demo] Hodnocení a stínové úlohy`**, percentage threshold 50 %, and four students, all with the
+password above. `SEED_DEMO_SUPERVISOR_EMAIL=<your address>` makes that account a supervisor of the
+group, and picks its instance; `SEED_INSTANCE_ID` overrides the instance. Solutions are really
+evaluated, so broker and worker must be running.
+
+What is in it:
+
+- Assignments, all from `[seed] Echo Greeting`: **Bonus 1, 2, 3** (5 points each, bonus, public),
+  **Skrytá úloha** (10, not public), **Viditelná až za týden** (10, `visibleFrom` in a week).
+- Shadow assignments **Stínová 01–10**, 10 points each; only **01** is public.
+- A supervisor, **`teacher.demo@demo.recodex.local`**, for the teacher's side under a known password.
+
+| Student                         | Did                                                                                       | Body  | Odevzdáno | Hodnoceno | Hranice     |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | ----- | --------- | --------- | ----------- |
+| `adam.demo@demo.recodex.local`  | Bonus 1 correct, points set to 2 · Bonus 2 correct, review closed · Bonus 3 wrong · 01: 5 | 12/10 | 3/3       | 3/4       | Splňuje     |
+| `bara.demo@demo.recodex.local`  | nothing                                                                                   | 0/10  | 0/3       | 0/4       | Pod hranicí |
+| `cyril.demo@demo.recodex.local` | Bonus 1 wrong · hidden 02: 10                                                             | 0/10  | 1/3       | 0/4       | Pod hranicí |
+| `dana.demo@demo.recodex.local`  | Bonus 1 points set to 5 · Bonus 2 review closed · Bonus 3 bonus +1 · 01: 10               | 26/10 | 3/3       | 4/4       | Splňuje     |
+
+Before X-032 a teacher read Adam as **12/120** and Cyril as **10/120** (hidden work in the maximum,
+Cyril's hidden shadow points in the sum). In the matrix, Cyril's 10 sits in the dimmed
+"Stínová 02" column and in no total. "Pouze standardní" shows totals out of 0 for everyone: every
+visible standard assignment here is a bonus.
+
+---
+
 ## A real gotcha worth remembering
 
 `POST /v1/groups/{id}/members/{userId}` (and `/students/{userId}`) checks `group.isNotArchived`
