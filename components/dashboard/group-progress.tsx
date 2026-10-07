@@ -32,7 +32,7 @@ export async function GroupProgressCards({ groups }: { groups: GroupProgress[] }
         const percent = percentOf(group.gained, group.total);
         // A group that has assigned nothing yet has no progress to report, and "0/0 points" under
         // an empty bar reads as a failure rather than as an absence.
-        const nothingAssigned = group.assignmentCount === 0 && group.total === 0;
+        const nothingAssigned = group.gradable === 0 && group.total === 0;
         return (
           <li key={group.id} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-3">
@@ -77,15 +77,21 @@ export async function GroupProgressCards({ groups }: { groups: GroupProgress[] }
                 </div>
 
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {t("solved", { solved: group.solvedCount, total: group.assignmentCount })}
-                  {group.hasLimit && group.limit !== null && (
-                    <>
-                      {" · "}
-                      {t("limit", {
+                  {[
+                    group.submittable > 0 &&
+                      (group.submitted >= group.submittable
+                        ? t("allSubmitted")
+                        : t("toSubmit", { count: group.submittable - group.submitted })),
+                    group.graded !== null &&
+                      t("graded", { graded: group.graded, total: group.gradable }),
+                    group.hasLimit &&
+                      group.limit !== null &&
+                      t("limit", {
                         limit: format.number(group.limit, { maximumFractionDigits: 1 }),
-                      })}
-                    </>
-                  )}
+                      }),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               </>
             )}

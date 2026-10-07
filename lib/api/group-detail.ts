@@ -17,6 +17,7 @@ import { ApiError, apiGet, apiPost } from "./client";
 import type { SolutionListPayload } from "./assignment-solutions";
 import { apiRead, pageRead } from "./read";
 import { getMyGroupStats, type GroupStudentStats } from "./groups";
+import { getMyWork } from "./my-work";
 
 /**
  * One group, as its own screen needs it (S-005, S-006, S-007).
@@ -363,8 +364,10 @@ export interface GroupAssignment {
     bestSolutionId: string | null;
     /** The assignment collects files rather than running code (DEC-141). */
     dataOnly: boolean;
-    /** Somebody awarded points -- approximated from the row, see `AssignmentProgressInput`. */
+    /** A person graded it -- see `AssignmentProgressInput`. */
     graded: boolean;
+    /** A teacher set the points in place of the evaluation's. */
+    pointsOverridden: boolean;
   } | null;
 }
 
@@ -394,6 +397,7 @@ export async function getGroupAssignments(
 
   const myStats = statsByGroup.get(groupId);
   const statsByAssignment = new Map((myStats?.assignments ?? []).map((row) => [row.id, row]));
+  const myWork = myStats ? await getMyWork(groupId) : null;
   const now = Date.now() / 1000;
 
   return assignments
@@ -420,7 +424,10 @@ export async function getGroupAssignments(
               accepted: stats?.accepted ?? null,
               bestSolutionId: stats?.bestSolutionId ?? null,
               dataOnly: isDataOnly(assignment.runtimeEnvironmentIds ?? []),
-              graded: (stats?.points.gained ?? 0) > 0 || (stats?.points.bonus ?? 0) !== 0,
+              pointsOverridden: myWork?.overridden.has(assignment.id) ?? false,
+              graded:
+                myWork?.pointsSet.has(assignment.id) ??
+                ((stats?.points.gained ?? 0) > 0 || (stats?.points.bonus ?? 0) !== 0),
             }
           : null,
       };

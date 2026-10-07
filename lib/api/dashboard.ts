@@ -5,12 +5,14 @@ import { cache } from "react";
 import { localizedName, type LocalizedText } from "@/lib/i18n-text/localized";
 import { deadlineSources } from "@/lib/groups/deadline-sources";
 import { isDataOnly } from "@/lib/status/exercise-validation";
+import { isStudentVisible, studentStanding } from "@/lib/status/student-standing";
 
 import { requireSession } from "@/lib/auth/require-session";
 
 import { ApiError, apiGet, apiPost } from "./client";
 import { apiRead } from "./read";
 import { getMyGroups, getMyGroupStats, type GroupAssignmentStats } from "./groups";
+import { getMyWork } from "./my-work";
 import { getGroupShadowAssignments } from "./shadow-assignment";
 
 /**
@@ -40,8 +42,10 @@ export interface UpcomingAssignment {
   stats?: Pick<GroupAssignmentStats, "status" | "accepted"> & {
     /** The assignment collects files rather than running code (DEC-141). */
     dataOnly?: boolean;
-    /** Somebody awarded points -- approximated, see `AssignmentProgressInput`. */
+    /** A person graded it -- see `AssignmentProgressInput`. */
     graded?: boolean;
+    /** A teacher set the points in place of the evaluation's. */
+    pointsOverridden?: boolean;
     gained: number | null;
     bonus: number | null;
     total: number;
@@ -56,8 +60,13 @@ export interface GroupProgress {
   limit: number | null;
   hasLimit: boolean;
   passesLimit: boolean;
-  assignmentCount: number;
-  solvedCount: number;
+  /** Visible assignments with at least one attempt, out of `submittable` (X-032). */
+  submitted: number;
+  submittable: number;
+  /** Visible assignments and shadow assignments a person has graded, out of `gradable`; null
+   *  where the reader's own solutions could not be read. */
+  graded: number | null;
+  gradable: number;
 }
 
 /**
@@ -109,6 +118,8 @@ interface AssignmentPayload {
   allowSecondDeadline: boolean;
   maxPointsBeforeFirstDeadline: number;
   isBonus: boolean;
+  isPublic: boolean;
+  visibleFrom?: number | null;
 }
 
 /**
@@ -178,10 +189,11 @@ export async function getStudentDashboard(locale: string): Promise<StudentDashbo
   const { member } = await getMyGroups(locale);
   if (member.length === 0) return { upcoming: [], progress: [], shadow: [] };
 
-  const [statsByGroup, assignmentsPerGroup, shadowPerGroup] = await Promise.all([
+  const [statsByGroup, assignmentsPerGroup, shadowPerGroup, workPerGroup] = await Promise.all([
     getMyGroupStats(),
     Promise.all(member.map((group) => fetchGroupAssignments(group.id))),
     Promise.all(member.map((group) => getGroupShadowAssignments(group.id, locale))),
+    Promise.all(member.map((group) => getMyWork(group.id))),
   ]);
 
   const now = Date.now() / 1000;
@@ -219,7 +231,10 @@ export async function getStudentDashboard(locale: string): Promise<StudentDashbo
           // and a missing maximum would render every such row as "0 points available".
           total: stats?.points.total ?? maxPointsById.get(open.id) ?? 0,
           dataOnly: dataOnlyById.get(open.id) ?? false,
-          graded: (stats?.points.gained ?? 0) > 0 || (stats?.points.bonus ?? 0) !== 0,
+          pointsOverridden: workPerGroup[index]?.overridden.has(open.id) ?? false,
+          graded:
+            workPerGroup[index]?.pointsSet.has(open.id) ??
+            ((stats?.points.gained ?? 0) > 0 || (stats?.points.bonus ?? 0) !== 0),
         },
       });
     }
@@ -239,6 +254,35 @@ export async function getStudentDashboard(locale: string): Promise<StudentDashbo
     }
 
     if (groupStats) {
+      const work = workPerGroup[index]!;
+      const standing = studentStanding({
+        stats: groupStats,
+        assignments: new Map(
+          assignments.map((assignment) => [
+            assignment.id,
+            {
+              maxPoints: assignment.maxPointsBeforeFirstDeadline,
+              isBonus: assignment.isBonus,
+              visible: isStudentVisible(
+                { isPublic: assignment.isPublic, visibleFrom: assignment.visibleFrom ?? null },
+                now,
+              ),
+            },
+          ]),
+        ),
+        shadows: new Map(
+          shadowPerGroup[index]!.map((entry) => [
+            entry.id,
+            { maxPoints: entry.maxPoints, isBonus: entry.isBonus, visible: entry.isPublic },
+          ]),
+        ),
+        threshold: null,
+        pointsLimit: null,
+        attempted: work?.attempted ?? null,
+        graded: work?.graded ?? null,
+      });
+      // Points and the threshold stay core-api's: this is the reader's own row, which core-api
+      // already builds from what the reader can see. Only the counts needed the solutions.
       progress.push({
         id: group.id,
         name: group.name,
@@ -247,8 +291,10 @@ export async function getStudentDashboard(locale: string): Promise<StudentDashbo
         limit: groupStats.points.limit,
         hasLimit: groupStats.hasLimit,
         passesLimit: groupStats.passesLimit,
-        assignmentCount: groupStats.assignments.length,
-        solvedCount: groupStats.assignments.filter((stats) => stats.status === "done").length,
+        submitted: standing.submitted,
+        submittable: standing.submittable,
+        graded: standing.graded,
+        gradable: standing.gradable,
       });
     }
   });

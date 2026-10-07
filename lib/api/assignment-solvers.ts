@@ -95,6 +95,8 @@ export async function getAssignmentSolvers(
   );
 
   const attempts = new Map(solvers.map((solver) => [solver.solverId, solver.lastAttemptIndex]));
+  const bestOf = (userId: string) =>
+    solutions.find((solution) => solution.authorId === userId && solution.isBest);
   // A solver whose author is gone is not a row. Deleting an account leaves its solutions behind
   // with no author, and `/v1/assignment-solvers` keeps reporting the solver record with
   // `solverId: null` -- which reached the table as a person with no name whose link pointed at
@@ -116,12 +118,12 @@ export async function getAssignmentSolvers(
         .find((entry) => entry.userId === userId)
         ?.assignments.find((entry) => entry.id === assignmentId);
       const attemptCount = attempts.get(userId) ?? 0;
+      const best = bestOf(userId);
       // No stats row: not (or no longer) a student of the group, which core-api's stats only
       // cover. Their row used to be guessed from the attempt count alone, and read "evaluation
       // failed" with no points beside a best solution with ten -- so it is read from that solution,
       // core-api's own `isBestSolution`, the very one the stats would have used.
       if (!row) {
-        const best = solutions.find((solution) => solution.authorId === userId && solution.isBest);
         if (best) {
           return {
             userId,
@@ -172,10 +174,9 @@ export async function getAssignmentSolvers(
                 pointsOverridden: row?.bestSolutionId
                   ? overriddenSolutions.has(row.bestSolutionId)
                   : false,
-                // The stats row has no overridden-points field, so "somebody marked it" is
-                // inferred: the data-only judge scores nought, so any points at all came from a
-                // person. Documented on `AssignmentProgressInput.graded`.
-                graded: (row?.points.gained ?? 0) > 0 || (row?.points.bonus ?? 0) !== 0,
+                // Read from the best solution itself rather than guessed from its points (X-032),
+                // by the same rule as the solution's own badge: a person set points or a bonus.
+                graded: best?.status.graded ?? false,
               }),
       };
     })

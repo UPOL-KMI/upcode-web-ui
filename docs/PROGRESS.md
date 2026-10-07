@@ -7295,3 +7295,24 @@ figures each student should show (`docs/SEED_ACCOUNTS.md`), without touching any
 instance (DEC-167).
 
 Typecheck, lint, format, build and 474 unit tests green.
+
+**The student's own dashboard card said "1 z 4 zadání vyřešeno" too**, for the same reason as the
+class table: "solved" meant the last evaluation scored above zero. The card now reads, like the
+roster, how many visible assignments the student has handed in and how many of their assignments
+and shadow assignments a person has graded ("Vše odevzdáno" or "Zbývá odevzdat: 1", then
+"4 z 5 ohodnoceno", as the operator worded it). It costs
+one read of the student's own solutions per group (`/v1/groups/{id}/students/{me}/solutions`); if
+that read fails the card leaves the graded count out. Points and the threshold there stay core-api's,
+which for the reader's own row are already the student's view. Checked on the rebuilt container
+as the demo student Adam.
+
+**The same guess, three more times.** Asked to look for the problem elsewhere, a sweep for screens
+that judge a student from the stats row turned up the points-only guess at "a person graded it" in
+the student's assignment list, the dashboard's open assignments and a teacher's class table for one
+assignment, and an automatic verdict ("Částečně správně") on a solution whose points the teacher
+had set. All three now read the best solution itself: the student's own solutions in the group
+(`lib/api/my-work.ts`, one call per group, memoized) or, for the class table, the assignment's
+solutions it already had. The data-only badge keeps the solution screen's rule -- points or a bonus
+set by a person -- while the "Hodnoceno" counts keep the grading queue's, which also counts a
+closed review (DEC-163); the two are deliberately different questions. Points and thresholds
+elsewhere were checked and are right: every other screen showing them reads the reader's own row.

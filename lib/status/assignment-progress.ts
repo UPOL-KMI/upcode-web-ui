@@ -24,18 +24,18 @@ export interface AssignmentProgressInput {
   /**
    * A teacher set the points in place of the scoring's.
    *
-   * **Not in the stats row**, which carries the points and not where they came from -- the class
-   * table looks it up in the assignment's own solutions, and the two summary screens built purely
-   * on stats (the group's assignment list, the dashboard) leave it unset and keep the automatic
-   * verdict. Better a screen that says less than one that says something untrue.
+   * **Not in the stats row**, which carries the points and not where they came from -- so every
+   * caller reads it from the solutions: the class table from the assignment's, the student's
+   * assignment list and dashboard from the student's own (X-032). Where those could not be read it
+   * stays unset and the automatic verdict shows, which says less rather than something untrue.
    */
   pointsOverridden?: boolean;
   /**
-   * Somebody awarded points for it. **An approximation, like the two below**, and for the same
-   * reason: a stats row carries no overridden-points field, so "a person decided" is inferred from
-   * there being points at all (the default data-only judge scores nought, so the pipeline awards
-   * none) or a bonus. A teacher who deliberately awards zero therefore still reads as "waiting" on
-   * these summary screens; the solution's own screen, which has the real fields, gets it right.
+   * A person set points for it -- overridden or a bonus, the same as `status.graded` on the
+   * solution's own screen (a closed review alone is not points, DEC-163). Every caller now reads it
+   * from the best solution itself (X-032); a stats row carries no overridden points, so where the
+   * solutions could not be read the callers fall back to inferring it from there being points at
+   * all -- which reads a deliberate zero as "waiting".
    */
   graded?: boolean;
 }
